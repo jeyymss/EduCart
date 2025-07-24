@@ -12,9 +12,26 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { register } from "./actions";
+import { login } from "./actions";
+import { useState } from "react";
 
-export default function RegisterPage() {
+export default function LoginPage() {
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError(null);
+
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+
+    const result = await login(formData);
+
+    if (result.error) {
+      setError(result.error);
+    }
+  };
+
   return (
     <div className="flex items-center justify-center h-screen">
       <Card className="w-full max-w-sm">
@@ -28,7 +45,7 @@ export default function RegisterPage() {
           </CardAction>
         </CardHeader>
         <CardContent>
-          <form>
+          <form onSubmit={handleSubmit}>
             <div className="flex flex-col gap-6">
               <div className="grid gap-2">
                 <Label htmlFor="email">Email</Label>
@@ -53,9 +70,13 @@ export default function RegisterPage() {
                 <Input id="password" type="password" name="password" required />
               </div>
             </div>
+            {/* Show error if exists */}
+            {error && (
+              <p className="text-sm text-red-600 text-center mb-4">{error}</p>
+            )}
             <div className="mt-3 flex flex-col gap-2">
-              <Button type="submit" className="w-full" formAction={register}>
-                Register
+              <Button type="submit" className="w-full">
+                Login
               </Button>
             </div>
           </form>

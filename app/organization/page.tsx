@@ -1,9 +1,9 @@
 "use client";
 
-export default function BrowsePage() {
+export default function OrganizationPage() {
   return (
     <div className="flex justify-center items-center h-screen">
-      <h1>Browse Page</h1>
+      <h1>Organization Page</h1>
     </div>
   );
 }

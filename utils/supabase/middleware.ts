@@ -4,10 +4,13 @@ import { NextResponse, type NextRequest } from "next/server";
 // paths that don't require authentication
 const publicPaths = [
   "/", // Landing page
-  "/login", // Auth pages
-  "/register",
-  "/callback",
+  "/login", // login user
+  "/register", // sign up user
+  "/callback", //When user clicks the confirm email
   "/error",
+  "/browse",
+  "/business",
+  "/organization",
 ];
 
 export async function updateSession(request: NextRequest) {
