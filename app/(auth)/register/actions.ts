@@ -24,7 +24,6 @@ export async function register(formData: FormData) {
       data: {
         display_name: credentials.name, //save user's full name in supabase auth
       },
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_BASE_URL}/login`,
     },
   });
 
