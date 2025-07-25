@@ -15,7 +15,7 @@ export default function Landing() {
     if (error) {
       console.error("Logout Failed: ", error.message);
     } else {
-      router.push("/");
+      router.push("/login");
     }
   };
 

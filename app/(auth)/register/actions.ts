@@ -4,52 +4,82 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/utils/supabase/server";
+import { uploadIdImage } from "@/lib/uploadIDImage";
 
 export async function register(formData: FormData) {
   const supabase = await createClient();
 
-  //get the credentials that the user entered from the frontend
+  // Extract credentials first
   const credentials = {
     role: formData.get("role") as string,
     name: formData.get("name") as string,
     email: formData.get("email") as string,
     password: formData.get("password") as string,
+    verificationStatus:
+      (formData.get("verificationStatus") as string) || "Pending",
+    university: formData.get("university") as string,
   };
 
-  // SIGN UP USER TO SUPABASE AUTHENTICATION
+  if (credentials.role === "student" || credentials.role === "faculty") {
+    const { data: university, error } = await supabase
+      .from("universities")
+      .select("domain")
+      .eq("id", Number(credentials.university))
+      .single();
+
+    if (error || !university) {
+      throw new Error("Selected university is invalid.");
+    }
+
+    if (!credentials.email.endsWith(university.domain)) {
+      throw new Error(`Email must end with ${university.domain}`);
+    }
+  }
+
+  // Get the file from formData
+  const rawFile = formData.get("idImage") as File | null;
+  const idImageFile = rawFile instanceof File ? rawFile : null;
+
+  // Upload image
+  let idImageUrl: string | null = null;
+  if (idImageFile) {
+    idImageUrl = await uploadIdImage(idImageFile, credentials.email);
+  }
+
+  // 1. Sign up user to Supabase Auth
   const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
     email: credentials.email,
     password: credentials.password,
     options: {
       data: {
-        display_name: credentials.name, //save user's full name in supabase auth
+        display_name: credentials.name,
       },
     },
   });
 
-  //if there is error, show in frontend
   if (signUpError || !signUpData?.user) {
     return { error: signUpError?.message || "Signup failed" };
   }
 
-  const user = signUpData.user!;
+  const user = signUpData.user;
 
-  //insert user's data in users table
+  // 2. Insert into your `users` table
   const { error: insertError } = await supabase.from("users").insert([
     {
       id: user.id,
       email: user.email,
       role: credentials.role,
       full_name: credentials.name,
+      id_verification_url: idImageUrl,
+      verification_status: credentials.verificationStatus,
+      university_id: credentials.university,
     },
   ]);
 
-  //if there is error in inserting data, show error in frontend
   if (insertError) {
+    console.log("Insert failed:", insertError);
     return { error: "Database error: " + insertError.message };
   }
 
-  //if registration successful
-  revalidatePath("/", "layout");
-  redirect("/login");
+  console.log("✅ Registered:", user.id);
 }
