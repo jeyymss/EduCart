@@ -22,6 +22,7 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { createClient } from "@/utils/supabase/client";
+import Image from "next/image";
 
 type Role = "Student" | "Faculty" | "Alumni";
 
@@ -291,7 +292,10 @@ export default function SignUpForm() {
                 >
                   {previewUrl ? (
                     <>
-                      <img
+                      <Image
+                        alt="Upload ID Preview"
+                        fill
+                        sizes="100vw"
                         src={previewUrl}
                         className="object-cover w-full h-full rounded-md"
                       />
