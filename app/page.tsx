@@ -6,8 +6,8 @@ import { createClient } from "@/utils/supabase/client";
 import { Button } from "@/components/ui/button";
 
 export default function Landing() {
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
   const supabase = createClient();
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
   const router = useRouter();
 
   const handleLogout = async () => {
@@ -15,7 +15,8 @@ export default function Landing() {
     if (error) {
       console.error("Logout Failed: ", error.message);
     } else {
-      router.push("/login");
+      router.push("/");
+      window.location.reload();
     }
   };
 

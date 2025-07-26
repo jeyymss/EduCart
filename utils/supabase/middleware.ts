@@ -5,7 +5,7 @@ import { NextResponse, type NextRequest } from "next/server";
 const publicPaths = [
   "/", // Landing page
   "/login", // login user
-  "/register", // sign up user
+  "/signup", // sign up user
   "/callback", //When user clicks the confirm email
   "/error",
   "/browse",

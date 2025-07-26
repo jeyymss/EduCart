@@ -4,18 +4,16 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
-  CardAction,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
-import { register } from "./actions";
-import { uploadIdImage } from "@/lib/uploadIDImage";
+import { register } from "../actions";
+
 import {
   Select,
   SelectTrigger,
@@ -27,7 +25,7 @@ import { createClient } from "@/utils/supabase/client";
 
 type Role = "Student" | "Faculty" | "Alumni";
 
-export default function RegisterPage() {
+export default function SignUpForm() {
   const [selectedRole, setSelectedRole] = useState<Role | "">("");
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -255,7 +253,7 @@ export default function RegisterPage() {
                 />
               </div>
 
-              {/* Password */}
+              {/* Enter Password */}
               <div className="grid gap-2">
                 <Label htmlFor="password">Password</Label>
                 <Input
@@ -269,7 +267,7 @@ export default function RegisterPage() {
                 />
               </div>
 
-              {/* Confirm Password */}
+              {/* Enter Confirm Password */}
               <div className="grid gap-2">
                 <Label htmlFor="confirmPassword">Confirm Password</Label>
                 <Input
@@ -401,7 +399,7 @@ export default function RegisterPage() {
               <Button
                 type="submit"
                 className="w-full mt-2"
-                disabled={verificationStatus !== "Verified"}
+                disabled={verificationStatus !== "Verified" && loading}
               >
                 Register
               </Button>

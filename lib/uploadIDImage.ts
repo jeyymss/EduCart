@@ -7,7 +7,7 @@ export async function uploadIdImage(
   const supabase = await createClient();
 
   const filePath = `ids/${email}_${Date.now()}`; // Unique path
-  const { data, error } = await supabase.storage
+  const { error } = await supabase.storage
     .from("id-verifications")
     .upload(filePath, file);
 
