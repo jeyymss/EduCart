@@ -8,9 +8,6 @@ const publicPaths = [
   "/signup", // sign up user
   "/callback", //When user clicks the confirm email
   "/error",
-  "/browse",
-  "/business",
-  "/organization",
 ];
 
 export async function updateSession(request: NextRequest) {
@@ -47,7 +44,7 @@ export async function updateSession(request: NextRequest) {
 
   const currentPath = request.nextUrl.pathname;
   const nextPath =
-    currentPath === "/login" || currentPath === "/register"
+    currentPath === "/login" || currentPath === "/signup"
       ? request.nextUrl.searchParams.get("next") || "/" // Default to landing page
       : currentPath;
 
@@ -67,7 +64,7 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (session && (currentPath === "/login" || currentPath === "/register")) {
+  if (session && (currentPath === "/login" || currentPath === "/signup")) {
     // For logged in users trying to access auth pages, redirect to the next path
     const url = new URL(nextPath, request.url);
     return NextResponse.redirect(url);

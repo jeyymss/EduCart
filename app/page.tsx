@@ -13,17 +13,6 @@ import { Textarea } from "@/components/ui/textarea";
 export default function Landing() {
   const supabase = createClient();
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
-  const router = useRouter();
-
-  const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      console.error("Logout Failed: ", error.message);
-    } else {
-      router.push("/");
-      window.location.reload();
-    }
-  };
 
   useEffect(() => {
     const checkSession = async () => {
@@ -37,12 +26,6 @@ export default function Landing() {
     checkSession();
   }, [supabase]);
 
-  const handleClick = () => {
-    return new Promise((resolve) => {
-      setTimeout(resolve, 4000);
-    });
-  };
-
   return (
     <div>
       <div className="flex md:px-10 lg:px-20 px-6 items-center justify-center h-[75vh]">
@@ -55,7 +38,7 @@ export default function Landing() {
           <h3 className="text-sm md:text-base text-center md:text-left">
             Connect, trade, and thrive in your academic community!
           </h3>
-          <Button className="w-full md:w-30 bg-[#C7D9E5] text-[#333333] hover:bg-[#122C4F] hover:text-white ">
+          <Button className="w-full md:w-30 bg-[#C7D9E5] text-[#333333] hover:bg-[#122C4F] hover:text-white hover:cursor-pointer ">
             Get Started
           </Button>
         </div>
