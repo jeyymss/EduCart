@@ -8,6 +8,7 @@ const publicPaths = [
   "/signup", // sign up user
   "/callback", //When user clicks the confirm email
   "/error",
+  "/reset-password",
 ];
 
 export async function updateSession(request: NextRequest) {

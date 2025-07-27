@@ -9,7 +9,10 @@ export default function HeaderWrapper() {
   const [showHeader, setShowHeader] = useState(true);
 
   useEffect(() => {
-    const hide = pathname === "/login" || pathname === "/signup";
+    const hide =
+      pathname === "/login" ||
+      pathname === "/signup" ||
+      pathname === "/reset-password";
     setShowHeader(!hide);
   }, [pathname]); // ✅ Only primitive (string) dependency here
 
