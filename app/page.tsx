@@ -1,8 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { createClient } from "@/utils/supabase/client";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import FeatureList from "@/components/FeatureList";
@@ -11,21 +8,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
 export default function Landing() {
-  const supabase = createClient();
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    const checkSession = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      setIsLoggedIn(!!session);
-    };
-
-    checkSession();
-  }, [supabase]);
-
   return (
     <div>
       <div className="flex md:px-10 lg:px-20 px-6 items-center justify-center h-[75vh]">
