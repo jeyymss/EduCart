@@ -238,6 +238,9 @@ export default function SignUpForm() {
                   onChange={(e) => setFullName(e.target.value)}
                   required
                 />
+                <p className="text-xs text-center text-gray-500">
+                  Do not include your middle initial.
+                </p>
               </div>
 
               {/* Enter Email */}

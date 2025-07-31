@@ -4,7 +4,7 @@ import { useState } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { login } from "../actions";
 
-import { Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,10 +16,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { DialogTitle } from "@radix-ui/react-dialog";
-import HeaderLogin from "./header";
-import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
 
 export default function LoginForm() {
   const supabase = createClient();
@@ -57,11 +54,10 @@ export default function LoginForm() {
 
   return (
     <>
-      <HeaderLogin />
-      <div className="flex flex-col md:flex-row h-[75vh] justify-center items-center">
+      <div className="flex flex-col md:flex-row min-h-[75vh] justify-center items-center px-4 lg:px-8">
         {/* LEFT SIDE – Login */}
-        <div className="w-full md:w-[45%] flex flex-col justify-center items-center ">
-          <div className="w-[85%] md:w-[75%] border-2 border-[#F4EFEB] p-8 md:p-12 rounded-lg">
+        <div className="w-full max-w-2xl flex flex-col justify-center items-center px-6">
+          <div className="w-full border-2 border-[#F4EFEB] p-6 md:p-10 lg:p-12 rounded-lg">
             <div className="text-center space-y-2">
               <h1 className="text-4xl font-medium text-[#333333]">
                 <span className="text-[#577C8E]">Welcome</span> Back!
@@ -168,7 +164,7 @@ export default function LoginForm() {
                 <div className="mt-3">
                   <Button
                     type="submit"
-                    className="w-full bg-[#C7D9E5] text-[#333333] hover:text-white hover:bg-[#122C4F]"
+                    className="w-full bg-[#C7D9E5] text-[#333333] hover:text-white hover:bg-[#122C4F] hover:cursor-pointer"
                   >
                     Login
                   </Button>
@@ -176,83 +172,15 @@ export default function LoginForm() {
               </div>
             </form>
           </div>
+
+          {/* "Create Account" on mobile only */}
           <div className="md:hidden items-center mt-5">
             <span className="text-sm">New here?</span>
             <Link href={"/signup"}>
               <Button variant="link" className="hover:cursor-pointer">
-                Create Account
-                <ArrowRight />
+                Create Account <ArrowRight />
               </Button>
             </Link>
-          </div>
-        </div>
-
-        {/* RIGHT SIDE – Yellow Card + Features */}
-        <div className="hidden md:flex w-[55%] justify-center items-center ">
-          <div className="flex flex-col items-center justify-center space-y-16 p-6 lg:space-y-20 lg:p-8">
-            {/* Yellow Card */}
-            <div
-              className="relative bg-[#FAD794] rounded-2xl shadow-lg 
-                p-8 w-[460px] 
-                md:p-10 md:w-[520px] 
-                lg:p-12 lg:w-[600px]"
-            >
-              <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-800 leading-snug">
-                Join Your <br /> Academic Community
-              </h2>
-              <p className="text-sm md:text-base lg:text-lg italic text-gray-700 mt-3">
-                Connect with students, faculty, and alumni.
-              </p>
-
-              <div
-                className="absolute 
-              right-[-14px] bottom-[-36px] w-[140px] 
-              md:right-[-16px] md:bottom-[-40px] md:w-[160px] 
-              lg:right-[-20px] lg:bottom-[-48px] lg:w-[200px] 
-              h-auto"
-              >
-                <Image
-                  src="/cart.png"
-                  alt="Cart"
-                  fill={false}
-                  width={200} // Max width (for largest screen)
-                  height={200} // Maintain aspect ratio
-                  className="w-full h-auto object-contain"
-                  priority // optional for login/landing screen
-                />
-              </div>
-            </div>
-
-            {/* Features */}
-            <div
-              className="border border-[#FAD794] rounded-2xl shadow-md text-center 
-                      flex justify-between 
-                      px-8 py-5 w-[450px] text-sm 
-                      md:px-10 md:py-6 lg:w-[550px] md:text-base 
-                      "
-            >
-              {/* Feature 1 */}
-              <div className="flex-1">
-                <p className="font-semibold text-gray-800">Easy</p>
-                <p className="text-gray-500 text-xs md:text-sm">To Use</p>
-              </div>
-
-              <div className="border-l border-gray-300 mx-4 md:mx-5 lg:mx-6 h-full" />
-
-              {/* Feature 2 */}
-              <div className="flex-1">
-                <p className="font-semibold text-gray-800">Affordable</p>
-                <p className="text-gray-500 text-xs md:text-sm">Prices</p>
-              </div>
-
-              <div className="border-l border-gray-300 mx-4 md:mx-5 lg:mx-6 h-full" />
-
-              {/* Feature 3 */}
-              <div className="flex-1">
-                <p className="font-semibold text-gray-800">Trusted</p>
-                <p className="text-gray-500 text-xs md:text-sm">Community</p>
-              </div>
-            </div>
           </div>
         </div>
       </div>

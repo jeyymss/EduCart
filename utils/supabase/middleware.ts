@@ -65,9 +65,14 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (session && (currentPath === "/login" || currentPath === "/signup")) {
+  if (
+    session &&
+    (currentPath === "/login" ||
+      currentPath === "/signup" ||
+      currentPath === "/")
+  ) {
     // For logged in users trying to access auth pages, redirect to the next path
-    const url = new URL(nextPath, request.url);
+    const url = new URL("/home", request.url);
     return NextResponse.redirect(url);
   }
 

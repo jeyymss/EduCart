@@ -3,9 +3,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Button } from "./ui/button";
 import { useEffect, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
+import { Button } from "./ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,14 +29,22 @@ import {
 } from "./ui/select";
 import { ForSaleForm } from "./forms/ForSaleForm";
 import { RentForm } from "./forms/RentForm";
+import {
+  NavigationMenu,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+} from "./ui/navigation-menu";
+import { usePathname } from "next/navigation";
 
 export default function Header() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null); // null = loading
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [selectedType, setSelectedType] = useState("");
   const router = useRouter();
   const supabase = createClient();
+  const pathname = usePathname();
 
   useEffect(() => {
     const checkSession = async () => {
@@ -51,34 +59,61 @@ export default function Header() {
 
   const handleLogout = async () => {
     setShowLogoutModal(true);
-
     setTimeout(async () => {
       await supabase.auth.signOut();
-
       window.location.href = "/";
     }, 2000);
   };
 
-  const ProfilePage = () => {
-    router.push("/profile");
-  };
+  const ProfilePage = () => router.push("/profile");
+  const resetModal = () => setSelectedType("");
 
-  const resetModal = () => {
-    setSelectedType("");
-  };
+  const navItems = [
+    { label: "Home", href: "/home" },
+    { label: "Browse", href: "/browse" },
+    { label: "Businesses", href: "/businesses" },
+    { label: "Organizations", href: "/organizations" },
+  ];
 
   return (
-    <header className="relative w-full flex items-center justify-between md:px-10 lg:px-20 px-6 py-4 bg-white z-50 ">
+    <header
+      className={`relative w-full flex items-center justify-between md:px-10 lg:px-20 px-6 py-4 bg-white z-50 ${
+        isLoggedIn ? "border-b border-[#DEDEDE]" : ""
+      }`}
+    >
       {/* LOGO */}
       <div>
-        <Image alt="EduCart Logo" src="/logo.png" width={200} height={0} />
+        <Link href={"/"}>
+          <Image alt="EduCart Logo" src="/logo.png" width={200} height={0} />
+        </Link>
       </div>
 
-      {/* DESKTOP BUTTONS */}
-      {isLoggedIn ? (
+      {/* AUTH STATE LOADING SPINNER */}
+      {isLoggedIn === null ? null : isLoggedIn ? (
+        // LOGGED IN VIEW
         <div className="flex items-center space-x-5">
+          <NavigationMenu>
+            <NavigationMenuList>
+              {navItems.map((item) => (
+                <NavigationMenuItem key={item.href}>
+                  <NavigationMenuLink
+                    href={item.href}
+                    className={`hover:cursor-pointer font-medium text-[#333333] hover:text-[#333333] ${
+                      pathname === item.href
+                        ? "text-[#577C8E] font-semibold"
+                        : ""
+                    }`}
+                  >
+                    {item.label}
+                  </NavigationMenuLink>
+                </NavigationMenuItem>
+              ))}
+            </NavigationMenuList>
+          </NavigationMenu>
+
+          {/* CREATE LISTING DIALOG */}
           <Dialog>
-            <DialogTrigger asChild onClick={() => resetModal()}>
+            <DialogTrigger asChild onClick={resetModal}>
               <Button variant="outline" className="hover:cursor-pointer">
                 Post
               </Button>
@@ -92,12 +127,15 @@ export default function Header() {
                   </DialogDescription>
                 </div>
               </DialogHeader>
-              <Select onValueChange={(value) => setSelectedType(value)}>
+              <Select
+                onValueChange={(value) => setSelectedType(value)}
+                value={selectedType}
+              >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select Listing Type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="For Sale">For Sale</SelectItem>
+                  <SelectItem value="Sale">For Sale</SelectItem>
                   <SelectItem value="Rent">Rent</SelectItem>
                   <SelectItem value="Trade">Trade</SelectItem>
                   <SelectItem value="Emergency Lending">
@@ -108,13 +146,17 @@ export default function Header() {
                 </SelectContent>
               </Select>
 
-              {/* This content is rendered below without navigation */}
+              {/* Render the correct form */}
               <div>
-                {selectedType === "For Sale" && <ForSaleForm />}
+                {selectedType === "Sale" && selectedType && (
+                  <ForSaleForm selectedType={selectedType} />
+                )}
                 {selectedType === "Rent" && <RentForm />}
               </div>
             </DialogContent>
           </Dialog>
+
+          {/* USER MENU */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="hover:cursor-pointer">
@@ -138,30 +180,23 @@ export default function Header() {
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                onClick={ProfilePage}
-                className="hover:cursor-pointer"
-              >
-                Profile
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={handleLogout}
-                className="hover:cursor-pointer"
-              >
+              <DropdownMenuItem onClick={ProfilePage}>Profile</DropdownMenuItem>
+              <DropdownMenuItem onClick={handleLogout}>
                 Log Out
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
       ) : (
+        // GUEST VIEW
         <div className="hidden md:flex items-center space-x-4">
           <Link href="/signup">
-            <Button className="bg-white shadow-none text-[#333333] font-semibold hover:text-[#E59D2C] hover:bg-white  hover:cursor-pointer">
+            <Button className="bg-white shadow-none text-[#333333] font-semibold hover:text-[#E59D2C] hover:bg-white">
               Sign Up
             </Button>
           </Link>
           <Link href="/login">
-            <Button className="bg-[#C7D9E5] text-[#333333] font-semibold w-[175px] hover:bg-[#122C4F] hover:text-white hover:cursor-pointer">
+            <Button className="bg-[#C7D9E5] text-[#333333] font-semibold w-[175px] hover:bg-[#122C4F] hover:text-white">
               Log In
             </Button>
           </Link>
@@ -169,7 +204,7 @@ export default function Header() {
       )}
 
       {/* MOBILE MENU BUTTON */}
-      {!isLoggedIn && (
+      {isLoggedIn === false && (
         <div className="md:hidden">
           <button onClick={() => setIsOpen(!isOpen)}>
             {isOpen ? (
@@ -209,7 +244,7 @@ export default function Header() {
 
       {/* MOBILE DROPDOWN MENU */}
       {isOpen && (
-        <div className="absolute top-full right-0.5 bg-white  w-full p-4 flex flex-col gap-3 z-50 md:hidden">
+        <div className="absolute top-full right-0.5 bg-white w-full p-4 flex flex-col gap-3 z-50 md:hidden">
           <Link href="/signup" onClick={() => setIsOpen(false)}>
             <Button className="w-full bg-white shadow-none text-[#333333] font-semibold hover:text-[#E59D2C] hover:bg-white">
               Sign Up
@@ -223,6 +258,7 @@ export default function Header() {
         </div>
       )}
 
+      {/* LOGOUT MODAL */}
       {showLogoutModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full text-center space-y-4">

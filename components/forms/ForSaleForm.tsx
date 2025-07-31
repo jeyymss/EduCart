@@ -1,7 +1,11 @@
-import { ForSale } from "@/lib/formSubmit";
+import { ForSale } from "@/app/api/formSubmit/route";
 import { useState } from "react";
 
-export function ForSaleForm() {
+interface ForSaleFormProps {
+  selectedType: string;
+}
+
+export function ForSaleForm({ selectedType }: ForSaleFormProps) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -14,7 +18,9 @@ export function ForSaleForm() {
     try {
       setLoading(true);
 
-      await ForSale(formData);
+      console.log("received selectedType: ", selectedType);
+
+      await ForSale(formData, selectedType);
       setLoading(false);
 
       window.location.href = "/home";
@@ -42,6 +48,13 @@ export function ForSaleForm() {
         placeholder="Description"
         name="itemDescription"
         className="w-full border border-gray-300 p-2 rounded-md"
+      />
+      <input
+        type="file"
+        name="itemImage"
+        accept="image/*"
+        required
+        className="w-full"
       />
       {/* Errors */}
       {error && <p className="text-sm text-red-600 text-center">{error}</p>}

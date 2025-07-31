@@ -1,7 +1,7 @@
 "use server";
 
 import { createClient } from "@/utils/supabase/server";
-import { uploadIdImage } from "@/lib/uploadIDImage";
+import { uploadImage } from "@/app/api/uploadImage/route";
 
 export async function register(formData: FormData) {
   const supabase = await createClient();
@@ -40,7 +40,12 @@ export async function register(formData: FormData) {
   // Upload image
   let idImageUrl: string | null = null;
   if (idImageFile) {
-    idImageUrl = await uploadIdImage(idImageFile, credentials.email);
+    idImageUrl = await uploadImage(
+      idImageFile,
+      "ids",
+      "id-verification",
+      credentials.email
+    );
   }
 
   // 1. Sign up user to Supabase Auth
