@@ -1,4 +1,5 @@
 import { createClient } from "@/utils/supabase/server";
+import Image from "next/image";
 
 type Params = {
   id: string;
@@ -77,10 +78,12 @@ export default async function ItemDetails({ params }: { params: Params }) {
         <p className="text-gray-600">Posted by: {item.full_name}</p>
       )}
       {item.image_url && (
-        <img
+        <Image
           src={item.image_url}
           alt={item.item_title}
-          className="w-100 h-150 object-cover rounded-lg"
+          width={150}
+          height={0}
+          className="object-cover rounded-lg"
         />
       )}
     </div>

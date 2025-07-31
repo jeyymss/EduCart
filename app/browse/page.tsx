@@ -30,8 +30,12 @@ export default function BrowsePage() {
         setLoading(false);
 
         setItems(data);
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          setError(err.message);
+        } else {
+          setError("An unknown error occurred.");
+        }
       }
     };
 
