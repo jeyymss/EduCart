@@ -26,8 +26,16 @@ export default function Landing() {
         </div>
 
         {/* RIGHT SIDE */}
-        <div className="hidden md:block  items-center justify-center">
-          <Image src={"/logo2.png"} alt="logo2" width={650} height={0} />
+        <div className="hidden md:flex items-center justify-center  w-[575px]  mx-auto">
+          <Image
+            src="/logo2.png"
+            alt="logo2"
+            width={0}
+            height={0}
+            sizes="100vw"
+            className="w-full h-auto"
+            priority
+          />
         </div>
       </div>
 
