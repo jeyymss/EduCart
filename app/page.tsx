@@ -26,7 +26,7 @@ export default function Landing() {
         </div>
 
         {/* RIGHT SIDE */}
-        <div className="hidden md:flex items-center justify-center  w-[575px]  mx-auto">
+        <div className="hidden md:flex items-center justify-center w-[500px]">
           <Image
             src="/logo2.png"
             alt="logo2"
