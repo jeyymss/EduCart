@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import ItemCard from "@/components/ItemCard";
+import { useBrowsepageItems } from "@/hooks/displayItems";
 
 type PostWithUser = {
   post_id: string;
@@ -14,44 +14,18 @@ type PostWithUser = {
 };
 
 export default function BrowsePage() {
-  const [items, setItems] = useState<PostWithUser[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const { data: items, isLoading, error } = useBrowsepageItems();
 
-  useEffect(() => {
-    const fetchItems = async () => {
-      try {
-        setLoading(true);
-
-        const res = await fetch("/api/product");
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Failed to fetch items");
-
-        setLoading(false);
-
-        setItems(data);
-      } catch (err: unknown) {
-        if (err instanceof Error) {
-          setError(err.message);
-        } else {
-          setError("An unknown error occurred.");
-        }
-      }
-    };
-
-    fetchItems();
-  }, []);
-
-  if (error) return <div>Error: {error}</div>;
+  if (error) return <div>Error: {(error as Error).message}</div>;
 
   return (
-    <div>
+    <div className="p-10">
       <div>
-        <h1 className="text-2xl font-semibold">Browse Items</h1>
+        <h1 className="font-semibold text-[#102E4A]">Featured Listing</h1>
       </div>
-      {loading ? (
+      {isLoading ? (
         <p>Loading...</p>
-      ) : items.length === 0 ? (
+      ) : !items || items.length === 0 ? (
         <p className="text-center text-gray-500 mt-4">No items available.</p>
       ) : (
         <div className="grid gap-4 grid-cols-1 md:grid-cols-3 xl:grid-cols-5">

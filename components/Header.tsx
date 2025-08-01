@@ -191,12 +191,12 @@ export default function Header() {
         // GUEST VIEW
         <div className="hidden md:flex items-center space-x-4">
           <Link href="/signup">
-            <Button className="bg-white shadow-none text-[#333333] font-semibold hover:text-[#E59D2C] hover:bg-white">
+            <Button className="bg-white shadow-none text-[#333333] font-semibold hover:text-[#E59D2C] hover:bg-white hover:cursor-pointer">
               Sign Up
             </Button>
           </Link>
           <Link href="/login">
-            <Button className="bg-[#C7D9E5] text-[#333333] font-semibold w-[175px] hover:bg-[#122C4F] hover:text-white">
+            <Button className="bg-[#C7D9E5] text-[#333333] font-semibold w-[175px] hover:bg-[#122C4F] hover:text-white hover:cursor-pointer">
               Log In
             </Button>
           </Link>

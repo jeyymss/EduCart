@@ -53,8 +53,6 @@ export default async function ItemDetails({ params }: { params: Params }) {
     .eq("post_id", id)
     .single<PostWithUser>();
 
-  console.log(item?.image_url);
-
   if (error || !item) {
     return (
       <div className="text-red-600">
@@ -64,7 +62,7 @@ export default async function ItemDetails({ params }: { params: Params }) {
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 p-10">
       <h1 className="text-xl font-bold">{item.item_title}</h1>
       {item.item_description && <p>{item.item_description}</p>}
       {item.post_type_name && <p>{item.post_type_name}</p>}

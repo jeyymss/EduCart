@@ -1,56 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import ItemCard from "@/components/ItemCard";
-
-type PostWithUser = {
-  post_id: string;
-  item_title: string;
-  item_description: string;
-  item_price: number;
-  full_name: string;
-  post_type_name: string;
-  created_at: string;
-};
+import { useHomepageItems } from "@/hooks/displayItems";
 
 export default function HomePage() {
-  const [items, setItems] = useState<PostWithUser[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  useEffect(() => {
-    const fetchItems = async () => {
-      try {
-        setLoading(true);
+  const { data: items, isLoading, error } = useHomepageItems();
 
-        const res = await fetch("/api/product?limit=5");
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Failed to fetch items");
-
-        setLoading(false);
-
-        setItems(data);
-      } catch (err: unknown) {
-        if (err instanceof Error) {
-          setError(err.message);
-        } else {
-          setError("An unknown error occurred.");
-        }
-      }
-    };
-
-    fetchItems();
-  }, []);
-
-  if (error) return <div>Error: {error}</div>;
+  if (error) return <div>Error: {(error as Error).message}</div>;
 
   return (
     <div className="p-10">
       <div>
         <h1 className="font-semibold text-[#102E4A]">Featured Listing</h1>
       </div>
-      {loading ? (
+      {isLoading ? (
         <p>Loading...</p>
-      ) : items.length === 0 ? (
+      ) : !items || items.length === 0 ? (
         <p className="text-center text-gray-500 mt-4">No items available.</p>
       ) : (
         <div className="grid gap-4 grid-cols-1 md:grid-cols-3 xl:grid-cols-5">

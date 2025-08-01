@@ -1,97 +1,64 @@
 "use client";
 
-import { createClient } from "@/utils/supabase/client";
-import { useEffect, useState } from "react";
-
-type UserProfile = {
-  full_name: string;
-  email: string;
-  role: string;
-  university_id: number;
-  verification_status: string;
-  created_at: string;
-  universities: {
-    abbreviation: string;
-  };
-};
+import { useUserProfile, UserProfile } from "@/hooks/useUserProfile";
+import { useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 
 export default function ProfilePage() {
-  const supabase = createClient();
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [user, setUser] = useState<UserProfile | null>(null);
+  const {
+    data: user,
+    isLoading,
+    error,
+  }: {
+    data: UserProfile | undefined;
+    isLoading: boolean;
+    error: unknown;
+  } = useUserProfile();
+
+  const queryClient = useQueryClient();
 
   useEffect(() => {
-    const checkSession = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      setIsLoggedIn(!!session);
-
-      if (session) {
-        setLoading(true);
-        const userId = session.user.id;
-
-        const { data, error } = await supabase
-          .from("users")
-          .select(
-            `
-            full_name,
-            email,
-            role,
-            university_id,
-            verification_status,
-            created_at,
-            universities:universities!users_university_id_fkey (
-              abbreviation
-            )
-          `
-          )
-          .eq("id", userId)
-          .single();
-
-        console.log("Fetched user:", data);
-
-        if (error) {
-          console.error("Failed to fetch user details: ", error.message);
-        } else {
-          setUser(data as UserProfile);
-        }
-      }
-      setLoading(false);
-    };
-
-    checkSession();
-  }, [supabase]);
+    const cachedUser = queryClient.getQueryData<UserProfile>(["user-profile"]);
+    console.log("📦 Cached user:", cachedUser);
+  }, [queryClient, user]);
 
   return (
     <div className="min-h-screen flex justify-center items-center">
       <div className="flex flex-col">
-        <h1>Profile Page</h1>
-        {loading ? (
-          <p>Loading... </p>
-        ) : isLoggedIn ? (
-          <div>
-            <p>Name: {user?.full_name}</p>
-            <p>University: {user?.universities?.abbreviation ?? "N/A"}</p>
-            <p>Email: {user?.email}</p>
-            <p>Role: {user?.role}</p>
-            <p>Status: {user?.verification_status}</p>
-            <p>
-              Joined:{" "}
-              {user?.created_at
-                ? new Date(user.created_at).toLocaleDateString("en-US", {
-                    year: "numeric",
-                    month: "long",
-                  })
-                : "N/A"}
-            </p>
-          </div>
+        <h1 className="text-2xl font-semibold mb-4">Profile Page</h1>
+
+        {isLoading ? (
+          <p>Loading...</p>
+        ) : error ? (
+          <p>Error fetching user: {(error as Error).message}</p>
         ) : (
-          <div>
-            <h1>Error Fetching: User Logged Out</h1>
-          </div>
+          user && (
+            <div className="space-y-2">
+              <p>
+                <strong>Name:</strong> {user.full_name}
+              </p>
+              <p>
+                <strong>University:</strong>{" "}
+                {user.universities?.abbreviation ?? "N/A"}
+              </p>
+              <p>
+                <strong>Email:</strong> {user.email}
+              </p>
+              <p>
+                <strong>Role:</strong> {user.role}
+              </p>
+              <p>
+                <strong>Status:</strong> {user.verification_status}
+              </p>
+              <p>
+                <strong>Joined:</strong>{" "}
+                {new Date(user.created_at).toLocaleDateString("en-US", {
+                  year: "numeric",
+                  month: "long",
+                })}
+              </p>
+            </div>
+          )
         )}
       </div>
     </div>
