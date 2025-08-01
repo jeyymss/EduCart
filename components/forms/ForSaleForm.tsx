@@ -20,10 +20,15 @@ export function ForSaleForm({ selectedType }: ForSaleFormProps) {
 
       console.log("received selectedType: ", selectedType);
 
-      await ForSale(formData, selectedType);
+      const output = await ForSale(formData, selectedType);
+
       setLoading(false);
 
-      window.location.href = "/home";
+      if (output?.error) {
+        setError(output.error);
+      } else {
+        window.location.href = "/home";
+      }
     } catch (err) {
       console.error(err);
       setError("Submit Failed");
@@ -53,6 +58,7 @@ export function ForSaleForm({ selectedType }: ForSaleFormProps) {
         type="file"
         name="itemImage"
         accept="image/*"
+        multiple
         required
         className="w-full"
       />

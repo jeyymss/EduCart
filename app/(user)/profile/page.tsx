@@ -19,7 +19,6 @@ export default function ProfilePage() {
 
   useEffect(() => {
     const cachedUser = queryClient.getQueryData<UserProfile>(["user-profile"]);
-    console.log("📦 Cached user:", cachedUser);
   }, [queryClient, user]);
 
   return (

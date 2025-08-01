@@ -1,20 +1,8 @@
-import { createClient } from "@/utils/supabase/server";
+"use client";
+
 import Image from "next/image";
-
-type Params = {
-  id: string;
-};
-
-type PostWithUser = {
-  post_id: string;
-  item_title: string;
-  item_description: string;
-  item_price: number;
-  full_name: string;
-  post_type_name: string;
-  created_at: string;
-  image_url: string;
-};
+import { useProductDetails } from "@/hooks/displayItems";
+import { useParams } from "next/navigation"; // ✅
 
 function getRelativeTime(timestamp: string): string {
   const now = new Date();
@@ -38,27 +26,33 @@ function getRelativeTime(timestamp: string): string {
   return `${diffMonths} month${diffMonths > 1 ? "s" : ""} ago`;
 }
 
-export default async function ItemDetails({ params }: { params: Params }) {
-  const { id } = await params;
+export default function ItemDetailsPage() {
+  const params = useParams();
+  const id = params.id as string;
+
+  const { data: item, isLoading, error } = useProductDetails(id);
+
+  if (item) {
+    /* item.image_urls.forEach((element) => {
+      console.log(element);
+    }); */
+    console.log(item.image_urls); // "string"
+  }
 
   if (!id || id === "NaN") {
     return <div className="text-red-600">Invalid or missing item ID</div>;
   }
 
-  const supabase = await createClient();
-
-  const { data: item, error } = await supabase
-    .from("posts_with_user")
-    .select("*")
-    .eq("post_id", id)
-    .single<PostWithUser>();
-
-  if (error || !item) {
+  if (error) {
     return (
       <div className="text-red-600">
-        <h1>Item not found or error: {error?.message}</h1>
+        <h1>Item not found or error: {error.message}</h1>
       </div>
     );
+  }
+
+  if (isLoading || !item) {
+    return <p className="p-10">Loading...</p>;
   }
 
   return (
@@ -75,14 +69,20 @@ export default async function ItemDetails({ params }: { params: Params }) {
       {item.full_name && (
         <p className="text-gray-600">Posted by: {item.full_name}</p>
       )}
-      {item.image_url && (
-        <Image
-          src={item.image_url}
-          alt={item.item_title}
-          width={150}
-          height={0}
-          className="object-cover rounded-lg"
-        />
+
+      {Array.isArray(item.image_urls) && item.image_urls.length > 0 && (
+        <div className="flex gap-4 mt-4 flex-wrap">
+          {item.image_urls.map((url: string, index: number) => (
+            <div key={index} className="relative w-40 h-40">
+              <Image
+                src={url}
+                alt={`${item.item_title} image ${index + 1}`}
+                fill
+                className="object-cover rounded-lg"
+              />
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );

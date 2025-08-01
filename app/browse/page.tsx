@@ -3,16 +3,6 @@
 import ItemCard from "@/components/ItemCard";
 import { useBrowsepageItems } from "@/hooks/displayItems";
 
-type PostWithUser = {
-  post_id: string;
-  item_title: string;
-  item_description: string;
-  item_price: number;
-  full_name: string;
-  post_type_name: string;
-  created_at: string;
-};
-
 export default function BrowsePage() {
   const { data: items, isLoading, error } = useBrowsepageItems();
 
@@ -33,9 +23,10 @@ export default function BrowsePage() {
             <ItemCard
               key={item.post_id}
               id={item.post_id}
+              image_urls={item.image_urls}
               title={item.item_title}
               price={item.item_price}
-              type={item.post_type_name}
+              post_type={item.post_type_name}
               seller={item.full_name || "Unknown"}
               created_at={item.created_at}
             />

@@ -24,8 +24,9 @@ export default function HomePage() {
               key={item.post_id}
               id={item.post_id}
               title={item.item_title}
+              image_urls={item.image_urls}
               price={item.item_price}
-              type={item.post_type_name}
+              post_type={item.post_type_name}
               seller={item.full_name || "Unknown"}
               created_at={item.created_at}
             />

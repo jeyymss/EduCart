@@ -1,26 +1,35 @@
 import { createClient } from "@/utils/supabase/server";
 
 export async function uploadImage(
-  file: File,
+  files: File[],
   folder: string,
   bucket: string,
   email: string
-): Promise<string | null> {
+): Promise<string[]> {
   const supabase = await createClient();
+  const imageUrls: string[] = [];
 
-  const safeEmail = email.replace(/[@.]/g, "_"); // clean for path
-  const filePath = `${folder}/${safeEmail}_${Date.now()}_${file.name}`;
+  const safeEmail = email.replace(/[@.]/g, "_");
 
-  const { error } = await supabase.storage.from(bucket).upload(filePath, file);
+  for (const file of files) {
+    const filePath = `${folder}/${safeEmail}_${Date.now()}_${file.name}`;
 
-  if (error) {
-    console.error("Image upload failed:", error);
-    return null;
+    const { error } = await supabase.storage
+      .from(bucket)
+      .upload(filePath, file);
+    if (error) {
+      console.error("Image upload failed for:", file.name, error);
+      continue; // skip this file
+    }
+
+    const { data: publicURLData } = supabase.storage
+      .from(bucket)
+      .getPublicUrl(filePath);
+
+    if (publicURLData?.publicUrl) {
+      imageUrls.push(publicURLData.publicUrl);
+    }
   }
 
-  const { data: publicURLData } = supabase.storage
-    .from(bucket)
-    .getPublicUrl(filePath);
-
-  return publicURLData?.publicUrl ?? null;
+  return imageUrls;
 }

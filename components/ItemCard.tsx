@@ -1,12 +1,14 @@
 import Link from "next/link";
+import Image from "next/image";
 
 type Props = {
   id: string;
   title: string;
   price?: number;
   seller: string;
-  type: string;
+  post_type: string;
   created_at: string;
+  image_urls: string[];
 };
 
 function getRelativeTime(timestamp: string): string {
@@ -36,9 +38,15 @@ export default function ItemCard({
   title,
   price,
   seller,
-  type,
+  post_type,
   created_at,
+  image_urls,
 }: Props) {
+  const imageSrc =
+    image_urls?.[0] && image_urls[0].trim() !== ""
+      ? image_urls[0]
+      : "/fallback.png";
+
   const formatName = (fullName: string) => {
     const parts = fullName.trim().split(/\s+/); // handles extra spaces
     if (parts.length === 0) return "";
@@ -53,8 +61,18 @@ export default function ItemCard({
   return (
     <Link href={`/product/${id}`}>
       <div className="rounded-lg shadow-md p-4 hover:shadow-xl transition cursor-pointer">
+        <div className="relative w-full h-48 mb-4 rounded overflow-hidden">
+          <Image
+            src={imageSrc}
+            alt={title}
+            fill
+            className="object-cover"
+            sizes="(max-width: 768px) 100vw, 33vw"
+          />
+        </div>
+
         <h2 className="text-lg font-bold">{title}</h2>
-        <p className="text-lg font-bold">{type}</p>
+        <p className="text-lg font-bold">{post_type}</p>
         <p className="text-blue-600 font-semibold">
           {price !== undefined
             ? `₱${price.toLocaleString()}`
