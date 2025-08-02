@@ -151,7 +151,9 @@ export function Header() {
                 {selectedType === "Sale" && selectedType && (
                   <ForSaleForm selectedType={selectedType} />
                 )}
-                {selectedType === "Rent" && <RentForm />}
+                {selectedType === "Rent" && selectedType && (
+                  <RentForm selectedType={selectedType} />
+                )}
               </div>
             </DialogContent>
           </Dialog>

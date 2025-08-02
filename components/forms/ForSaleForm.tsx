@@ -10,6 +10,8 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
+import { Label } from "../ui/label";
+import { Input } from "../ui/input";
 
 interface ForSaleFormProps {
   selectedType: string;
@@ -54,31 +56,34 @@ export function ForSaleForm({ selectedType }: ForSaleFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
-      <input
+      <Label className="text-sm">
+        Item Name<span className="text-red-600">*</span>
+      </Label>
+      <Input
         type="text"
         name="itemTitle"
         placeholder="Item Title"
         className="w-full border border-gray-300 p-2 rounded-md"
       />
-      <input
+      <Input
         type="number"
         name="itemPrice"
         placeholder="Price"
         className="w-full border border-gray-300 p-2 rounded-md"
       />
-      <textarea
-        placeholder="Description"
-        name="itemDescription"
-        className="w-full border border-gray-300 p-2 rounded-md"
-      />
-      <input
-        type="file"
-        name="itemImage"
-        accept="image/*"
-        multiple
-        required
-        className="w-full"
-      />
+
+      <Select onValueChange={setCondition}>
+        <SelectTrigger className="w-full">
+          <SelectValue placeholder="Select condition" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="New">New</SelectItem>
+          <SelectItem value="Used - Like New">Used - Like New</SelectItem>
+          <SelectItem value="Used - Very Good">Used - Very Good</SelectItem>
+          <SelectItem value="Used - Good">Used - Good</SelectItem>
+          <SelectItem value="Used - Acceptable">Used - Acceptable</SelectItem>
+        </SelectContent>
+      </Select>
 
       <Select onValueChange={(value) => setSelectedCategory(value)}>
         <SelectTrigger className="w-full">
@@ -93,18 +98,19 @@ export function ForSaleForm({ selectedType }: ForSaleFormProps) {
         </SelectContent>
       </Select>
 
-      <Select onValueChange={setCondition}>
-        <SelectTrigger className="w-full">
-          <SelectValue placeholder="Select condition" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="New">New</SelectItem>
-          <SelectItem value="Used - Like New">Used - Like New</SelectItem>
-          <SelectItem value="Used - Very Good">Used - Very Good</SelectItem>
-          <SelectItem value="Used - Good">Used - Good</SelectItem>
-          <SelectItem value="Used - Acceptable">Used - Acceptable</SelectItem>
-        </SelectContent>
-      </Select>
+      <textarea
+        placeholder="Description"
+        name="itemDescription"
+        className="w-full border border-gray-300 p-2 rounded-md"
+      />
+      <Input
+        type="file"
+        name="itemImage"
+        accept="image/*"
+        multiple
+        required
+        className="w-full"
+      />
 
       {error && <p className="text-sm text-red-600 text-center">{error}</p>}
 
