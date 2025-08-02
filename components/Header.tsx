@@ -118,7 +118,7 @@ export function Header() {
                 Post
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="">
               <DialogHeader>
                 <div className="text-center">
                   <DialogTitle>Create Listing</DialogTitle>

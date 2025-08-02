@@ -34,18 +34,21 @@ export async function register(formData: FormData) {
   }
 
   // Get the file from formData
-  const rawFile = formData.get("idImage") as File | null;
+  const rawFile = formData.get("idImage");
   const idImageFile = rawFile instanceof File ? rawFile : null;
 
   // Upload image
   let idImageUrl: string | null = null;
+
   if (idImageFile) {
-    idImageUrl = await uploadImage(
-      idImageFile,
+    const urls = await uploadImage(
+      [idImageFile],
       "ids",
       "id-verification",
       credentials.email
     );
+
+    idImageUrl = urls[0] || null;
   }
 
   // 1. Sign up user to Supabase Auth

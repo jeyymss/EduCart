@@ -18,7 +18,7 @@ export default function BrowsePage() {
       ) : !items || items.length === 0 ? (
         <p className="text-center text-gray-500 mt-4">No items available.</p>
       ) : (
-        <div className="grid gap-4 grid-cols-1 md:grid-cols-3 xl:grid-cols-5">
+        <div className="grid gap-4 grid-cols-1 md:grid-cols-3 xl:grid-cols-5 mt-3">
           {items.map((item) => (
             <ItemCard
               key={item.post_id}
