@@ -6,6 +6,7 @@ type Props = {
   title: string;
   price?: number;
   seller: string;
+  category_name: string;
   post_type: string;
   created_at: string;
   image_urls: string[];
@@ -33,11 +34,12 @@ function getRelativeTime(timestamp: string): string {
   return `${diffMonths} month${diffMonths > 1 ? "s" : ""} ago`;
 }
 
-export default function ItemCard({
+export function ItemCard({
   id,
   title,
   price,
   seller,
+  category_name,
   post_type,
   created_at,
   image_urls,
@@ -72,6 +74,7 @@ export default function ItemCard({
         </div>
 
         <h2 className="text-lg font-bold">{title}</h2>
+        <h2 className="text-lg font-bold text-green-600">{category_name}</h2>
         <p className="text-lg font-bold">{post_type}</p>
         <p className="text-blue-600 font-semibold">
           {price !== undefined

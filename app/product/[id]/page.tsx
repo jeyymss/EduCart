@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useProductDetails } from "@/hooks/displayItems";
-import { useParams } from "next/navigation"; // ✅
+import { useParams } from "next/navigation";
 
 function getRelativeTime(timestamp: string): string {
   const now = new Date();
@@ -58,6 +58,7 @@ export default function ItemDetailsPage() {
   return (
     <div className="space-y-2 p-10">
       <h1 className="text-xl font-bold">{item.item_title}</h1>
+      <h1 className="text-xl font-bold text-green-600">{item.category_name}</h1>
       {item.item_description && <p>{item.item_description}</p>}
       {item.post_type_name && <p>{item.post_type_name}</p>}
       {item.created_at && (

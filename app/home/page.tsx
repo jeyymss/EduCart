@@ -1,6 +1,6 @@
 "use client";
 
-import ItemCard from "@/components/ItemCard";
+import { ItemCard } from "@/components/ItemCard";
 import { useHomepageItems } from "@/hooks/displayItems";
 
 export default function HomePage() {
@@ -24,6 +24,7 @@ export default function HomePage() {
               key={item.post_id}
               id={item.post_id}
               title={item.item_title}
+              category_name={item.category_name}
               image_urls={item.image_urls}
               price={item.item_price}
               post_type={item.post_type_name}

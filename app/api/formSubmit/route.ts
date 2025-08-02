@@ -3,7 +3,11 @@
 import { createClient } from "@/utils/supabase/server";
 import { uploadImage } from "../uploadImage/route";
 
-export async function ForSale(formData: FormData, selectedType: string) {
+export async function ForSale(
+  formData: FormData,
+  selectedType: string,
+  selectedCategory: string
+) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -37,14 +41,23 @@ export async function ForSale(formData: FormData, selectedType: string) {
 
   if (!postType) return { error: "Invalid post type selected." };
 
+  const { data: category } = await supabase
+    .from("categories")
+    .select("id")
+    .eq("name", selectedCategory)
+    .single();
+
+  if (!category) return { error: "Invalid category selected." };
+
   const { error: insertError } = await supabase.from("posts").insert([
     {
       seller_id: user.id,
+      post_type_id: postType.id,
+      category_id: category.id,
       item_title: itemTitle,
       item_price: itemPrice,
       item_description: itemDescription,
-      post_type_id: postType.id,
-      image_urls: imageUrls, // ✅ Make sure this column exists as TEXT[]
+      image_urls: imageUrls,
     },
   ]);
 

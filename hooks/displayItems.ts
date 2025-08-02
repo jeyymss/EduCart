@@ -6,6 +6,7 @@ type PostWithUser = {
   item_description: string;
   item_price: number;
   full_name: string;
+  category_name: string;
   post_type_name: string;
   created_at: string;
   image_urls: string[];
@@ -36,7 +37,7 @@ export const useBrowsepageItems = () => {
       if (!res.ok) throw new Error(data.error || "Failed to fetch items");
       return data;
     },
-    staleTime: 1000 * 60 * 3, // cache is fresh for 3 minutes
+    staleTime: 1000 * 60 * 3,
     refetchOnWindowFocus: true,
   });
 };

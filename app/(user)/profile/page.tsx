@@ -17,10 +17,6 @@ export default function ProfilePage() {
 
   const queryClient = useQueryClient();
 
-  useEffect(() => {
-    const cachedUser = queryClient.getQueryData<UserProfile>(["user-profile"]);
-  }, [queryClient, user]);
-
   return (
     <div className="min-h-screen flex justify-center items-center">
       <div className="flex flex-col">

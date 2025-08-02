@@ -37,7 +37,7 @@ import {
 } from "./ui/navigation-menu";
 import { usePathname } from "next/navigation";
 
-export default function Header() {
+export function Header() {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null); // null = loading
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isOpen, setIsOpen] = useState(false);

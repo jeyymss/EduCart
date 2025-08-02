@@ -1,13 +1,28 @@
+"use client";
+
 import { ForSale } from "@/app/api/formSubmit/route";
 import { useState } from "react";
+import { useCategories } from "@/hooks/useCategories";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 
-interface ForSaleFormProps {
+import { Category } from "@/hooks/useCategories";
+
+interface SelectedType {
   selectedType: string;
 }
 
-export function ForSaleForm({ selectedType }: ForSaleFormProps) {
+export function ForSaleForm({ selectedType }: SelectedType) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
+
+  const { data: categories, isLoading } = useCategories();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -18,9 +33,7 @@ export function ForSaleForm({ selectedType }: ForSaleFormProps) {
     try {
       setLoading(true);
 
-      console.log("received selectedType: ", selectedType);
-
-      const output = await ForSale(formData, selectedType);
+      const output = await ForSale(formData, selectedType, selectedCategory);
 
       setLoading(false);
 
@@ -62,12 +75,26 @@ export function ForSaleForm({ selectedType }: ForSaleFormProps) {
         required
         className="w-full"
       />
-      {/* Errors */}
+
+      <Select onValueChange={(value) => setSelectedCategory(value)}>
+        <SelectTrigger className="w-full">
+          <SelectValue placeholder="Select a category" />
+        </SelectTrigger>
+        <SelectContent>
+          {categories?.map((category: Category) => (
+            <SelectItem key={category.id} value={category.name}>
+              {category.name}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
       {error && <p className="text-sm text-red-600 text-center">{error}</p>}
+
       <button
         type="submit"
         className="w-full bg-primary text-white p-2 rounded-md"
-        disabled={loading}
+        disabled={loading || isLoading}
       >
         Submit For Sale
       </button>

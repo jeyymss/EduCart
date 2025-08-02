@@ -2,8 +2,8 @@
 
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
-import FeatureList from "@/components/FeatureList";
-import TransactionSteps from "@/components/TransactionSteps";
+import { FeatureList } from "@/components/FeatureList";
+import { TransactionSteps } from "@/components/TransactionSteps";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 

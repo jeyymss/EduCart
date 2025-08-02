@@ -19,7 +19,7 @@ export async function uploadImage(
       .upload(filePath, file);
     if (error) {
       console.error("Image upload failed for:", file.name, error);
-      continue; // skip this file
+      continue;
     }
 
     const { data: publicURLData } = supabase.storage

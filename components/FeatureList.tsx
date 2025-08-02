@@ -20,7 +20,7 @@ const features = [
   { icon: <CheckCircle size={35} />, label: "Admin Moderation" },
 ];
 
-export default function FeatureList() {
+export function FeatureList() {
   return (
     <div className="flex flex-wrap justify-center items-center gap-6 py-6">
       {features.map((feature, index) => (

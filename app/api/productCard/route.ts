@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
     .select("*")
     .order("created_at", { ascending: false });
 
-  if (limit > 0) query.limit(limit); //limit display in frontend
+  if (limit > 0) query.limit(limit);
 
   const { data, error } = await query;
 

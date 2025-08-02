@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 
-export default function OCRUploader() {
+export function OCRUploader() {
   const [name, setName] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
