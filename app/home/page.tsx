@@ -23,6 +23,7 @@ export default function HomePage() {
             <ItemCard
               key={item.post_id}
               id={item.post_id}
+              condition={item.condition}
               title={item.item_title}
               category_name={item.category_name}
               image_urls={item.image_urls}

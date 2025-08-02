@@ -23,8 +23,10 @@ export default function BrowsePage() {
             <ItemCard
               key={item.post_id}
               id={item.post_id}
-              image_urls={item.image_urls}
+              condition={item.condition}
               title={item.item_title}
+              category_name={item.category_name}
+              image_urls={item.image_urls}
               price={item.item_price}
               post_type={item.post_type_name}
               seller={item.full_name || "Unknown"}

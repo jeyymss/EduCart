@@ -1,12 +1,13 @@
 "use server";
 
 import { createClient } from "@/utils/supabase/server";
-import { uploadImage } from "../uploadImage/route";
+import { uploadImage } from "../../uploadImage/route";
 
 export async function ForSale(
   formData: FormData,
   selectedType: string,
-  selectedCategory: string
+  selectedCategory: string,
+  selectedCondition: string
 ) {
   const supabase = await createClient();
   const {
@@ -54,6 +55,7 @@ export async function ForSale(
       seller_id: user.id,
       post_type_id: postType.id,
       category_id: category.id,
+      condition: selectedCondition,
       item_title: itemTitle,
       item_price: itemPrice,
       item_description: itemDescription,

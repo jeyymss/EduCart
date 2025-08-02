@@ -6,6 +6,7 @@ type Props = {
   title: string;
   price?: number;
   seller: string;
+  condition: string;
   category_name: string;
   post_type: string;
   created_at: string;
@@ -39,6 +40,7 @@ export function ItemCard({
   title,
   price,
   seller,
+  condition,
   category_name,
   post_type,
   created_at,
@@ -75,6 +77,7 @@ export function ItemCard({
 
         <h2 className="text-lg font-bold">{title}</h2>
         <h2 className="text-lg font-bold text-green-600">{category_name}</h2>
+        <h2 className="text-lg font-bold text-blue-600">{condition}</h2>
         <p className="text-lg font-bold">{post_type}</p>
         <p className="text-blue-600 font-semibold">
           {price !== undefined

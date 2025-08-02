@@ -33,10 +33,7 @@ export default function ItemDetailsPage() {
   const { data: item, isLoading, error } = useProductDetails(id);
 
   if (item) {
-    /* item.image_urls.forEach((element) => {
-      console.log(element);
-    }); */
-    console.log(item.image_urls); // "string"
+    console.log(item.image_urls);
   }
 
   if (!id || id === "NaN") {
@@ -59,6 +56,7 @@ export default function ItemDetailsPage() {
     <div className="space-y-2 p-10">
       <h1 className="text-xl font-bold">{item.item_title}</h1>
       <h1 className="text-xl font-bold text-green-600">{item.category_name}</h1>
+      <h1 className="text-xl font-bold text-blue-600">{item.condition}</h1>
       {item.item_description && <p>{item.item_description}</p>}
       {item.post_type_name && <p>{item.post_type_name}</p>}
       {item.created_at && (

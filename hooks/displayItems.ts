@@ -6,6 +6,7 @@ type PostWithUser = {
   item_description: string;
   item_price: number;
   full_name: string;
+  condition: string;
   category_name: string;
   post_type_name: string;
   created_at: string;

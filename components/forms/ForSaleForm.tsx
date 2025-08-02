@@ -1,8 +1,8 @@
 "use client";
 
-import { ForSale } from "@/app/api/formSubmit/route";
 import { useState } from "react";
-import { useCategories } from "@/hooks/useCategories";
+import { ForSale } from "@/app/api/formSubmit/sale/route";
+import { useCategories, Category } from "@/hooks/useCategories";
 import {
   Select,
   SelectTrigger,
@@ -11,16 +11,15 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 
-import { Category } from "@/hooks/useCategories";
-
-interface SelectedType {
+interface ForSaleFormProps {
   selectedType: string;
 }
 
-export function ForSaleForm({ selectedType }: SelectedType) {
+export function ForSaleForm({ selectedType }: ForSaleFormProps) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [condition, setCondition] = useState<string>("");
 
   const { data: categories, isLoading } = useCategories();
 
@@ -33,7 +32,12 @@ export function ForSaleForm({ selectedType }: SelectedType) {
     try {
       setLoading(true);
 
-      const output = await ForSale(formData, selectedType, selectedCategory);
+      const output = await ForSale(
+        formData,
+        selectedType,
+        selectedCategory,
+        condition
+      );
 
       setLoading(false);
 
@@ -86,6 +90,19 @@ export function ForSaleForm({ selectedType }: SelectedType) {
               {category.name}
             </SelectItem>
           ))}
+        </SelectContent>
+      </Select>
+
+      <Select onValueChange={setCondition}>
+        <SelectTrigger className="w-full">
+          <SelectValue placeholder="Select condition" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="New">New</SelectItem>
+          <SelectItem value="Used - Like New">Used - Like New</SelectItem>
+          <SelectItem value="Used - Very Good">Used - Very Good</SelectItem>
+          <SelectItem value="Used - Good">Used - Good</SelectItem>
+          <SelectItem value="Used - Acceptable">Used - Acceptable</SelectItem>
         </SelectContent>
       </Select>
 
