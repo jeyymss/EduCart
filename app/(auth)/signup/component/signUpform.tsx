@@ -90,10 +90,13 @@ export default function SignUpForm() {
     formData.append("image", idImage);
 
     try {
-      const res = await fetch("https://ocr-api-5.onrender.com/api/ocr", {
-        method: "POST",
-        body: formData,
-      });
+      const res = await fetch(
+        "https://ocr-api-production-53ff.up.railway.app/api/ocr",
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
 
       const data = await res.json();
       const extracted = data?.Name?.toLowerCase().trim();
@@ -140,7 +143,6 @@ export default function SignUpForm() {
       return;
     }
 
-    // Only validate domain for student or faculty
     if (
       (selectedRole === "Student" || selectedRole === "Faculty") &&
       !email.endsWith(selectedUniversity.domain)
@@ -150,20 +152,20 @@ export default function SignUpForm() {
     }
 
     setLoading(true);
+    setShowLoadingModal(true);
 
     const formData = new FormData(e.currentTarget);
 
-    try {
-      setShowLoadingModal(true);
+    const res = await register(formData);
 
-      await register(formData);
+    setShowLoadingModal(false);
 
-      setShowLoadingModal(false);
-      setShowSuccessModal(true);
-    } catch (err) {
-      console.error(err);
-      setError("Registration failed. Please try again.");
+    if (res?.error) {
+      setError("Email already registered.");
+      return;
     }
+
+    setShowSuccessModal(true);
   };
 
   return (

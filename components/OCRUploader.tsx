@@ -18,10 +18,13 @@ export function OCRUploader() {
     formData.append("image", file);
 
     try {
-      const res = await fetch("https://ocr-api-5.onrender.com/api/ocr", {
-        method: "POST",
-        body: formData,
-      });
+      const res = await fetch(
+        "https://ocr-api-production-53ff.up.railway.app/api/ocr",
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
 
       const raw = await res.text(); // Always read raw first
 

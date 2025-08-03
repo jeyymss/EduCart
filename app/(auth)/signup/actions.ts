@@ -44,7 +44,7 @@ export async function register(formData: FormData) {
     const urls = await uploadImage(
       [idImageFile],
       "ids",
-      "id-verification",
+      "id-verifications",
       credentials.email
     );
 
@@ -63,7 +63,8 @@ export async function register(formData: FormData) {
   });
 
   if (signUpError || !signUpData?.user) {
-    return { error: signUpError?.message || "Signup failed" };
+    const errorMessage = signUpError?.message || "Signup failed";
+    return { error: "Error Message" + errorMessage };
   }
 
   const user = signUpData.user;
@@ -71,8 +72,8 @@ export async function register(formData: FormData) {
   // 2. Insert into your `users` table
   const { error: insertError } = await supabase.from("users").insert([
     {
-      id: user.id,
-      email: user.email,
+      id: signUpData.user.id,
+      email: user?.email,
       role: credentials.role,
       full_name: credentials.name,
       id_verification_url: idImageUrl,
@@ -82,9 +83,9 @@ export async function register(formData: FormData) {
   ]);
 
   if (insertError) {
-    console.log("Insert failed:", insertError);
-    return { error: "Database error: " + insertError.message };
+    console.error("Insert error:", insertError.message);
+    return { error: insertError.message };
   }
 
-  console.log("✅ Registered:", user.id);
+  return { success: true };
 }
