@@ -3,27 +3,23 @@
 import Image from "next/image";
 import { useProductDetails } from "@/hooks/displayItems";
 import { useParams } from "next/navigation";
+import SaleDetails from "@/components/posts/itemDetails/saleDetails";
+import RentDetails from "@/components/posts/itemDetails/rentDetails";
+import TradeDetails from "@/components/posts/itemDetails/tradeDetails";
+import { getRelativeTime } from "@/utils/getRelativeTime";
 
-function getRelativeTime(timestamp: string): string {
-  const now = new Date();
-  const created = new Date(timestamp);
-  const diffMs = now.getTime() - created.getTime();
-  const diffMins = Math.floor(diffMs / 60000);
-
-  if (diffMins < 1) return "Just now";
-  if (diffMins < 60) return `${diffMins} min${diffMins > 1 ? "s" : ""} ago`;
-
-  const diffHrs = Math.floor(diffMins / 60);
-  if (diffHrs < 24) return `${diffHrs} hour${diffHrs > 1 ? "s" : ""} ago`;
-
-  const diffDays = Math.floor(diffHrs / 24);
-  if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? "s" : ""} ago`;
-
-  const diffWeeks = Math.floor(diffDays / 7);
-  if (diffWeeks < 4) return `${diffWeeks} week${diffWeeks > 1 ? "s" : ""} ago`;
-
-  const diffMonths = Math.floor(diffDays / 30);
-  return `${diffMonths} month${diffMonths > 1 ? "s" : ""} ago`;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function renderDetails(item: any) {
+  switch (item.post_type_name) {
+    case "Sale":
+      return <SaleDetails item={item} />;
+    case "Rent":
+      return <RentDetails item={item} />;
+    case "Trade":
+      return <TradeDetails item={item} />;
+    default:
+      return <p>Unsupported post type</p>;
+  }
 }
 
 export default function ItemDetailsPage() {
@@ -31,10 +27,6 @@ export default function ItemDetailsPage() {
   const id = params.id as string;
 
   const { data: item, isLoading, error } = useProductDetails(id);
-
-  if (item) {
-    console.log(item.image_urls);
-  }
 
   if (!id || id === "NaN") {
     return <div className="text-red-600">Invalid or missing item ID</div>;
@@ -52,32 +44,27 @@ export default function ItemDetailsPage() {
     return <p className="p-10">Loading...</p>;
   }
 
+  console.log("🕒 item.created_at =", item.created_at);
+
   return (
-    <div className="space-y-2 p-10">
-      <h1 className="text-xl font-bold">{item.item_title}</h1>
-      <h1 className="text-xl font-bold text-green-600">{item.category_name}</h1>
-      <h1 className="text-xl font-bold text-blue-600">{item.condition}</h1>
-      {item.item_description && <p>{item.item_description}</p>}
-      {item.post_type_name && <p>{item.post_type_name}</p>}
+    <div className="space-y-4 p-10">
+      {renderDetails(item)}
+
       {item.created_at && (
         <p className="text-sm text-gray-500">
           Listed {getRelativeTime(item.created_at)}
         </p>
       )}
-      {item.item_price !== null && <p>₱{item.item_price}</p>}
-      {item.full_name && (
-        <p className="text-gray-600">Posted by: {item.full_name}</p>
-      )}
 
       {Array.isArray(item.image_urls) && item.image_urls.length > 0 && (
-        <div className="flex gap-4 mt-4 flex-wrap">
+        <div className="flex gap-4 flex-wrap">
           {item.image_urls.map((url: string, index: number) => (
             <div key={index} className="relative w-40 h-40">
               <Image
                 src={url}
-                alt={`${item.item_title} image ${index + 1}`}
+                alt={`Image ${index + 1}`}
                 fill
-                className="object-cover rounded-lg"
+                className="object-cover rounded"
               />
             </div>
           ))}

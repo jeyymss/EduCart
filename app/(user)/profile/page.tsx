@@ -1,8 +1,6 @@
 "use client";
 
 import { useUserProfile, UserProfile } from "@/hooks/useUserProfile";
-import { useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
 
 export default function ProfilePage() {
   const {
@@ -14,8 +12,6 @@ export default function ProfilePage() {
     isLoading: boolean;
     error: unknown;
   } = useUserProfile();
-
-  const queryClient = useQueryClient();
 
   return (
     <div className="min-h-screen flex justify-center items-center">

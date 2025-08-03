@@ -31,8 +31,10 @@ export function ForSaleForm({ selectedType }: ForSaleFormProps) {
   const { data: categories, isLoading } = useCategories();
 
   useEffect(() => {
+    const form = formRef.current;
+
     const handleValidation = () => {
-      const formValid = formRef.current?.checkValidity() ?? false;
+      const formValid = form?.checkValidity() ?? false;
       const isValid =
         formValid &&
         selectedFiles.length > 0 &&
@@ -42,15 +44,16 @@ export function ForSaleForm({ selectedType }: ForSaleFormProps) {
       setIsFormValid(isValid);
     };
 
-    if (formRef.current) {
-      formRef.current.addEventListener("input", handleValidation);
+    if (form) {
+      form.addEventListener("input", handleValidation);
     }
 
-    // validate when dependencies change
     handleValidation();
 
     return () => {
-      formRef.current?.removeEventListener("input", handleValidation);
+      if (form) {
+        form.removeEventListener("input", handleValidation);
+      }
     };
   }, [selectedFiles, condition, selectedCategory]);
 
@@ -67,7 +70,7 @@ export function ForSaleForm({ selectedType }: ForSaleFormProps) {
       setLoading(true);
       const formData = new FormData(e.currentTarget);
 
-      formData.delete("itemImage"); // prevent double image appending
+      formData.delete("itemImage");
 
       selectedFiles.forEach((file) => {
         formData.append("itemImage", file);
@@ -94,7 +97,7 @@ export function ForSaleForm({ selectedType }: ForSaleFormProps) {
   };
 
   return (
-    <form ref={formRef} onSubmit={handleSubmit} className="space-y-3">
+    <form ref={formRef} onSubmit={handleSubmit} className="space-y-2">
       {/* Item Name */}
       <Label className="text-sm">
         Item Name<span className="text-red-600">*</span>

@@ -59,17 +59,6 @@ export function ItemCard({
       ? image_urls[0]
       : "/fallback.png";
 
-  const formatName = (fullName: string) => {
-    const parts = fullName.trim().split(/\s+/);
-    if (parts.length === 0) return "";
-
-    const firstName = parts[0];
-    const lastName = parts[parts.length - 1];
-    const lastInitial = lastName.charAt(0).toUpperCase();
-
-    return `${firstName} ${lastInitial}.`;
-  };
-
   return (
     <Link href={`/product/${id}`}>
       <div className="rounded-md overflow-hidden border border-gray-200 shadow hover:shadow-md transition cursor-pointer bg-white flex flex-col h-full">

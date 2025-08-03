@@ -1,21 +1,25 @@
 import type { NextConfig } from "next";
 
-// Strip the protocol (https://) from the Supabase URL to get the domain
-const supabaseDomain = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(
-  /^https?:\/\//,
-  ""
-);
+// Strip protocol to get domain + optional port/path
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 
 const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
   images: {
-    domains: supabaseDomain ? [supabaseDomain] : [],
+    remotePatterns: supabaseUrl
+      ? [
+          {
+            protocol: "https",
+            hostname: new URL(supabaseUrl).hostname,
+          },
+        ]
+      : [],
   },
   experimental: {
     serverActions: {
-      bodySizeLimit: "10mb", // You can adjust this if needed
+      bodySizeLimit: "10mb",
     },
   },
 };
