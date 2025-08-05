@@ -5,7 +5,7 @@ export default function TradeDetails({ item }: { item: any }) {
   return (
     <div className="space-y-1">
       <h1 className="text-2xl font-bold">{item.item_title}</h1>
-      <p className="text-blue-700">{item.condition}</p>
+      <p className="text-blue-700">{item.item_condition}</p>
       <p className="text-green-700 font-medium">{item.category_name}</p>
       {item.item_price && (
         <p className="text-lg text-orange-600 font-semibold">

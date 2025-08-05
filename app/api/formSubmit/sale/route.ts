@@ -55,7 +55,7 @@ export async function ForSale(
       seller_id: user.id,
       post_type_id: postType.id,
       category_id: category.id,
-      condition: selectedCondition,
+      item_condition: selectedCondition,
       item_title: itemTitle,
       item_price: itemPrice,
       item_description: itemDescription,
