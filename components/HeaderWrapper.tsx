@@ -12,7 +12,11 @@ export function HeaderWrapper() {
     const hide =
       pathname === "/login" ||
       pathname === "/signup" ||
-      pathname === "/reset-password";
+      pathname === "/reset-password" ||
+      pathname === "/admin/dashboard" ||
+      pathname === "/admin/accounts" ||
+      pathname === "/admin/wallet" ||
+      pathname === "/admin/reports";
     setShowHeader(!hide);
   }, [pathname]);
 
