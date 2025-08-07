@@ -1,6 +1,8 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Clock } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { getRelativeTime } from "@/utils/getRelativeTime";
 
 type Props = {
   id: string;
@@ -22,28 +24,6 @@ const typeBadgeStyles: Record<string, string> = {
   "Emergency Lending": "bg-[#A02B2B] text-white",
   Trade: "bg-[#3E5A73] text-white",
 };
-
-function getRelativeTime(timestamp: string): string {
-  const now = new Date();
-  const created = new Date(timestamp);
-  const diffMs = now.getTime() - created.getTime();
-  const diffMins = Math.floor(diffMs / 60000);
-
-  if (diffMins < 1) return "Just now";
-  if (diffMins < 60) return `${diffMins} min${diffMins > 1 ? "s" : ""} ago`;
-
-  const diffHrs = Math.floor(diffMins / 60);
-  if (diffHrs < 24) return `${diffHrs} hour${diffHrs > 1 ? "s" : ""} ago`;
-
-  const diffDays = Math.floor(diffHrs / 24);
-  if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? "s" : ""} ago`;
-
-  const diffWeeks = Math.floor(diffDays / 7);
-  if (diffWeeks < 4) return `${diffWeeks} week${diffWeeks > 1 ? "s" : ""} ago`;
-
-  const diffMonths = Math.floor(diffDays / 30);
-  return `${diffMonths} month${diffMonths > 1 ? "s" : ""} ago`;
-}
 
 export function ItemCard({
   id,
@@ -91,7 +71,7 @@ export function ItemCard({
           </div>
           <div className="flex items-center justify-between mt-2">
             <span className="text-[#E59E2C] font-medium text-sm">
-              {price !== undefined
+              {price != null
                 ? `₱${price.toLocaleString()}`
                 : "Price not listed"}
             </span>
@@ -103,5 +83,33 @@ export function ItemCard({
         </div>
       </div>
     </Link>
+  );
+}
+
+export function ItemCardSkeleton() {
+  return (
+    <div className="rounded-md overflow-hidden border border-gray-200 shadow bg-white flex flex-col h-full animate-pulse">
+      <div className="relative w-full h-60">
+        <div className="absolute inset-0">
+          <Skeleton className="w-full h-full bg-gray-300" />
+        </div>
+        <Skeleton className="absolute top-2 left-2 h-5 w-16 rounded-full bg-gray-400" />
+      </div>
+
+      <div className="p-3 flex flex-col flex-grow justify-between">
+        <div className="space-y-2">
+          <div className="flex items-start justify-between gap-2">
+            <Skeleton className="h-4 w-3/4 rounded bg-gray-400" />
+            <Skeleton className="h-5 w-14 rounded-full bg-gray-400" />
+          </div>
+          <Skeleton className="h-4 w-2/3 rounded bg-gray-300" />
+        </div>
+
+        <div className="flex items-center justify-between mt-4">
+          <Skeleton className="h-4 w-20 rounded bg-gray-300" />
+          <Skeleton className="h-4 w-16 rounded bg-gray-300" />
+        </div>
+      </div>
+    </div>
   );
 }

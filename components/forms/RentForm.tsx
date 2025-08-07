@@ -14,11 +14,11 @@ import { Label } from "../ui/label";
 import { Input } from "../ui/input";
 import ImageUploader from "../posts/ImageUpload";
 
-interface ForSaleFormProps {
+interface FormProps {
   selectedType: string;
 }
 
-export function RentForm({ selectedType }: ForSaleFormProps) {
+export function RentForm({ selectedType }: FormProps) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>("");

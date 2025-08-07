@@ -13,8 +13,9 @@ export async function GET(req: NextRequest) {
   const { data, error } = await supabase
     .from("posts_with_user")
     .select(
-      "seller_id, full_name, post_type_name, item_title, item_description, item_price, image_urls, category_name, item_condition, created_at"
+      "post_user_id, full_name, post_type_name, item_title, item_description, item_price, image_urls, category_name, item_condition, created_at"
     )
+    .neq("post_type_name", "Emergency Lending")
     .eq("post_id", postId)
     .single();
 

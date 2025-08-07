@@ -1,0 +1,61 @@
+import { Clock } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { getRelativeTime } from "@/utils/getRelativeTime";
+
+type EmergencyRequestCardProps = {
+  id: string;
+  title: string;
+  description: string;
+  isUrgent: boolean;
+  created_at: string;
+};
+
+export function EmergencyCard({
+  title,
+  description,
+  isUrgent,
+  created_at,
+}: EmergencyRequestCardProps) {
+  return (
+    <div className="border rounded-lg p-4 shadow-sm hover:shadow-md transition bg-white space-y-2 hover:cursor-pointer h-[150px] flex flex-col justify-between">
+      <div className="flex items-start justify-between">
+        <h2 className="text-sm font-semibold text-gray-800">{title}</h2>
+        {isUrgent && (
+          <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded font-medium">
+            Urgent
+          </span>
+        )}
+      </div>
+
+      <p className="text-sm text-gray-500 line-clamp-2">{description}</p>
+
+      <div className="flex items-center justify-end text-xs text-gray-400 mt-auto">
+        <Clock className="w-4 h-4 mr-1" />
+        <span>{getRelativeTime(created_at)}</span>
+      </div>
+    </div>
+  );
+}
+
+export function EmergencyPostCardSkeleton() {
+  return (
+    <div className="rounded-lg border bg-white px-4 py-3 shadow-sm space-y-6 animate-pulse">
+      {/* Title and urgent badge */}
+      <div className="flex items-start justify-between">
+        <Skeleton className="h-4 w-3/4 rounded bg-gray-400" />
+        <Skeleton className="h-5 w-12 rounded-full bg-gray-300" />
+      </div>
+
+      {/* Description lines */}
+      <div className="space-y-1">
+        <Skeleton className="h-4 w-5/6 rounded bg-gray-200" />
+        <Skeleton className="h-4 w-full rounded bg-gray-200" />
+      </div>
+
+      {/* Timestamp */}
+      <div className="flex items-center justify-end gap-2 pt-1">
+        <Skeleton className="h-4 w-16 rounded" />
+      </div>
+    </div>
+  );
+}

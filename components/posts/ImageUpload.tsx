@@ -2,6 +2,7 @@
 
 import { useRef } from "react";
 import { X, Upload } from "lucide-react";
+import Image from "next/image";
 
 type Props = {
   selectedFiles: File[];
@@ -54,10 +55,13 @@ export default function ImageUploader({
             key={i}
             className="relative w-[86px] h-[80px] rounded-md overflow-hidden border border-gray-300"
           >
-            <img
+            <Image
               src={URL.createObjectURL(file)}
               alt={`preview-${i}`}
+              width={86}
+              height={80}
               className="w-full h-full object-cover"
+              unoptimized
             />
             <button
               type="button"

@@ -1,6 +1,6 @@
 "use client";
 
-import { ItemCard } from "@/components/ItemCard";
+import { ItemCard } from "@/components/posts/displayposts/ItemCard";
 import { useBrowsepageItems } from "@/hooks/displayItems";
 
 export default function BrowsePage() {

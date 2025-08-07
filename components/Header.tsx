@@ -29,6 +29,7 @@ import {
 } from "./ui/select";
 import { ForSaleForm } from "./forms/ForSaleForm";
 import { RentForm } from "./forms/RentForm";
+import { EmergencyForm } from "./forms/EmergencyForm";
 import {
   NavigationMenu,
   NavigationMenuItem,
@@ -36,6 +37,9 @@ import {
   NavigationMenuList,
 } from "./ui/navigation-menu";
 import { usePathname } from "next/navigation";
+import TradeForm from "./forms/TradeForm";
+import PasaBuyForm from "./forms/PasaBuyForm";
+import GiveawayForm from "./forms/GiveawayForm";
 
 export function Header() {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null); // null = loading
@@ -153,6 +157,18 @@ export function Header() {
                 )}
                 {selectedType === "Rent" && selectedType && (
                   <RentForm selectedType={selectedType} />
+                )}
+                {selectedType === "Trade" && selectedType && (
+                  <TradeForm selectedType={selectedType} />
+                )}
+                {selectedType === "Emergency Lending" && selectedType && (
+                  <EmergencyForm selectedType={selectedType} />
+                )}
+                {selectedType === "PasaBuy" && selectedType && (
+                  <PasaBuyForm selectedType={selectedType} />
+                )}
+                {selectedType === "Giveaway" && selectedType && (
+                  <GiveawayForm selectedType={selectedType} />
                 )}
               </div>
             </DialogContent>
