@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  Flag,
-  LayoutDashboard,
-  UserPen,
-  Wallet,
-  type LucideIcon,
-} from "lucide-react";
+import { Flag, LayoutDashboard, UserPen, Wallet } from "lucide-react";
 
 import {
   SidebarGroup,
