@@ -3,10 +3,7 @@
 import { createClient } from "@/utils/supabase/server";
 import { withErrorHandling } from "@/hooks/withErrorHandling";
 
-export async function EmergencySubmit(
-  formData: FormData,
-  selectedType: string
-) {
+export async function PasaBuySubmit(formData: FormData, selectedType: string) {
   return await withErrorHandling(async () => {
     const supabase = await createClient();
     const {
@@ -17,9 +14,12 @@ export async function EmergencySubmit(
     if (!user.email) return { error: "User email is missing." };
 
     const itemTitle = formData.get("itemTitle") as string;
+    const itemServiceFee = Number(formData.get("itemServiceFee"));
+    const pasabuyLocation = formData.get("pasabuyLocation") as string;
+    const pasabuyCutOffDate = formData.get("pasabuyCutOffDate") as string;
     const itemDescription = formData.get("itemDescription") as string;
 
-    //set selected post type (EMERGENCY LENDING)
+    //set selected post type (PASABUY)
     const { data: postType } = await supabase
       .from("post_types")
       .select("id")
@@ -33,6 +33,9 @@ export async function EmergencySubmit(
       {
         post_user_id: user.id,
         post_type_id: postType.id,
+        item_service_fee: itemServiceFee,
+        item_pasabuy_location: pasabuyLocation,
+        item_pasabuy_cutoff: pasabuyCutOffDate,
         item_title: itemTitle,
         item_description: itemDescription,
       },

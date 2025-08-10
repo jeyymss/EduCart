@@ -29,7 +29,10 @@ import {
 } from "./ui/select";
 import { ForSaleForm } from "./forms/ForSaleForm";
 import { RentForm } from "./forms/RentForm";
+import { TradeForm } from "./forms/TradeForm";
 import { EmergencyForm } from "./forms/EmergencyForm";
+import { PasaBuyForm } from "./forms/PasaBuyForm";
+
 import {
   NavigationMenu,
   NavigationMenuItem,
@@ -37,12 +40,10 @@ import {
   NavigationMenuList,
 } from "./ui/navigation-menu";
 import { usePathname } from "next/navigation";
-import TradeForm from "./forms/TradeForm";
-import PasaBuyForm from "./forms/PasaBuyForm";
 import GiveawayForm from "./forms/GiveawayForm";
 
 export function Header() {
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null); // null = loading
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [selectedType, setSelectedType] = useState("");

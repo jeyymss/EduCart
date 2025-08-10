@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
-import { ForSale } from "@/app/api/formSubmit/sale/route";
+import { ForRent } from "@/app/api/formSubmit/rent/route";
 import { useCategories, Category } from "@/hooks/useCategories";
 import {
   Select,
@@ -76,7 +76,7 @@ export function RentForm({ selectedType }: FormProps) {
         formData.append("itemImage", file);
       });
 
-      const output = await ForSale(
+      const output = await ForRent(
         formData,
         selectedType,
         selectedCategory,

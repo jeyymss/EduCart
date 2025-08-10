@@ -22,7 +22,7 @@ const typeBadgeStyles: Record<string, string> = {
   Rent: "bg-[#54766B] text-white",
   PasaBuy: "bg-[#785A28] text-white",
   "Emergency Lending": "bg-[#A02B2B] text-white",
-  Trade: "bg-[#3E5A73] text-white",
+  Trade: "bg-red-600 text-white",
 };
 
 export function ItemCard({

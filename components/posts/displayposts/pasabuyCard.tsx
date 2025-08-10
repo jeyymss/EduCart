@@ -2,20 +2,20 @@ import { Clock } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getRelativeTime } from "@/utils/getRelativeTime";
 
-type EmergencyRequestCardProps = {
+type PasabuyCardProps = {
   id: string;
   title: string;
   description: string;
-  isUrgent: boolean;
+  serviceFee: number;
   created_at: string;
 };
 
 export function PasabuyCard({
   title,
   description,
-  isUrgent,
+  serviceFee,
   created_at,
-}: EmergencyRequestCardProps) {
+}: PasabuyCardProps) {
   return (
     <div className="border rounded-lg p-4 shadow-sm hover:shadow-md transition bg-white space-y-2 hover:cursor-pointer h-[150px] flex flex-col justify-between">
       <div className="flex items-start justify-between">
@@ -26,7 +26,7 @@ export function PasabuyCard({
 
       <div className="flex items-center justify-between text-xs text-gray-400 mt-auto">
         <div>
-          <h1>Service Fee:</h1>
+          <h1>Service Fee: {serviceFee}</h1>
         </div>
 
         <div className="flex">
@@ -38,7 +38,7 @@ export function PasabuyCard({
   );
 }
 
-export function EmergencyPostCardSkeleton() {
+export function PasaBuyPostCardSkeleton() {
   return (
     <div className="rounded-lg border bg-white px-4 py-3 shadow-sm space-y-6 animate-pulse">
       {/* Title and urgent badge */}

@@ -12,9 +12,9 @@ export default function TradeDetails({ item }: { item: any }) {
           ₱{item.item_price} + trade
         </p>
       )}
-      {item.item_to_trade && (
+      {item.item_trade && (
         <p className="italic text-sm text-gray-700">
-          Wants to trade for: {item.item_to_trade}
+          Wants to trade for: {item.item_trade}
         </p>
       )}
       <p>{item.item_description}</p>

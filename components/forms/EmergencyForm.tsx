@@ -3,7 +3,7 @@
 import { useRef, useState, useEffect } from "react";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
-import { EmergencyAPI } from "@/app/api/formSubmit/emergency/route";
+import { EmergencySubmit } from "@/app/api/formSubmit/emergency/route";
 
 interface FormProps {
   selectedType: string;
@@ -48,7 +48,7 @@ export function EmergencyForm({ selectedType }: FormProps) {
 
       const formData = new FormData(e.currentTarget);
 
-      const output = await EmergencyAPI(formData, selectedType);
+      const output = await EmergencySubmit(formData, selectedType);
 
       setLoading(false);
 

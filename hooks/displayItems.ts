@@ -5,12 +5,36 @@ type PostWithUser = {
   item_title: string;
   item_description: string;
   item_price: number;
+  item_trade: string | null;
   full_name: string;
   item_condition: string;
   category_name: string;
   post_type_name: string;
   created_at: string;
   image_urls: string[];
+};
+
+type EmergencyPost = {
+  post_id: string;
+  full_name: string;
+  role: string;
+  university: string;
+  item_title: string;
+  item_description: string;
+  post_type_name: string;
+  created_at: string;
+};
+
+type PasaBuyPost = {
+  post_id: string;
+  full_name: string;
+  role: string;
+  serviceFee: number;
+  university: string;
+  item_title: string;
+  item_description: string;
+  post_type_name: string;
+  created_at: string;
 };
 
 // DISPLAY ITEMS IN HOME PAGE
@@ -23,14 +47,14 @@ export const useHomepageItems = () => {
       if (!res.ok) throw new Error(data.error || "Failed to fetch items");
       return data;
     },
-    staleTime: 1000 * 60 * 3, // cache is fresh for 3 minutes
+    staleTime: 1000 * 60 * 5, // cache is fresh for 3 minutes
     refetchOnWindowFocus: true,
   });
 };
 
 // DISPLAY EMERGENCY LENDING IN HOME PAGE
 export const useHomePageEmergency = () => {
-  return useQuery<PostWithUser[]>({
+  return useQuery<EmergencyPost[]>({
     queryKey: ["emergency", 4],
     queryFn: async () => {
       const res = await fetch("/api/posts/emergencyCard?limit=4");
@@ -38,7 +62,22 @@ export const useHomePageEmergency = () => {
       if (!res.ok) throw new Error(data.error || "Failed to fetch items");
       return data;
     },
-    staleTime: 1000 * 60 * 3, // cache is fresh for 3 minutes
+    staleTime: 1000 * 60 * 5, // cache is fresh for 3 minutes
+    refetchOnWindowFocus: true,
+  });
+};
+
+// DISPLAY PASABUY POSTS IN HOME PAGE
+export const useHomePagePasaBuy = () => {
+  return useQuery<PasaBuyPost[]>({
+    queryKey: ["pasabuy", 4],
+    queryFn: async () => {
+      const res = await fetch("/api/posts/pasabuyCard?limit=4");
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to fetch items");
+      return data;
+    },
+    staleTime: 1000 * 60 * 5, // cache is fresh for 3 minutes
     refetchOnWindowFocus: true,
   });
 };
@@ -53,7 +92,7 @@ export const useBrowsepageItems = () => {
       if (!res.ok) throw new Error(data.error || "Failed to fetch items");
       return data;
     },
-    staleTime: 1000 * 60 * 3,
+    staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: true,
   });
 };
@@ -69,6 +108,6 @@ export const useProductDetails = (id: string) => {
       return data;
     },
     enabled: !!id,
-    staleTime: 1000 * 60 * 3,
+    staleTime: 1000 * 60 * 5,
   });
 };
