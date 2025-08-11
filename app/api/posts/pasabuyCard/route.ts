@@ -8,9 +8,7 @@ export async function GET(req: NextRequest) {
 
   const query = supabase
     .from("posts_with_user")
-    .select(
-      "post_user_id, full_name, item_title, item_description, item_service_fee, role, university_abbreviation, created_at"
-    )
+    .select("*")
     .eq("post_type_name", "PasaBuy")
     .order("created_at", { ascending: false });
 

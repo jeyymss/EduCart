@@ -4,63 +4,42 @@ import { ItemCard } from "@/components/posts/displayposts/ItemCard";
 import { useHomePageEmergency, useHomepageItems } from "@/hooks/displayItems";
 import { EmergencyCard } from "@/components/posts/displayposts/emergencyCard";
 import { ItemCardSkeleton } from "@/components/posts/displayposts/ItemCard";
-import { EmergencyPostCardSkeleton } from "@/components/posts/displayposts/emergencyCard";
-import { PasaBuyPostCardSkeleton } from "@/components/posts/displayposts/pasabuyCard";
+import { PostCardSkeleton } from "@/components/EmergencyPasaBuySkele";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { getRelativeTime } from "@/utils/getRelativeTime";
 import { PasabuyCard } from "@/components/posts/displayposts/pasabuyCard";
 import { useHomePagePasaBuy } from "@/hooks/displayItems";
-
-type EmergencyPost = {
-  post_id: string;
-  full_name: string;
-  role: string;
-  university: string;
-  item_title: string;
-  item_description: string;
-  post_type_name: string;
-  created_at: string;
-};
-
-type PasaBuyPost = {
-  post_id: string;
-  full_name: string;
-  role: string;
-  serviceFee: number;
-  university: string;
-  item_title: string;
-  item_description: string;
-  post_type_name: string;
-  created_at: string;
-};
+import { EmergencyPost } from "@/hooks/displayItems";
+import { PasaBuyPost } from "@/hooks/displayItems";
 
 export default function HomePage() {
   //Fetch posts from sale, rent, trade
   const {
-    data: items,
+    data: items = [],
     isLoading: itemLoading,
     error: itemError,
   } = useHomepageItems();
 
   //Fetch posts from emergency lending
   const {
-    data: emergency,
+    data: emergency = [],
     isLoading: emergencyLoading,
     error: emergencyError,
   } = useHomePageEmergency();
 
   //Fetch posts from pasabuy
   const {
-    data: pasabuy,
+    data: pasabuy = [],
     isLoading: pasabuyLoading,
     error: pasabuyError,
   } = useHomePagePasaBuy();
@@ -75,9 +54,26 @@ export default function HomePage() {
   if (itemError && emergencyError)
     return <div>Error: {(itemError && (emergencyError as Error)).message}</div>;
 
-  console.log(emergency?.map((e) => e.post_id));
-  console.log(pasabuy?.map((p) => p.post_id));
-  console.log(items?.map((i) => i.post_id));
+  useEffect(() => {
+    if (emergency) {
+      console.log(
+        "EMERGENCY IDS",
+        emergency.map((e) => e.post_id)
+      );
+    }
+    if (pasabuy) {
+      console.log(
+        "PASABUY IDS",
+        pasabuy.map((p) => p.post_id)
+      );
+    }
+    if (items) {
+      console.log(
+        "ITEM IDS",
+        items.map((i) => i.post_id)
+      );
+    }
+  }, [emergency, pasabuy, items]);
 
   return (
     <div className="p-10 space-y-10">
@@ -90,78 +86,98 @@ export default function HomePage() {
           </Link>
         </div>
         {/* EMERGENCY LENDING */}
-        {emergencyLoading ? (
-          <div className="grid gap-4 grid-cols-1 md:grid-cols-2 xl:grid-cols-4 mt-3">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <EmergencyPostCardSkeleton key={i} />
-            ))}
-          </div>
-        ) : !emergency || emergency.length === 0 ? (
-          <p className="text-center text-gray-500 mt-4">No items available.</p>
-        ) : (
-          <div className="grid gap-4 grid-cols-1 md:grid-cols-2 xl:grid-cols-4 mt-3">
-            {emergency.map((emg) => (
-              <div key={emg.post_id} onClick={() => setSelectedEmergency(emg)}>
-                <EmergencyCard
-                  id={emg.post_id}
-                  title={emg.item_title}
-                  description={emg.item_description}
-                  isUrgent={emg.post_type_name === "Emergency Lending"}
-                  created_at={emg.created_at}
-                />
-              </div>
-            ))}
-          </div>
-        )}
 
-        {/* Show All Details for Emergency Lending */}
-        <Dialog
-          open={!!selectedEmergency}
-          onOpenChange={() => setSelectedEmergency(null)}
-        >
-          <DialogContent className="sm:max-w-lg">
-            <DialogHeader>
-              <DialogTitle>{selectedEmergency?.item_title}</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-2 text-sm text-gray-600 mt-2">
-              <p>
-                <strong>Description:</strong>{" "}
-                {selectedEmergency?.item_description}
-              </p>
-
-              {emergencyLoading ? (
-                <p>Loading...</p>
-              ) : emergencyError ? (
-                <p>Error fetching user: {(emergencyError as Error).message}</p>
-              ) : (
-                emergency && (
-                  <div className="space-y-2">
-                    <p>
-                      <strong>Name:</strong> {selectedEmergency?.full_name}
-                    </p>
-                    <p>
-                      <strong>University:</strong>{" "}
-                      {selectedEmergency?.university}
-                    </p>
-                    <p>
-                      <strong>Role:</strong> {selectedEmergency?.role}
-                    </p>
-                  </div>
-                )
-              )}
-
-              <p>
-                <strong>Posted:</strong>{" "}
-                <span>
-                  {getRelativeTime(selectedEmergency?.created_at ?? " ")}
-                </span>
-              </p>
+        <div>
+          {emergencyLoading ? (
+            <div className="grid gap-4 grid-cols-1 md:grid-cols-2 xl:grid-cols-4 mt-3">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <PostCardSkeleton key={i} />
+              ))}
             </div>
-            <DialogFooter>
-              <Button className="hover:cursor-pointer">Message</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+          ) : emergency.length === 0 ? (
+            <p className="text-center text-gray-500 mt-4">
+              No items available.
+            </p>
+          ) : (
+            <>
+              {/* plain grid — NOT a DialogTrigger */}
+              <div className="grid gap-4 grid-cols-1 md:grid-cols-2 xl:grid-cols-4 mt-3">
+                {emergency.map((emg) => (
+                  <button
+                    key={emg.post_id}
+                    type="button"
+                    onClick={() => setSelectedEmergency(emg)}
+                    className="text-left cursor-pointer"
+                  >
+                    <EmergencyCard
+                      id={emg.post_id}
+                      title={emg.item_title}
+                      description={emg.item_description}
+                      isUrgent={emg.post_type_name === "Emergency Lending"}
+                      created_at={emg.created_at}
+                    />
+                  </button>
+                ))}
+              </div>
+
+              {/* mount dialog ONLY when a card is selected */}
+              {selectedEmergency && (
+                <Dialog
+                  open
+                  onOpenChange={(open) => {
+                    if (!open) setSelectedEmergency(null);
+                  }}
+                >
+                  <DialogContent className="sm:max-w-lg">
+                    <DialogHeader>
+                      <DialogTitle>{selectedEmergency.item_title}</DialogTitle>
+                    </DialogHeader>
+
+                    <div className="space-y-2 text-sm text-gray-600 mt-2">
+                      <p>
+                        <strong>Description:</strong>{" "}
+                        {selectedEmergency.item_description ?? ""}
+                      </p>
+
+                      {emergencyError ? (
+                        <p>
+                          Error fetching user:{" "}
+                          {(emergencyError as Error).message}
+                        </p>
+                      ) : (
+                        <div className="space-y-2">
+                          <p>
+                            <strong>Name:</strong>{" "}
+                            {selectedEmergency.full_name ?? ""}
+                          </p>
+                          <p>
+                            <strong>University:</strong>{" "}
+                            {selectedEmergency.university_abbreviation ?? ""}
+                          </p>
+                          <p>
+                            <strong>Role:</strong>{" "}
+                            {selectedEmergency.role ?? ""}
+                          </p>
+                        </div>
+                      )}
+
+                      <p>
+                        <strong>Posted:</strong>{" "}
+                        <span>
+                          {getRelativeTime(selectedEmergency.created_at)}
+                        </span>
+                      </p>
+                    </div>
+
+                    <DialogFooter>
+                      <Button className="hover:cursor-pointer">Message</Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              )}
+            </>
+          )}
+        </div>
       </div>
 
       {/* DISPLAY LISTED ITEMS */}
@@ -175,8 +191,8 @@ export default function HomePage() {
         {/* FEATURED LISTING */}
         {itemLoading ? (
           <div className="grid gap-4 grid-cols-1 md:grid-cols-3 xl:grid-cols-5 mt-3">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <ItemCardSkeleton key={i} />
+            {Array.from({ length: 5 }).map((_, a) => (
+              <ItemCardSkeleton key={a} />
             ))}
           </div>
         ) : !items || items.length === 0 ? (
@@ -209,77 +225,90 @@ export default function HomePage() {
             <span className="text-sm text-[#577C8E]">View All</span>
           </Link>
         </div>
+
         {pasabuyLoading ? (
           <div className="grid gap-4 grid-cols-1 md:grid-cols-2 xl:grid-cols-4 mt-3">
             {Array.from({ length: 4 }).map((_, i) => (
-              <PasaBuyPostCardSkeleton key={i} />
+              <PostCardSkeleton key={i} />
             ))}
           </div>
-        ) : !pasabuy || pasabuy.length === 0 ? (
+        ) : !emergency || emergency.length === 0 ? (
           <p className="text-center text-gray-500 mt-4">No items available.</p>
         ) : (
           <div className="grid gap-4 grid-cols-1 md:grid-cols-2 xl:grid-cols-4 mt-3">
-            {pasabuy.map((post) => (
-              <div key={post.post_id} onClick={() => setSelectedPasaBuy(post)}>
+            {(pasabuy ?? []).map((post) => (
+              <button
+                key={post.post_id}
+                type="button"
+                onClick={() => setSelectedPasaBuy(post)}
+                className="text-left cursor-pointer"
+              >
                 <PasabuyCard
                   id={post.post_id}
                   title={post.item_title}
                   description={post.item_description}
-                  serviceFee={post.serviceFee}
+                  serviceFee={post.item_service_fee}
                   created_at={post.created_at}
                 />
-              </div>
+              </button>
             ))}
           </div>
         )}
 
-        {/* Show All Details for PasaBuy */}
-        <Dialog
-          open={!!selectedPasaBuy}
-          onOpenChange={() => setSelectedPasaBuy(null)}
-        >
-          <DialogContent className="sm:max-w-lg">
-            <DialogHeader>
-              <DialogTitle>{selectedPasaBuy?.item_title}</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-2 text-sm text-gray-600 mt-2">
-              <p>
-                <strong>Description:</strong>{" "}
-                {selectedPasaBuy?.item_description}
-              </p>
+        {/* Mount only when data is already fetched */}
+        {selectedPasaBuy && (
+          <Dialog
+            open
+            onOpenChange={(open) => {
+              if (!open) setSelectedPasaBuy(null);
+            }}
+          >
+            <DialogContent className="sm:max-w-lg">
+              <DialogHeader>
+                <DialogTitle>{selectedPasaBuy.item_title}</DialogTitle>
+              </DialogHeader>
 
-              {pasabuyLoading ? (
-                <p>Loading...</p>
-              ) : pasabuyError ? (
-                <p>Error fetching user: {(pasabuyError as Error).message}</p>
-              ) : (
-                pasabuy && (
-                  <div className="space-y-2">
-                    <p>
-                      <strong>Name:</strong> {selectedPasaBuy?.full_name}
-                    </p>
-                    <p>
-                      <strong>University:</strong> {selectedPasaBuy?.university}
-                    </p>
-                    <p>
-                      <strong>Role:</strong> {selectedPasaBuy?.role}
-                    </p>
-                  </div>
-                )
-              )}
+              <div className="space-y-2 text-sm text-gray-600 mt-2">
+                <p>
+                  <strong>Description:</strong>{" "}
+                  {selectedPasaBuy.item_description ?? ""}
+                </p>
 
-              <p>
-                <strong>Posted:</strong>{" "}
-                <span>
-                  {getRelativeTime(selectedPasaBuy?.created_at ?? " ")}
-                </span>
-              </p>
-            </div>
-            <DialogFooter>
-              <Button className="hover:cursor-pointer">Message</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+                <div className="space-y-2">
+                  <p>
+                    <strong>Name:</strong> {selectedPasaBuy.full_name ?? ""}
+                  </p>
+                  <p>
+                    <strong>University:</strong>{" "}
+                    {selectedPasaBuy.university_abbreviation ?? ""}
+                  </p>
+                  <p>
+                    <strong>Role:</strong> {selectedPasaBuy.role ?? ""}
+                  </p>
+                </div>
+
+                <p>
+                  <strong>Posted:</strong>{" "}
+                  <span>{getRelativeTime(selectedPasaBuy.created_at)}</span>
+                </p>
+              </div>
+
+              <DialogFooter>
+                <Button>Message</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )}
+      </div>
+
+      {/* DISPLAY GIVEAWAY AND DONATIONS */}
+      <div>
+        <div className="flex justify-between">
+          <h1 className="font-semibold text-[#102E4A]">Donation & Giveaways</h1>
+          <Link href={"#"}>
+            <span className="text-sm text-[#577C8E]">View All</span>
+          </Link>
+        </div>
       </div>
     </div>
   );

@@ -10,6 +10,7 @@ export async function GET(req: NextRequest) {
     .from("posts_with_user")
     .select("*")
     .neq("post_type_name", "Emergency Lending")
+    .neq("post_type_name", "PasaBuy")
     .order("created_at", { ascending: false });
 
   if (limit > 0) query.limit(limit);

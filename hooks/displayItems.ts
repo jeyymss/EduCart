@@ -14,27 +14,21 @@ type PostWithUser = {
   image_urls: string[];
 };
 
-type EmergencyPost = {
+type BasePost = {
   post_id: string;
   full_name: string;
   role: string;
-  university: string;
+  university_abbreviation: string;
   item_title: string;
   item_description: string;
   post_type_name: string;
   created_at: string;
 };
 
-type PasaBuyPost = {
-  post_id: string;
-  full_name: string;
-  role: string;
-  serviceFee: number;
-  university: string;
-  item_title: string;
-  item_description: string;
-  post_type_name: string;
-  created_at: string;
+export type EmergencyPost = BasePost;
+
+export type PasaBuyPost = BasePost & {
+  item_service_fee: number;
 };
 
 // DISPLAY ITEMS IN HOME PAGE
