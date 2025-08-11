@@ -1,5 +1,4 @@
 import { Clock } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
 import { getRelativeTime } from "@/utils/getRelativeTime";
 
 type EmergencyRequestCardProps = {

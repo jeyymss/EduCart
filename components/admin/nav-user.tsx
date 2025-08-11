@@ -27,12 +27,8 @@ export function NavUser() {
 
   const {
     data: user,
-    isLoading,
-    error,
   }: {
     data: UserProfile | undefined;
-    isLoading: boolean;
-    error: unknown;
   } = useUserProfile();
 
   const handleLogout = async () => {

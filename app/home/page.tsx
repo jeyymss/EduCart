@@ -6,14 +6,13 @@ import { EmergencyCard } from "@/components/posts/displayposts/emergencyCard";
 import { ItemCardSkeleton } from "@/components/posts/displayposts/ItemCard";
 import { PostCardSkeleton } from "@/components/EmergencyPasaBuySkele";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { getRelativeTime } from "@/utils/getRelativeTime";
@@ -53,27 +52,6 @@ export default function HomePage() {
 
   if (itemError && emergencyError)
     return <div>Error: {(itemError && (emergencyError as Error)).message}</div>;
-
-  useEffect(() => {
-    if (emergency) {
-      console.log(
-        "EMERGENCY IDS",
-        emergency.map((e) => e.post_id)
-      );
-    }
-    if (pasabuy) {
-      console.log(
-        "PASABUY IDS",
-        pasabuy.map((p) => p.post_id)
-      );
-    }
-    if (items) {
-      console.log(
-        "ITEM IDS",
-        items.map((i) => i.post_id)
-      );
-    }
-  }, [emergency, pasabuy, items]);
 
   return (
     <div className="p-10 space-y-10">
@@ -134,11 +112,6 @@ export default function HomePage() {
                     </DialogHeader>
 
                     <div className="space-y-2 text-sm text-gray-600 mt-2">
-                      <p>
-                        <strong>Description:</strong>{" "}
-                        {selectedEmergency.item_description ?? ""}
-                      </p>
-
                       {emergencyError ? (
                         <p>
                           Error fetching user:{" "}
@@ -146,6 +119,10 @@ export default function HomePage() {
                         </p>
                       ) : (
                         <div className="space-y-2">
+                          <p>
+                            <strong>Description:</strong>{" "}
+                            {selectedEmergency.item_description ?? ""}
+                          </p>
                           <p>
                             <strong>Name:</strong>{" "}
                             {selectedEmergency.full_name ?? ""}
@@ -269,28 +246,34 @@ export default function HomePage() {
               </DialogHeader>
 
               <div className="space-y-2 text-sm text-gray-600 mt-2">
-                <p>
-                  <strong>Description:</strong>{" "}
-                  {selectedPasaBuy.item_description ?? ""}
-                </p>
+                {pasabuyError ? (
+                  <p>Error fetching user: {(pasabuyError as Error).message}</p>
+                ) : (
+                  <div className="space-y-2">
+                    <p>
+                      <strong>Description:</strong>{" "}
+                      {selectedPasaBuy.item_description ?? ""}
+                    </p>
 
-                <div className="space-y-2">
-                  <p>
-                    <strong>Name:</strong> {selectedPasaBuy.full_name ?? ""}
-                  </p>
-                  <p>
-                    <strong>University:</strong>{" "}
-                    {selectedPasaBuy.university_abbreviation ?? ""}
-                  </p>
-                  <p>
-                    <strong>Role:</strong> {selectedPasaBuy.role ?? ""}
-                  </p>
-                </div>
+                    <div className="space-y-2">
+                      <p>
+                        <strong>Name:</strong> {selectedPasaBuy.full_name ?? ""}
+                      </p>
+                      <p>
+                        <strong>University:</strong>{" "}
+                        {selectedPasaBuy.university_abbreviation ?? ""}
+                      </p>
+                      <p>
+                        <strong>Role:</strong> {selectedPasaBuy.role ?? ""}
+                      </p>
+                    </div>
 
-                <p>
-                  <strong>Posted:</strong>{" "}
-                  <span>{getRelativeTime(selectedPasaBuy.created_at)}</span>
-                </p>
+                    <p>
+                      <strong>Posted:</strong>{" "}
+                      <span>{getRelativeTime(selectedPasaBuy.created_at)}</span>
+                    </p>
+                  </div>
+                )}
               </div>
 
               <DialogFooter>
