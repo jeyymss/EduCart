@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { login } from "../actions";
 
@@ -14,28 +15,52 @@ import {
   DialogContent,
   DialogHeader,
   DialogTrigger,
+  DialogTitle, // ✅ use shadcn's DialogTitle
 } from "@/components/ui/dialog";
-import { DialogTitle } from "@radix-ui/react-dialog";
 import Link from "next/link";
 
 export default function LoginForm() {
   const supabase = createClient();
+  const router = useRouter();
+
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
   const [resetMessage, setResetMessage] = useState("");
 
+  // Loading modal + success modal (same pattern as your SignUp)
+  const [showLoadingModal, setShowLoadingModal] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
 
-    const form = e.currentTarget;
-    const formData = new FormData(form);
+    try {
+      setSubmitting(true);
+      setShowLoadingModal(true);
 
-    const result = await login(formData);
+      const form = e.currentTarget;
+      const formData = new FormData(form);
 
-    if (result.error) {
-      setError(result.error);
+      const result = await login(formData);
+
+      setShowLoadingModal(false);
+
+      if (result?.error) {
+        setError(result.error);
+        return;
+      }
+
+      setTimeout(() => {
+        router.replace("/home"); // change route as needed
+      }, 3000);
+    } catch (err) {
+      console.error("Login failed:", err);
+      setShowLoadingModal(false);
+      setError("An unexpected error occurred. Please try again.");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -84,6 +109,7 @@ export default function LoginForm() {
                       placeholder="Enter Email"
                       className="pl-10"
                       required
+                      disabled={submitting}
                     />
                   </div>
                 </div>
@@ -102,17 +128,21 @@ export default function LoginForm() {
                       placeholder="Enter Password"
                       className="pl-10 pr-10"
                       required
+                      disabled={submitting}
                     />
-                    <div
+                    <button
+                      type="button"
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 cursor-pointer"
                       onClick={() => setShowPassword((prev) => !prev)}
+                      aria-label="Toggle password visibility"
+                      disabled={submitting}
                     >
                       {showPassword ? (
                         <EyeOff className="w-4 h-4" />
                       ) : (
                         <Eye className="w-4 h-4" />
                       )}
-                    </div>
+                    </button>
                   </div>
 
                   {/* Forgot Password */}
@@ -123,6 +153,7 @@ export default function LoginForm() {
                           type="button"
                           variant="link"
                           className="p-0 h-auto text-[#333333] font-normal"
+                          disabled={submitting}
                         >
                           Forgot Password?
                         </Button>
@@ -156,7 +187,11 @@ export default function LoginForm() {
                 </div>
 
                 {error && (
-                  <p className="text-sm text-red-600 text-center mt-4">
+                  <p
+                    className="text-sm text-red-600 text-center mt-2"
+                    role="alert"
+                    aria-live="polite"
+                  >
                     {error}
                   </p>
                 )}
@@ -165,8 +200,9 @@ export default function LoginForm() {
                   <Button
                     type="submit"
                     className="w-full bg-[#C7D9E5] text-[#333333] hover:text-white hover:bg-[#122C4F] hover:cursor-pointer"
+                    disabled={submitting}
                   >
-                    Login
+                    {submitting ? "Signing in…" : "Login"}
                   </Button>
                 </div>
               </div>
@@ -184,6 +220,18 @@ export default function LoginForm() {
           </div>
         </div>
       </div>
+
+      {/* Loading Modal (same style as your SignUp) */}
+      {showLoadingModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-md bg-opacity-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full text-center space-y-4">
+            <h2 className="text-lg font-medium text-gray-700 animate-pulse">
+              Signing you in...
+            </h2>
+            <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

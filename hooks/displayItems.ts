@@ -41,8 +41,9 @@ export const useHomepageItems = () => {
       if (!res.ok) throw new Error(data.error || "Failed to fetch items");
       return data;
     },
-    staleTime: 1000 * 60 * 5, // cache is fresh for 3 minutes
-    refetchOnWindowFocus: true,
+    staleTime: 1000 * 60 * 5, // cache is fresh for 5 minutes
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 };
 
@@ -56,7 +57,7 @@ export const useHomePageEmergency = () => {
       if (!res.ok) throw new Error(data.error || "Failed to fetch items");
       return data;
     },
-    staleTime: 1000 * 60 * 5, // cache is fresh for 3 minutes
+    staleTime: 1000 * 60 * 5, // cache is fresh for 5 minutes
     refetchOnWindowFocus: true,
   });
 };
@@ -71,7 +72,7 @@ export const useHomePagePasaBuy = () => {
       if (!res.ok) throw new Error(data.error || "Failed to fetch items");
       return data;
     },
-    staleTime: 1000 * 60 * 5, // cache is fresh for 3 minutes
+    staleTime: 1000 * 60 * 5, // cache is fresh for 5 minutes
     refetchOnWindowFocus: true,
   });
 };
@@ -86,7 +87,7 @@ export const useBrowsepageItems = () => {
       if (!res.ok) throw new Error(data.error || "Failed to fetch items");
       return data;
     },
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 5, // cache is fresh for 5 minutes
     refetchOnWindowFocus: true,
   });
 };

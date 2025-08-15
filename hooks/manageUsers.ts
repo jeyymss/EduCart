@@ -15,7 +15,7 @@ export const manageUsers = () => {
   return useQuery<Users[]>({
     queryKey: ["users"],
     queryFn: async () => {
-      const res = await fetch("/api/manageUsers");
+      const res = await fetch("/api/admin/manageUsers");
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to fetch items");
       return data;

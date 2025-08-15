@@ -78,7 +78,6 @@ export default function HomePage() {
             </p>
           ) : (
             <>
-              {/* plain grid — NOT a DialogTrigger */}
               <div className="grid gap-4 grid-cols-1 md:grid-cols-2 xl:grid-cols-4 mt-3">
                 {emergency.map((emg) => (
                   <button
@@ -98,7 +97,7 @@ export default function HomePage() {
                 ))}
               </div>
 
-              {/* mount dialog ONLY when a card is selected */}
+              {/* Mount dialog ONLY when a card is selected */}
               {selectedEmergency && (
                 <Dialog
                   open
@@ -285,12 +284,15 @@ export default function HomePage() {
       </div>
 
       {/* DISPLAY GIVEAWAY AND DONATIONS */}
-      <div>
+      <div className="space-y-2">
         <div className="flex justify-between">
           <h1 className="font-semibold text-[#102E4A]">Donation & Giveaways</h1>
           <Link href={"#"}>
             <span className="text-sm text-[#577C8E]">View All</span>
           </Link>
+        </div>
+        <div>
+          <h1>hello</h1>
         </div>
       </div>
     </div>

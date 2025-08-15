@@ -279,7 +279,7 @@ export function Header() {
 
       {/* LOGOUT MODAL */}
       {showLogoutModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-md bg-opacity-50">
           <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full text-center space-y-4">
             <h2 className="text-xl font-semibold text-gray-800">
               Logging out...
