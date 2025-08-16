@@ -53,7 +53,7 @@ export default function LoginForm() {
       }
 
       setTimeout(() => {
-        router.replace("/home"); // change route as needed
+        router.replace(result.role === "Admin" ? "/admin/dashboard" : "/home"); // change route as needed
       }, 3000);
     } catch (err) {
       console.error("Login failed:", err);

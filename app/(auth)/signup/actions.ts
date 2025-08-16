@@ -84,7 +84,7 @@ export async function register(formData: FormData) {
   const authUser = signUpData.user;
 
   // 2) Insert into your public.users (works because you granted INSERT to anon/authenticated)
-  const { error: insertError } = await supabase.from("public.users").insert([
+  const { error: insertError } = await supabase.from("users").insert([
     {
       id: authUser.id, // FK -> auth.users.id
       email: authUser.email ?? credentials.email,

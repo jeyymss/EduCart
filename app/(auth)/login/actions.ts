@@ -36,10 +36,8 @@ export async function login(formData: FormData) {
   // revalidate layout cache
   revalidatePath("/", "layout");
 
-  // redirect based on role
-  if (userData.role === "Admin") {
-    redirect("/admin/dashboard");
-  } else {
-    redirect("/home");
-  }
+  return {
+    success: true,
+    role: userData.role as "Admin" | "Student" | "Faculty" | "Alumni",
+  };
 }
