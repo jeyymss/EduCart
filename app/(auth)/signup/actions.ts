@@ -6,63 +6,62 @@ import { uploadImage } from "@/app/api/uploadImage/route";
 export async function register(formData: FormData) {
   const supabase = await createClient();
 
-  // Extract credentials first
-  const credentials = {
-    role: formData.get("role") as string,
-    name: formData.get("name") as string,
-    email: formData.get("email") as string,
-    password: formData.get("password") as string,
-    verificationStatus:
-      (formData.get("verificationStatus") as string) || "Pending",
-    university: formData.get("university") as string,
-  };
+  // ---- extract & normalize inputs ----
+  const roleRaw = (formData.get("role") as string) ?? "";
+  const role = roleRaw.trim(); // e.g., "Student" | "Faculty" | "Alumni"
 
-  if (credentials.role === "student" || credentials.role === "faculty") {
-    const { data: university, error } = await supabase
+  const name = (formData.get("name") as string)?.trim() ?? "";
+  const email = (formData.get("email") as string)?.trim() ?? "";
+  const password = (formData.get("password") as string) ?? "";
+  const verificationStatus = (
+    (formData.get("verificationStatus") as string) ?? "Pending"
+  ).trim();
+
+  const universityIdStr = (formData.get("university") as string) ?? "";
+  const universityId = Number(universityIdStr || 0); // FK -> universities.id
+
+  // ---- role-specific domain check for Student/Faculty ----
+  const roleLower = role.toLowerCase();
+  if (roleLower === "student" || roleLower === "faculty") {
+    const { data: uni, error } = await supabase
       .from("universities")
       .select("domain")
-      .eq("id", Number(credentials.university))
+      .eq("id", universityId)
       .single();
 
-    if (error || !university) {
-      throw new Error("Selected university is invalid.");
+    if (error || !uni) {
+      return { error: "Selected university is invalid." };
     }
-
-    if (!credentials.email.endsWith(university.domain)) {
-      throw new Error(`Email must end with ${university.domain}`);
+    if (!email.toLowerCase().endsWith(uni.domain.toLowerCase())) {
+      return { error: `Email must end with ${uni.domain}` };
     }
   }
 
-  // Get the file from formData
-  const rawFile = formData.get("idImage");
-  const idImageFile = rawFile instanceof File ? rawFile : null;
-
-  // Upload image
+  // ---- upload the ID image (optional) ----
   let idImageUrl: string | null = null;
-
-  if (idImageFile) {
-    const urls = await uploadImage(
-      [idImageFile],
-      "ids",
-      "id-verifications",
-      credentials.email
-    );
-
-    idImageUrl = urls[0] || null;
+  const idImage = formData.get("idImage");
+  if (idImage instanceof File) {
+    const urls = await uploadImage([idImage], "ids", "id-verifications", email);
+    idImageUrl = urls?.[0] ?? null;
   }
 
-  // 1. Sign up user to Supabase Auth
+  // ---- sign up (DB trigger will insert into public.users) ----
   const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-    email: credentials.email,
-    password: credentials.password,
+    email,
+    password,
     options: {
+      // All fields the trigger reads go here:
       data: {
-        display_name: credentials.name,
+        full_name: name,
+        role, // "Student" | "Faculty" | "Alumni"
+        university_id: universityId,
+        verification_status: verificationStatus, // "Verified" | "Pending"
+        id_verification_url: idImageUrl, // optional
       },
     },
   });
 
-  // Real auth error
+  // Real auth error handling
   if (signUpError) {
     const msg = signUpError.message?.toLowerCase?.() ?? "";
     if (
@@ -74,32 +73,13 @@ export async function register(formData: FormData) {
     return { error: signUpError.message || "Signup failed." };
   }
 
-  // Supabase quirk: already-registered email -> user.identities = []
+  // Supabase quirk: already-registered email -> identities = []
   if (!signUpData?.user || signUpData.user.identities?.length === 0) {
-    return {
-      error: "Email already registered.",
-    };
+    return { error: "Email already registered." };
   }
 
-  const authUser = signUpData.user;
-
-  // 2) Insert into your public.users (works because you granted INSERT to anon/authenticated)
-  const { error: insertError } = await supabase.from("users").insert([
-    {
-      id: authUser.id, // FK -> auth.users.id
-      email: authUser.email ?? credentials.email,
-      role: credentials.role,
-      full_name: credentials.name,
-      id_verification_url: idImageUrl,
-      verification_status: credentials.verificationStatus,
-      university_id: credentials.university, // must be number
-    },
-  ]);
-
-  if (insertError) {
-    // Common causes: invalid university_id, constraints, etc.
-    return { error: insertError.message };
-  }
+  // ⛔️ No manual insert into public.users here.
+  // The SECURITY DEFINER trigger on auth.users will create the row.
 
   return { success: true };
 }
