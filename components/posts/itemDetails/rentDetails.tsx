@@ -11,7 +11,6 @@ export default function RentDetails({ item }: { item: any }) {
         ₱{item.daily_rent_price ?? item.item_price} / day
       </p>
       <p>{item.item_description}</p>
-      <p className="text-sm text-gray-600">Posted by: {item.full_name}</p>
     </div>
   );
 }

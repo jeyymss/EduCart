@@ -1,6 +1,8 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link"; // 👈 add
+import { Button } from "@/components/ui/button"; // 👈 shadcn button
 import { useProductDetails } from "@/hooks/displayItems";
 import { useParams } from "next/navigation";
 import SaleDetails from "@/components/posts/itemDetails/saleDetails";
@@ -28,7 +30,7 @@ export default function ItemDetailsPage() {
 
   const { data: item, isLoading, error } = useProductDetails(id);
 
-  if (!id || id === "NaN") {
+  if (!id) {
     return <div className="text-red-600">Invalid or missing item ID</div>;
   }
 
@@ -44,11 +46,23 @@ export default function ItemDetailsPage() {
     return <p className="p-10">Loading...</p>;
   }
 
-  console.log("🕒 item.created_at =", item.created_at);
-
   return (
-    <div className="space-y-4 p-10">
+    <div className="space-y-6 p-10">
       {renderDetails(item)}
+
+      {/* Lister card */}
+      {item.post_user_id && (
+        <div className="flex items-center justify-between border rounded-2xl p-4">
+          <div className="min-w-0">
+            <p className="font-medium truncate">{item.full_name ?? "Lister"}</p>
+            {/* If you add role/university later, show them here */}
+          </div>
+
+          <Button asChild variant="secondary">
+            <Link href={`/${item.post_user_id}`}>View lister</Link>
+          </Button>
+        </div>
+      )}
 
       {item.created_at && (
         <p className="text-sm text-gray-500">

@@ -18,7 +18,6 @@ export default function TradeDetails({ item }: { item: any }) {
         </p>
       )}
       <p>{item.item_description}</p>
-      <p className="text-sm text-gray-600">Posted by: {item.full_name}</p>
     </div>
   );
 }
