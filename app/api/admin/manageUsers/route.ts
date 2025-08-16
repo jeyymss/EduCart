@@ -5,18 +5,8 @@ export async function GET() {
   const supabase = await createClient();
 
   const query = supabase
-    .from("users")
-    .select(
-      `
-          full_name,
-          email,
-          role,
-          university_id,
-          verification_status,
-          created_at,
-          universities(abbreviation)
-        `
-    )
+    .from("admin_users")
+    .select("*")
     .neq("role", "Admin")
     .order("created_at", { ascending: false });
 

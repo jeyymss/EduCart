@@ -6,6 +6,7 @@ export type PublicProfile = {
   role: string;
   university_abbreviation: string | null;
   university_name: string | null;
+  avatar_url: string | null;
 };
 
 export type PublicListing = {
@@ -21,16 +22,19 @@ export type PublicListing = {
   category_name: string | null;
 };
 
-export const usePublicProfile = (userId: string) =>
+export const usePublicProfile = (
+  userId?: string,
+  opts?: { enabled?: boolean }
+) =>
   useQuery<PublicProfile>({
     queryKey: ["publicProfile", userId],
     queryFn: async () => {
       const r = await fetch(`/api/profiles/${userId}`, { cache: "no-store" });
       const j = await r.json();
       if (!r.ok) throw new Error(j.error || "Failed to load profile");
-      return j;
+      return j as PublicProfile;
     },
-    enabled: !!userId,
+    enabled: !!userId && (opts?.enabled ?? true),
     staleTime: 5 * 60 * 1000,
   });
 
@@ -57,6 +61,6 @@ export const usePublicListings = (userId: string, page = 1, limit = 12) =>
       };
     },
     enabled: !!userId,
-    placeholderData: (prev) => prev, // ✅ v5 way to keep old page while new one loads
+    placeholderData: (prev) => prev,
     staleTime: 5 * 60 * 1000,
   });

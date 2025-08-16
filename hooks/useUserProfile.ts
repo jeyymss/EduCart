@@ -1,50 +1,41 @@
+// useUserProfile.ts
 import { useQuery } from "@tanstack/react-query";
 import { createClient } from "@/utils/supabase/client";
 
 export type UserProfile = {
+  id: string;
   full_name: string;
   email: string;
   role: string;
-  university_id: number;
   verification_status: string;
   created_at: string;
-  universities: { abbreviation: string }[]; // ← FIXED
+  avatar_url: string | null;
+  universities: { abbreviation: string | null } | null; // 1-to-1
 };
 
-export const useUserProfile = () => {
+export function useUserProfile() {
   const supabase = createClient();
 
   return useQuery<UserProfile, Error>({
     queryKey: ["user-profile"],
-    queryFn: async (): Promise<UserProfile> => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      if (!session) throw new Error("No active session");
-
-      const userId = session.user.id;
+    queryFn: async () => {
+      const { data: auth } = await supabase.auth.getUser();
+      if (!auth.user) throw new Error("Not logged in");
 
       const { data, error } = await supabase
         .from("users")
         .select(
           `
-          full_name,
-          email,
-          role,
-          university_id,
-          verification_status,
-          created_at,
-          universities (
-            abbreviation
-          )
+          id, full_name, email, role, verification_status, created_at, avatar_url,
+          universities ( abbreviation )
         `
         )
-        .eq("id", userId)
+        .eq("id", auth.user.id)
+        .returns<UserProfile>()
         .single();
 
-      if (error) throw new Error(error.message);
-      return data as UserProfile;
+      if (error || !data) throw new Error(error?.message ?? "No row");
+      return data;
     },
   });
-};
+}
