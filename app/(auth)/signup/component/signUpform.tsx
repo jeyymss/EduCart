@@ -161,7 +161,7 @@ export default function SignUpForm() {
     setShowLoadingModal(false);
 
     if (res?.error) {
-      setError("Email already registered.");
+      setError(res.error);
       return;
     }
 

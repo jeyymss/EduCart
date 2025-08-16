@@ -62,28 +62,42 @@ export async function register(formData: FormData) {
     },
   });
 
-  if (signUpError || !signUpData?.user) {
-    const errorMessage = signUpError?.message || "Signup failed";
-    return { error: "Error Message" + errorMessage };
+  // Real auth error
+  if (signUpError) {
+    const msg = signUpError.message?.toLowerCase?.() ?? "";
+    if (
+      msg.includes("already") &&
+      (msg.includes("exist") || msg.includes("registered"))
+    ) {
+      return { error: "Email already registered. Try logging in." };
+    }
+    return { error: signUpError.message || "Signup failed." };
   }
 
-  const user = signUpData.user;
+  // Supabase quirk: already-registered email -> user.identities = []
+  if (!signUpData?.user || signUpData.user.identities?.length === 0) {
+    return {
+      error: "Email already registered.",
+    };
+  }
 
-  // 2. Insert into your `users` table
-  const { error: insertError } = await supabase.from("users").insert([
+  const authUser = signUpData.user;
+
+  // 2) Insert into your public.users (works because you granted INSERT to anon/authenticated)
+  const { error: insertError } = await supabase.from("public.users").insert([
     {
-      id: signUpData.user.id,
-      email: user?.email,
+      id: authUser.id, // FK -> auth.users.id
+      email: authUser.email ?? credentials.email,
       role: credentials.role,
       full_name: credentials.name,
       id_verification_url: idImageUrl,
       verification_status: credentials.verificationStatus,
-      university_id: credentials.university,
+      university_id: credentials.university, // must be number
     },
   ]);
 
   if (insertError) {
-    console.error("Insert error:", insertError.message);
+    // Common causes: invalid university_id, constraints, etc.
     return { error: insertError.message };
   }
 
