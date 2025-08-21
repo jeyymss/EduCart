@@ -11,7 +11,8 @@ export default function HeaderLogin() {
 
   // Check the current route
   const isLoginPage = pathname === "/login";
-  const isSignupPage = pathname === "/signup";
+  const isSignupPage =
+    pathname === "/signup" || pathname === "/organization-account";
 
   if (!isLoginPage && !isSignupPage) return null; // don't show header on other pages
 

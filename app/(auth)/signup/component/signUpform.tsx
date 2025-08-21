@@ -170,252 +170,264 @@ export default function SignUpForm() {
 
   return (
     <div className="flex items-center justify-center min-h-screen p-4">
-      <Card className="w-full max-w-sm">
-        <CardHeader>
-          <div className="flex justify-between items-center">
-            <CardTitle>Register your account</CardTitle>
-            <Link href="/login">
-              <Button variant="link">Log In</Button>
-            </Link>
-          </div>
-          <CardDescription>
-            Enter your details below to create your account
-          </CardDescription>
-        </CardHeader>
+      <div className="flex flex-col">
+        <Card className="w-full max-w-sm">
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <CardTitle>Register your account</CardTitle>
+              <Link href="/login">
+                <Button variant="link">Log In</Button>
+              </Link>
+            </div>
+            <CardDescription>
+              Enter your details below to create your account
+            </CardDescription>
+          </CardHeader>
 
-        <CardContent>
-          <form onSubmit={handleSubmit}>
-            <div className="flex flex-col gap-4">
-              {/* Role Selection */}
-              <div>
-                <Label>I am:</Label>
-                <Input type="hidden" name="role" value={selectedRole} />
-                <div className="flex justify-center gap-2 mt-2">
-                  {roles.map((role) => (
-                    <Button
-                      key={role}
-                      type="button"
-                      className={`rounded-full px-4 ${
-                        selectedRole === role
-                          ? "bg-blue-600 text-white"
-                          : "bg-white border border-gray-300 text-gray-700"
-                      }`}
-                      onClick={() => handleSelect(role)}
-                    >
-                      {role}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-
-              {/* University */}
-              <div className="grid gap-2">
-                <Label>University</Label>
-                <Select
-                  onValueChange={(value) => setSelectedUniversityId(value)}
-                  name="university"
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Choose a university" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {universities.map((uni) => (
-                      <SelectItem key={uni.id} value={String(uni.id)}>
-                        {uni.abbreviation}
-                      </SelectItem>
+          <CardContent>
+            <form onSubmit={handleSubmit}>
+              <div className="flex flex-col gap-4">
+                {/* Role Selection */}
+                <div>
+                  <Label>I am:</Label>
+                  <Input type="hidden" name="role" value={selectedRole} />
+                  <div className="flex justify-center gap-2 mt-2">
+                    {roles.map((role) => (
+                      <Button
+                        key={role}
+                        type="button"
+                        className={`rounded-full px-4 ${
+                          selectedRole === role
+                            ? "bg-blue-600 text-white"
+                            : "bg-white border border-gray-300 text-gray-700"
+                        }`}
+                        onClick={() => handleSelect(role)}
+                      >
+                        {role}
+                      </Button>
                     ))}
-                  </SelectContent>
-                </Select>
-              </div>
+                  </div>
+                </div>
 
-              {/* Full Name */}
-              <div className="grid gap-2">
-                <Label htmlFor="name">Full Name</Label>
-                <Input
-                  id="name"
-                  name="name"
-                  type="text"
-                  placeholder="Enter Full Name"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  required
-                />
-                <p className="text-xs text-center text-gray-500">
-                  Do not include your middle initial.
-                </p>
-              </div>
+                {/* University */}
+                <div className="grid gap-2">
+                  <Label>University</Label>
+                  <Select
+                    onValueChange={(value) => setSelectedUniversityId(value)}
+                    name="university"
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Choose a university" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {universities.map((uni) => (
+                        <SelectItem key={uni.id} value={String(uni.id)}>
+                          {uni.abbreviation}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-              {/* Enter Email */}
-              <div className="grid gap-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  placeholder="@university.edu"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
+                {/* Full Name */}
+                <div className="grid gap-2">
+                  <Label htmlFor="name">Full Name</Label>
+                  <Input
+                    id="name"
+                    name="name"
+                    type="text"
+                    placeholder="Enter Full Name"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    required
+                  />
+                  <p className="text-xs text-center text-gray-500">
+                    Do not include your middle initial.
+                  </p>
+                </div>
 
-              {/* Enter Password */}
-              <div className="grid gap-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  name="password"
-                  type="password"
-                  placeholder="Enter Password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
+                {/* Enter Email */}
+                <div className="grid gap-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    placeholder="@university.edu"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                </div>
 
-              {/* Enter Confirm Password */}
-              <div className="grid gap-2">
-                <Label htmlFor="confirmPassword">Confirm Password</Label>
-                <Input
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  placeholder="Confirm Password"
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                />
-              </div>
+                {/* Enter Password */}
+                <div className="grid gap-2">
+                  <Label htmlFor="password">Password</Label>
+                  <Input
+                    id="password"
+                    name="password"
+                    type="password"
+                    placeholder="Enter Password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                </div>
 
-              {/* ID Upload and Verification */}
-              <div className="grid gap-2">
-                <Label htmlFor="idImage">University/Alumni ID</Label>
+                {/* Enter Confirm Password */}
+                <div className="grid gap-2">
+                  <Label htmlFor="confirmPassword">Confirm Password</Label>
+                  <Input
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    placeholder="Confirm Password"
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                  />
+                </div>
 
-                <div
-                  onClick={() => fileInputRef.current?.click()}
-                  className="relative border border-dashed border-gray-300 h-40 w-full mt-2 rounded-md cursor-pointer flex justify-center items-center bg-white overflow-hidden"
-                >
-                  {previewUrl ? (
-                    <>
-                      <Image
-                        alt="Upload ID Preview"
-                        fill
-                        sizes="100vw"
-                        src={previewUrl}
-                        className="object-cover w-full h-full rounded-md"
-                      />
+                {/* ID Upload and Verification */}
+                <div className="grid gap-2">
+                  <Label htmlFor="idImage">University/Alumni ID</Label>
 
-                      {/* Status or Verify Button */}
-                      <div className="absolute bottom-1 right-1">
-                        {isVerifying ? (
-                          <span className="text-xs text-green-700 animate-pulse">
-                            Verifying...
-                          </span>
-                        ) : verificationStatus ? (
-                          <div
-                            className={`text-xs px-2 py-1 rounded-full ${
-                              verificationStatus === "Verified"
-                                ? "bg-green-100 text-green-700"
-                                : "bg-red-100 text-red-700"
-                            }`}
+                  <div
+                    onClick={() => fileInputRef.current?.click()}
+                    className="relative border border-dashed border-gray-300 h-40 w-full mt-2 rounded-md cursor-pointer flex justify-center items-center bg-white overflow-hidden"
+                  >
+                    {previewUrl ? (
+                      <>
+                        <Image
+                          alt="Upload ID Preview"
+                          fill
+                          sizes="100vw"
+                          src={previewUrl}
+                          className="object-cover w-full h-full rounded-md"
+                        />
+
+                        {/* Status or Verify Button */}
+                        <div className="absolute bottom-1 right-1">
+                          {isVerifying ? (
+                            <span className="text-xs text-green-700 animate-pulse">
+                              Verifying...
+                            </span>
+                          ) : verificationStatus ? (
+                            <div
+                              className={`text-xs px-2 py-1 rounded-full ${
+                                verificationStatus === "Verified"
+                                  ? "bg-green-100 text-green-700"
+                                  : "bg-red-100 text-red-700"
+                              }`}
+                            >
+                              {verificationStatus === "Verified"
+                                ? "✔ Verified"
+                                : "✖ Failed"}
+                            </div>
+                          ) : (
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="secondary"
+                              className="text-xs px-2 py-1"
+                              onClick={(e) => {
+                                e.stopPropagation(); // prevent file picker from triggering
+                                verifyID();
+                              }}
+                            >
+                              Verify ID
+                            </Button>
+                          )}
+                        </div>
+                      </>
+                    ) : (
+                      <span className="text-gray-400 text-sm text-center px-4">
+                        <div className="flex flex-col items-center">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-6 w-6 mb-1 text-gray-300"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
                           >
-                            {verificationStatus === "Verified"
-                              ? "✔ Verified"
-                              : "✖ Failed"}
-                          </div>
-                        ) : (
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="secondary"
-                            className="text-xs px-2 py-1"
-                            onClick={(e) => {
-                              e.stopPropagation(); // prevent file picker from triggering
-                              verifyID();
-                            }}
-                          >
-                            Verify ID
-                          </Button>
-                        )}
-                      </div>
-                    </>
-                  ) : (
-                    <span className="text-gray-400 text-sm text-center px-4">
-                      <div className="flex flex-col items-center">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-6 w-6 mb-1 text-gray-300"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M4 16l4-4m0 0l4-4m-4 4h12"
-                          />
-                        </svg>
-                        Upload your University/Alumni ID
-                      </div>
-                    </span>
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M4 16l4-4m0 0l4-4m-4 4h12"
+                            />
+                          </svg>
+                          Upload your University/Alumni ID
+                        </div>
+                      </span>
+                    )}
+                  </div>
+
+                  <input
+                    type="file"
+                    accept="image/*"
+                    name="idImage"
+                    ref={fileInputRef}
+                    onChange={handleFileChange}
+                    className="hidden"
+                  />
+
+                  <Button
+                    type="button"
+                    onClick={verifyID}
+                    disabled={!idImage || !fullName || isVerifying}
+                    className="mt-1"
+                  >
+                    {isVerifying ? "Verifying..." : "Verify ID"}
+                  </Button>
+
+                  <p className="text-xs text-center text-gray-500">
+                    This ID will be used for verification purposes.
+                  </p>
+                  {verificationStatus === "Failed" && (
+                    <p className="text-xs text-red-600 text-center">
+                      ID verification failed.
+                    </p>
                   )}
                 </div>
 
-                <input
-                  type="file"
-                  accept="image/*"
-                  name="idImage"
-                  ref={fileInputRef}
-                  onChange={handleFileChange}
-                  className="hidden"
-                />
-
-                <Button
-                  type="button"
-                  onClick={verifyID}
-                  disabled={!idImage || !fullName || isVerifying}
-                  className="mt-1"
-                >
-                  {isVerifying ? "Verifying..." : "Verify ID"}
-                </Button>
-
-                <p className="text-xs text-center text-gray-500">
-                  This ID will be used for verification purposes.
-                </p>
-                {verificationStatus === "Failed" && (
-                  <p className="text-xs text-red-600 text-center">
-                    ID verification failed.
-                  </p>
+                {/* Errors */}
+                {error && (
+                  <p className="text-sm text-red-600 text-center">{error}</p>
                 )}
+
+                {/* Updates the status of user to Verified */}
+                {verificationStatus === "Verified" && (
+                  <input
+                    type="hidden"
+                    name="verificationStatus"
+                    value="Verified"
+                  />
+                )}
+
+                {/* Submit */}
+                <Button
+                  type="submit"
+                  className="w-full mt-2"
+                  disabled={verificationStatus !== "Verified" && loading}
+                >
+                  Register
+                </Button>
               </div>
+            </form>
+          </CardContent>
+        </Card>
 
-              {/* Errors */}
-              {error && (
-                <p className="text-sm text-red-600 text-center">{error}</p>
-              )}
+        <div>
+          <h3>
+            Register an Organiztion?{" "}
+            <Link href={"/organization-account"}>
+              <span>Create</span>
+            </Link>
+          </h3>
+        </div>
+      </div>
 
-              {/* Updates the status of user to Verified */}
-              {verificationStatus === "Verified" && (
-                <input
-                  type="hidden"
-                  name="verificationStatus"
-                  value="Verified"
-                />
-              )}
-
-              {/* Submit */}
-              <Button
-                type="submit"
-                className="w-full mt-2"
-                disabled={verificationStatus !== "Verified" && loading}
-              >
-                Register
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
       {/* Loading Modal */}
       {showLoadingModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">

@@ -12,6 +12,7 @@ export function HeaderWrapper() {
     const hide =
       pathname === "/login" ||
       pathname === "/signup" ||
+      pathname === "/organization-account" ||
       pathname === "/reset-password" ||
       pathname === "/admin/dashboard" ||
       pathname === "/admin/accounts" ||

@@ -9,6 +9,7 @@ const publicPaths = [
   "/callback", // When user clicks confirm email
   "/error",
   "/reset-password",
+  "/organization-account",
 ];
 
 export async function updateSession(request: NextRequest) {
