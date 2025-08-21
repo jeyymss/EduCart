@@ -1,4 +1,4 @@
-import OrgSignUpForm from "./component/signUP-dump";
+import OrgSignUpForm from "./component/signUP-form";
 
 export default function OrganizationPage() {
   return (
