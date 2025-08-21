@@ -350,6 +350,7 @@ function StepConnector({ isComplete }: StepConnectorProps) {
   );
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface CheckIconProps extends React.SVGProps<SVGSVGElement> {}
 function CheckIcon(props: CheckIconProps) {
   return (
