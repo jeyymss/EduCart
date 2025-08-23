@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { usePublicProfile, usePublicListings } from "@/hooks/profiles";
+import { usePublicProfile, usePublicListings } from "@/hooks/queries/profiles";
 import Image from "next/image";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";

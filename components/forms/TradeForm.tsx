@@ -2,7 +2,7 @@
 
 import { useRef, useState, useEffect } from "react";
 import { ForTrade } from "@/app/api/formSubmit/trade/route";
-import { useCategories, Category } from "@/hooks/useCategories";
+import { useCategories, Category } from "@/hooks/queries/useCategories";
 import {
   Select,
   SelectTrigger,

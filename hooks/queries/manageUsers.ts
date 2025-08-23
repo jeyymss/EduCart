@@ -1,24 +1,24 @@
 import { useQuery } from "@tanstack/react-query";
-import { createClient } from "@/utils/supabase/client";
 
 export type Users = {
-  full_name: string;
+  user_id: string;
+  name: string;
   email: string;
   role: string;
-  university_id: number;
-  verification_status: string;
+  university: string | null;
+
   created_at: string;
-  universities: { abbreviation: string };
+  avatar_url: string | null;
 };
 
 export const manageUsers = () => {
   return useQuery<Users[]>({
-    queryKey: ["users"],
+    queryKey: ["AllUsers"],
     queryFn: async () => {
       const res = await fetch("/api/admin/manageUsers");
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to fetch items");
-      return data;
+      return data as Users[];
     },
     staleTime: 1000 * 60 * 3,
     refetchOnWindowFocus: true,

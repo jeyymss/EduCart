@@ -41,18 +41,17 @@ export default function LoginForm() {
       setShowLoadingModal(true);
 
       const formData = new FormData(e.currentTarget);
-      const result = await login(formData); // your server action
+      const result = await login(formData); // typed as LoginResult
 
       setShowLoadingModal(false);
 
-      if (!result || result.error) {
-        setError(result?.error ?? "Login failed. Please try again.");
+      if (!result.success) {
+        setError(result.error ?? "Login failed. Please try again.");
         return;
       }
 
-      // Navigate based on role
-      const dest = result.role === "Admin" ? "/admin/dashboard" : "/home";
-      router.replace(dest);
+      // success branch
+      router.replace(result.redirect);
     } catch (err) {
       console.error("Login failed:", err);
       setShowLoadingModal(false);

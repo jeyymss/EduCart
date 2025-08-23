@@ -2,9 +2,9 @@
 
 import * as React from "react";
 
-import { AdminNavMain } from "@/components/admin/nav-main";
+import { OrgNavMain } from "@/components/organization/nav-main";
 
-import { AdminNavUser } from "@/components/admin/nav-user";
+import { OrgNavUser } from "@/components/organization/nav-user";
 import {
   Sidebar,
   SidebarContent,
@@ -22,7 +22,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem className="flex item-center justify-center">
-            <Link href={"/admin/dashboard"}>
+            <Link href={"/organization/dashboard"}>
               <Image
                 src={"/logo.png"}
                 alt="EduCart Logo"
@@ -34,10 +34,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <AdminNavMain />
+        <OrgNavMain />
       </SidebarContent>
       <SidebarFooter>
-        <AdminNavUser />
+        <OrgNavUser />
       </SidebarFooter>
     </Sidebar>
   );

@@ -4,13 +4,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useProductDetails } from "@/hooks/displayItems";
+import { useProductDetails } from "@/hooks/queries/displayItems";
 import { useParams } from "next/navigation";
 import SaleDetails from "@/components/posts/itemDetails/saleDetails";
 import RentDetails from "@/components/posts/itemDetails/rentDetails";
 import TradeDetails from "@/components/posts/itemDetails/tradeDetails";
 import { getRelativeTime } from "@/utils/getRelativeTime";
-import { usePublicProfile } from "@/hooks/profiles";
+import { usePublicProfile } from "@/hooks/queries/profiles";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function renderDetails(item: any) {

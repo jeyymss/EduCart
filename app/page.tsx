@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 export default function Landing() {
   return (
     <div>
-      <div className="flex md:px-10 lg:px-20 px-6 items-center justify-center h-[75vh]">
+      <div className="flex md:px-10 lg:px-20 px-6 items-center justify-center h-[75vh] py-10 md:py-16">
         {/* LEFT SIDE */}
         <div className="flex flex-col space-y-5 md:w-1/2">
           <h1 className="font-semibold text-center md:text-left text-4xl md:text-5xl lg:text-7xl">
@@ -26,7 +26,7 @@ export default function Landing() {
         </div>
 
         {/* RIGHT SIDE */}
-        <div className="hidden md:flex items-center justify-center xl:w-[600px] md:z-50">
+        <div className="hidden md:flex items-center justify-center xl:w-[500px] md:z-3">
           <Image
             src="/logo2.png"
             alt="logo2"

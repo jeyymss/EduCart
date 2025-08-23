@@ -3,40 +3,74 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/utils/supabase/server";
 
-export async function login(formData: FormData) {
+type LoginSuccess = {
+  success: true;
+  isAdmin: boolean;
+  role: "Student" | "Faculty" | "Alumni" | "Organization" | null;
+  redirect: "/admin/dashboard" | "/home" | "/organization/dashboard";
+};
+
+type LoginError = {
+  success: false;
+  error: string;
+};
+
+export type LoginResult = LoginSuccess | LoginError;
+
+export async function login(formData: FormData): Promise<LoginResult> {
   const supabase = await createClient();
 
-  // get the data that the user entered from the frontend
-  const data = {
-    email: formData.get("email") as string,
-    password: formData.get("password") as string,
-  };
+  const email = (formData.get("email") as string) ?? "";
+  const password = (formData.get("password") as string) ?? "";
 
-  // sign in user
-  const { data: authData, error } = await supabase.auth.signInWithPassword(
-    data
-  );
+  const { data: auth, error: authError } =
+    await supabase.auth.signInWithPassword({ email, password });
 
-  if (error) {
-    return { error: error.message };
+  if (authError || !auth?.user) {
+    return {
+      success: false,
+      error: authError?.message ?? "Invalid credentials.",
+    };
   }
 
-  // fetch the role from users table
-  const { data: userData, error: userError } = await supabase
-    .from("users")
-    .select("role")
-    .eq("id", authData.user.id)
-    .single();
+  const userId = auth.user.id;
 
-  if (userError || !userData) {
-    return { error: "Unable to fetch user role." };
+  // ✅ Check admin
+  let isAdmin = false;
+  {
+    const { data: adminRow } = await supabase
+      .from("admin_users")
+      .select("is_enabled")
+      .eq("user_id", userId)
+      .maybeSingle();
+    isAdmin = !!adminRow?.is_enabled;
   }
 
-  // revalidate layout cache
+  // ✅ Get role
+  let role: LoginSuccess["role"] = null;
+  {
+    const { data: userRow } = await supabase
+      .from("users")
+      .select("role")
+      .eq("id", userId)
+      .maybeSingle();
+    role = (userRow?.role as typeof role) ?? null;
+  }
+
   revalidatePath("/", "layout");
+
+  // ✅ Redirect logic
+  let redirect: LoginSuccess["redirect"] = "/home";
+  if (isAdmin) {
+    redirect = "/admin/dashboard";
+  } else if (role === "Organization") {
+    redirect = "/organization/dashboard";
+  }
 
   return {
     success: true,
-    role: userData.role as "Admin" | "Student" | "Faculty" | "Alumni",
+    isAdmin,
+    role,
+    redirect,
   };
 }

@@ -50,13 +50,14 @@ export async function register(formData: FormData) {
     email,
     password,
     options: {
-      // All fields the trigger reads go here:
       data: {
-        full_name: name,
-        role, // "Student" | "Faculty" | "Alumni"
+        name, // 👈
+        full_name: name, // 👈
+
+        role, // "student" | "faculty" | "alumni"
         university_id: universityId,
-        verification_status: verificationStatus, // "Verified" | "Pending"
-        id_verification_url: idImageUrl, // optional
+        verification_status: verificationStatus,
+        id_verification_url: idImageUrl,
       },
     },
   });

@@ -1,4 +1,3 @@
-// app/(auth)/org-signup/OrgSignUpForm.tsx
 "use client";
 
 import { Input } from "@/components/ui/input";

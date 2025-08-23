@@ -4,9 +4,9 @@ import { NextResponse, type NextRequest } from "next/server";
 // paths that don't require authentication
 const publicPaths = [
   "/", // Landing page
-  "/login", // login user
-  "/signup", // sign up user
-  "/callback", // When user clicks confirm email
+  "/login",
+  "/signup",
+  "/callback",
   "/error",
   "/reset-password",
   "/organization-account",
@@ -24,7 +24,7 @@ export async function updateSession(request: NextRequest) {
           return request.cookies.getAll();
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) =>
+          cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
           );
           supabaseResponse = NextResponse.next({ request });
@@ -36,20 +36,21 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  // ✅ Secure way: verify session via Auth server
+  // 1) Verify session
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   const currentPath = request.nextUrl.pathname;
 
+  // 2) Is this a public path?
   const isPublicPath = publicPaths.some((path) => {
     const pattern = path.replace(":id", "[^/]+");
     const regex = new RegExp(`^${pattern}$`);
     return regex.test(currentPath);
   });
 
-  // If not logged in and not a public path → redirect to login
+  // 3) If not logged in and not a public path → send to /login
   if (!user && !isPublicPath) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
@@ -57,39 +58,42 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // If logged in, fetch role from DB
-  let userRole: string | null = null;
+  // 4) If logged in, compute isAdmin using admin_users view/table
+  //    (A row with is_enabled=true means the user is an Admin.)
+  let isAdmin = false;
   if (user) {
-    const { data: userData, error } = await supabase
-      .from("users")
-      .select("role")
-      .eq("id", user.id)
-      .single();
+    const { data: adminRow } = await supabase
+      .from("admin_users") // <-- public view recommended
+      .select("is_enabled")
+      .eq("user_id", user.id)
+      .maybeSingle();
 
-    if (!error && userData) {
-      userRole = userData.role;
-    }
+    isAdmin = !!adminRow?.is_enabled;
   }
 
-  // Admin-only route protection
-  if (user && currentPath.startsWith("/admin")) {
-    if (userRole !== "Admin") {
-      const url = new URL("/admin/dashboard", request.url);
+  // 5) Protect /admin routes → only Admins may continue
+  if (currentPath.startsWith("/admin")) {
+    if (!user) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/login";
+      url.searchParams.set("next", currentPath);
+      return NextResponse.redirect(url);
+    }
+    if (!isAdmin) {
+      // Non-admin trying to access /admin → bounce to user home (or your user dashboard)
+      const url = new URL("/home", request.url);
       return NextResponse.redirect(url);
     }
   }
 
-  // Redirect logged-in users away from login/signup/root
+  // 6) Smart redirects away from login/signup/root when already authenticated
   if (
     user &&
     (currentPath === "/login" ||
       currentPath === "/signup" ||
       currentPath === "/")
   ) {
-    const url = new URL(
-      userRole === "Admin" ? "/admin/dashboard" : "/home",
-      request.url
-    );
+    const url = new URL(isAdmin ? "/admin/dashboard" : "/home", request.url);
     return NextResponse.redirect(url);
   }
 

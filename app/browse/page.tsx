@@ -1,7 +1,7 @@
 "use client";
 
 import { ItemCard } from "@/components/posts/displayposts/ItemCard";
-import { useBrowsepageItems } from "@/hooks/displayItems";
+import { useBrowsepageItems } from "@/hooks/queries/displayItems";
 
 export default function BrowsePage() {
   const { data: items, isLoading, error } = useBrowsepageItems();

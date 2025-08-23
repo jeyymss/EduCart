@@ -2,7 +2,7 @@
 
 import { useRef, useState, useEffect } from "react";
 import { ForRent } from "@/app/api/formSubmit/rent/route";
-import { useCategories, Category } from "@/hooks/useCategories";
+import { useCategories, Category } from "@/hooks/queries/useCategories";
 import {
   Select,
   SelectTrigger,

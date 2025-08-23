@@ -1,6 +1,17 @@
 "use client";
 
-import { manageUsers } from "@/hooks/manageUsers";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { manageUsers } from "@/hooks/queries/manageUsers";
+
+function initialsFrom(name?: string) {
+  if (!name) return "ED";
+  return name
+    .split(" ")
+    .filter(Boolean)
+    .map((w) => w[0]!.toUpperCase())
+    .slice(0, 2)
+    .join("");
+}
 
 export default function ManageUsers() {
   const { data: users, isLoading, isError, error } = manageUsers();
@@ -14,26 +25,36 @@ export default function ManageUsers() {
       <table className="min-w-full border border-gray-300">
         <thead className="bg-gray-100">
           <tr>
-            <th className="px-4 py-2 border">Full Name</th>
-            <th className="px-4 py-2 border">Email</th>
-            <th className="px-4 py-2 border">Role</th>
-            <th className="px-4 py-2 border">University</th>
-            <th className="px-4 py-2 border">Verification Status</th>
-            <th className="px-4 py-2 border">Joined</th>
+            <th className="px-4 py-2 border text-left">User</th>
+            <th className="px-4 py-2 border text-left">Role</th>
+            <th className="px-4 py-2 border text-left">University</th>
+            {/* <th className="px-4 py-2 border text-left">Verification Status</th> */}
+            <th className="px-4 py-2 border text-left">Joined</th>
           </tr>
         </thead>
         <tbody>
-          {users.map((user, idx) => (
-            <tr key={idx} className="hover:bg-gray-50">
-              <td className="px-4 py-2 border">{user.full_name}</td>
-              <td className="px-4 py-2 border">{user.email}</td>
-              <td className="px-4 py-2 border">{user.role}</td>
+          {users.map((u) => (
+            <tr key={u.user_id} className="hover:bg-gray-50">
               <td className="px-4 py-2 border">
-                {user.universities?.abbreviation || "N/A"}
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-9 w-9">
+                    <AvatarImage src={u.avatar_url ?? undefined} alt={u.name} />
+                    <AvatarFallback>{initialsFrom(u.name)}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex flex-col">
+                    <span className="font-medium leading-5">{u.name}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {u.email}
+                    </span>
+                  </div>
+                </div>
               </td>
-              <td className="px-4 py-2 border">{user.verification_status}</td>
+
+              <td className="px-4 py-2 border">{u.role}</td>
+              <td className="px-4 py-2 border">{u.university ?? "N/A"}</td>
+
               <td className="px-4 py-2 border">
-                {new Date(user.created_at).toLocaleDateString()}
+                {new Date(u.created_at).toLocaleDateString()}
               </td>
             </tr>
           ))}

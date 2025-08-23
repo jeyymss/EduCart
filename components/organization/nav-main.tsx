@@ -11,13 +11,13 @@ import {
 } from "@/components/ui/sidebar";
 import Link from "next/link";
 
-export function AdminNavMain() {
+export function OrgNavMain() {
   return (
     <SidebarGroup>
       <SidebarGroupLabel>General</SidebarGroupLabel>
       <SidebarMenu>
         <SidebarMenuItem>
-          <Link href={"/admin/dashboard"}>
+          <Link href={"/organization/dashboard"}>
             <SidebarMenuButton className="hover: cursor-pointer">
               <LayoutDashboard />
               <span>Dashboard</span>
@@ -25,7 +25,7 @@ export function AdminNavMain() {
           </Link>
         </SidebarMenuItem>
         <SidebarMenuItem>
-          <Link href={"/admin/accounts"}>
+          <Link href={"/organization/accounts"}>
             <SidebarMenuButton className="hover: cursor-pointer">
               <UserPen />
               <span>Manage Accounts</span>
@@ -33,7 +33,7 @@ export function AdminNavMain() {
           </Link>
         </SidebarMenuItem>
         <SidebarMenuItem>
-          <Link href={"/admin/wallet"}>
+          <Link href={"/organization/wallet"}>
             <SidebarMenuButton className="hover: cursor-pointer">
               <Wallet />
               <span>Wallet</span>
@@ -41,7 +41,7 @@ export function AdminNavMain() {
           </Link>
         </SidebarMenuItem>
         <SidebarMenuItem>
-          <Link href={"/admin/reports"}>
+          <Link href={"/organization/reports"}>
             <SidebarMenuButton className="hover: cursor-pointer">
               <Flag />
               <span>Reports</span>

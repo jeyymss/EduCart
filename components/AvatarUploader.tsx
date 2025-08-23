@@ -6,6 +6,7 @@ import { createClient } from "@/utils/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useQueryClient } from "@tanstack/react-query";
 import type { UserProfile } from "@/hooks/useUserProfile";
+import Image from "next/image";
 
 type Props = {
   currentUrl?: string;
@@ -24,7 +25,6 @@ export default function AvatarUploader({ currentUrl, onUploaded }: Props) {
   const [uploading, setUploading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  // keep preview in sync when parent passes a new currentUrl
   useEffect(() => setPreviewUrl(currentUrl), [currentUrl]);
 
   function onPick(e: React.ChangeEvent<HTMLInputElement>) {
@@ -36,37 +36,42 @@ export default function AvatarUploader({ currentUrl, onUploaded }: Props) {
 
   async function onUpload() {
     if (!file) return;
-
     try {
       setUploading(true);
 
       // who am I
       const { data: auth, error: authErr } = await supabase.auth.getUser();
       if (authErr) throw authErr;
-      const uid = auth.user?.id;
+      const uid = auth?.user?.id;
       if (!uid) throw new Error("You must be logged in.");
 
       // upload to Storage
-      const path = `${uid}/${Date.now()}-${file.name}`;
+      const ext = file.name.split(".").pop() || "jpg";
+      const path = `${uid}/avatar-${Date.now()}.${ext}`;
+
       const { error: upErr } = await supabase.storage
         .from("avatars")
-        .upload(path, file, { upsert: false, contentType: file.type });
+        .upload(path, file, {
+          upsert: false,
+          contentType: file.type || "image/*",
+          cacheControl: "3600",
+        });
       if (upErr) throw upErr;
 
-      // get public URL (use signed URL instead if your bucket is private)
+      // get URL (use signed url if bucket is private)
       const { data: pub } = supabase.storage.from("avatars").getPublicUrl(path);
       const url = pub.publicUrl;
 
-      // persist to users.avatar_url
+      // persist to INDIVIDUALS (NOT users)
       const { error: dbErr } = await supabase
-        .from("users")
+        .from("individuals")
         .update({ avatar_url: url })
-        .eq("id", uid)
+        .eq("user_id", uid)
         .select("avatar_url")
         .single();
       if (dbErr) throw dbErr;
 
-      // update React Query cache
+      // update cache so UI reflects immediately
       qc.setQueryData<UserProfile | undefined>(["user-profile"], (prev) =>
         prev ? { ...prev, avatar_url: url } : prev
       );
@@ -74,24 +79,28 @@ export default function AvatarUploader({ currentUrl, onUploaded }: Props) {
       onUploaded?.(url);
       router.refresh();
       setFile(null);
-    } catch (e: unknown) {
-      const message = e instanceof Error ? e.message : "Upload failed";
-      setErr(message);
+      if (inputRef.current) inputRef.current.value = "";
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (e: any) {
+      setErr(e?.message ?? "Upload failed");
     } finally {
       setUploading(false);
-      if (inputRef.current) inputRef.current.value = "";
     }
   }
 
   return (
     <div className="flex items-center gap-3">
-      {previewUrl && (
-        <img
+      {previewUrl ? (
+        <Image
+          key={previewUrl} // refresh when a new blob URL is set
           src={previewUrl}
           alt="Current avatar preview"
+          width={40}
+          height={40}
+          unoptimized // important for blob: URLs and one-off previews
           className="h-10 w-10 rounded-full object-cover"
         />
-      )}
+      ) : null}
 
       <label className="text-sm" htmlFor="avatar-input">
         Change avatar:

@@ -18,9 +18,9 @@ import {
 } from "@/components/ui/sidebar";
 import { createClient } from "@/utils/supabase/client";
 import { useState, useMemo } from "react";
-import { useAdminBadge } from "@/hooks/queries/useAdminBadge";
+import { useCurrentOrganization } from "@/hooks/queries/useCurrentOrg";
 
-function initialsFrom(name?: string) {
+function initialsFrom(name?: string | null) {
   if (!name) return "ED";
   return name
     .split(" ")
@@ -30,20 +30,25 @@ function initialsFrom(name?: string) {
     .join("");
 }
 
-export function AdminNavUser() {
+function MiniSkeleton() {
+  return (
+    <div className="grid flex-1 text-left text-sm leading-tight">
+      <div className="h-3 w-24 rounded bg-muted animate-pulse mb-1" />
+      <div className="h-2.5 w-40 rounded bg-muted animate-pulse" />
+    </div>
+  );
+}
+
+export function OrgNavUser() {
   const supabase = createClient();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const { isMobile } = useSidebar();
+  const { data: org, isLoading } = useCurrentOrganization();
 
-  // fetch admin badge + normal user profile
-  const { data: admin } = useAdminBadge();
-
-  // prefer admin (display_name/email/avatar), else fallback to profile
-  const displayName = admin?.display_name ?? "User";
-  const email = admin?.email ?? "";
-  const avatarUrl = admin?.avatar_url ?? null; // if your UserProfile has avatar_url
-
-  const fallback = useMemo(() => initialsFrom(displayName), [displayName]);
+  const name = org?.organization_name ?? null;
+  const email = org?.email ?? null;
+  const avatar = org?.avatar_url ?? null;
+  const fallback = useMemo(() => initialsFrom(name), [name]);
 
   const handleLogout = async () => {
     setShowLogoutModal(true);
@@ -64,16 +69,23 @@ export function AdminNavUser() {
                 className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
               >
                 <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage src={avatarUrl ?? undefined} alt={displayName} />
+                  <AvatarImage
+                    src={avatar ?? undefined}
+                    alt={name ?? "Organization"}
+                  />
                   <AvatarFallback className="rounded-lg">
                     {fallback}
                   </AvatarFallback>
                 </Avatar>
 
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">{displayName}</span>
-                  <span className="truncate text-xs">{email}</span>
-                </div>
+                {isLoading ? (
+                  <MiniSkeleton />
+                ) : (
+                  <div className="grid flex-1 text-left text-sm leading-tight">
+                    <span className="truncate font-medium">{name ?? "—"}</span>
+                    <span className="truncate text-xs">{email ?? "—"}</span>
+                  </div>
+                )}
 
                 <ChevronsUpDown className="ml-auto size-4" />
               </SidebarMenuButton>
@@ -89,17 +101,23 @@ export function AdminNavUser() {
                 <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                   <Avatar className="h-8 w-8 rounded-lg">
                     <AvatarImage
-                      src={avatarUrl ?? undefined}
-                      alt={displayName}
+                      src={avatar ?? undefined}
+                      alt={name ?? "Organization"}
                     />
                     <AvatarFallback className="rounded-lg">
                       {fallback}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-medium">{displayName}</span>
-                    <span className="truncate text-xs">{email}</span>
-                  </div>
+                  {isLoading ? (
+                    <MiniSkeleton />
+                  ) : (
+                    <div className="grid flex-1 text-left text-sm leading-tight">
+                      <span className="truncate font-medium">
+                        {name ?? "—"}
+                      </span>
+                      <span className="truncate text-xs">{email ?? "—"}</span>
+                    </div>
+                  )}
                 </div>
               </DropdownMenuLabel>
 
@@ -114,12 +132,12 @@ export function AdminNavUser() {
       </SidebarMenu>
 
       {showLogoutModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full text-center space-y-4">
-            <h2 className="text-xl font-semibold text-gray-800">
-              Logging out...
-            </h2>
-            <p className="text-sm text-gray-500">Please wait a moment.</p>
+            <h2 className="text-xl font-semibold">Logging out...</h2>
+            <p className="text-sm text-muted-foreground">
+              Please wait a moment.
+            </p>
           </div>
         </div>
       )}

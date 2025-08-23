@@ -82,7 +82,7 @@ export function Header() {
 
   return (
     <header
-      className={`relative w-full flex items-center justify-between md:px-10 lg:px-20 px-6 py-4 bg-white z-50 ${
+      className={`relative w-full flex items-center justify-between md:px-10 lg:px-20 px-6 py-4 bg-white ${
         isLoggedIn ? "border-b border-[#DEDEDE]" : ""
       }`}
     >

@@ -1,7 +1,10 @@
 "use client";
 
 import { ItemCard } from "@/components/posts/displayposts/ItemCard";
-import { useHomePageEmergency, useHomepageItems } from "@/hooks/displayItems";
+import {
+  useHomePageEmergency,
+  useHomepageItems,
+} from "@/hooks/queries/displayItems";
 import { EmergencyCard } from "@/components/posts/displayposts/emergencyCard";
 import { ItemCardSkeleton } from "@/components/posts/displayposts/ItemCard";
 import { PostCardSkeleton } from "@/components/EmergencyPasaBuySkele";
@@ -17,9 +20,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { getRelativeTime } from "@/utils/getRelativeTime";
 import { PasabuyCard } from "@/components/posts/displayposts/pasabuyCard";
-import { useHomePagePasaBuy } from "@/hooks/displayItems";
-import { EmergencyPost } from "@/hooks/displayItems";
-import { PasaBuyPost } from "@/hooks/displayItems";
+import { useHomePagePasaBuy } from "@/hooks/queries/displayItems";
+import { EmergencyPost } from "@/hooks/queries/displayItems";
+import { PasaBuyPost } from "@/hooks/queries/displayItems";
 
 export default function HomePage() {
   //Fetch posts from sale, rent, trade

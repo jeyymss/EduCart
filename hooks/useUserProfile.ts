@@ -1,41 +1,30 @@
-// useUserProfile.ts
 import { useQuery } from "@tanstack/react-query";
-import { createClient } from "@/utils/supabase/client";
 
 export type UserProfile = {
   id: string;
-  full_name: string;
+  full_name: string | null;
   email: string;
-  role: string;
-  verification_status: string;
-  created_at: string;
+  role: string | null;
   avatar_url: string | null;
-  universities: { abbreviation: string | null } | null; // 1-to-1
+  background_url: string | null;
+  post_credits_balance: number;
+  universities: { id: number; abbreviation: string | null } | null;
+  created_at: string;
+  updated_at: string;
 };
 
 export function useUserProfile() {
-  const supabase = createClient();
-
-  return useQuery<UserProfile, Error>({
+  return useQuery<UserProfile>({
     queryKey: ["user-profile"],
     queryFn: async () => {
-      const { data: auth } = await supabase.auth.getUser();
-      if (!auth.user) throw new Error("Not logged in");
-
-      const { data, error } = await supabase
-        .from("users")
-        .select(
-          `
-          id, full_name, email, role, verification_status, created_at, avatar_url,
-          universities ( abbreviation )
-        `
-        )
-        .eq("id", auth.user.id)
-        .returns<UserProfile>()
-        .single();
-
-      if (error || !data) throw new Error(error?.message ?? "No row");
+      const res = await fetch("/api/user-profile-view/individual", {
+        credentials: "include",
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to fetch profile");
       return data;
     },
+    staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: true,
   });
 }
