@@ -22,7 +22,8 @@ export default function ConfirmEmailPage() {
 
 function ConfirmEmailClient() {
   const sp = useSearchParams();
-  const token_hash = sp.get("token_hash");
+  const code = sp.get("code"); // PKCE auth code when using redirect_to
+  const token_hash = sp.get("token_hash"); // when linking directly with {{ .TokenHash }}
   const type =
     (sp.get("type") as "signup" | "recovery" | "invite" | "magiclink" | null) ??
     "signup";
@@ -42,37 +43,50 @@ function ConfirmEmailClient() {
 
   useEffect(() => {
     const verify = async () => {
-      if (!token_hash || !type) {
-        setState("error");
-        setMessage("Invalid or missing confirmation link.");
-        return;
-      }
-      setState("verifying");
-
-      const { error } = await supabase.auth.verifyOtp({
-        type,
-        token_hash,
-      });
-
-      if (error) {
-        const msg = (error.message || "").toLowerCase();
-        if (msg.includes("already confirmed")) {
-          setState("already");
-          setMessage("Your email is already verified.");
+      // Flow A: redirected with PKCE code (most common when using emailRedirectTo/Additional Redirect URLs)
+      if (code) {
+        setState("verifying");
+        const { error } = await supabase.auth.exchangeCodeForSession(code);
+        // Even if the session exchange fails because the code was used/expired,
+        // the email is already verified (the verify step happened server-side).
+        if (error && !/already|used/i.test(error.message)) {
+          setState("error");
+          setMessage(error.message || "Verification failed.");
           return;
         }
-        setState("error");
-        setMessage(error.message || "Verification failed.");
+        setState("success");
+        setMessage("Your email has been confirmed. You can now log in.");
         return;
       }
 
-      setState("success");
-      setMessage("Your email has been confirmed. You can now log in.");
+      // Flow B: direct link with token_hash + type (when you craft the email URL yourself)
+      if (token_hash && type) {
+        setState("verifying");
+        const { error } = await supabase.auth.verifyOtp({ type, token_hash });
+        if (error) {
+          const msg = (error.message || "").toLowerCase();
+          if (msg.includes("already confirmed")) {
+            setState("already");
+            setMessage("Your email is already verified.");
+            return;
+          }
+          setState("error");
+          setMessage(error.message || "Verification failed.");
+          return;
+        }
+        setState("success");
+        setMessage("Your email has been confirmed. You can now log in.");
+        return;
+      }
+
+      // Neither flow present
+      setState("error");
+      setMessage("Invalid or missing confirmation link.");
     };
 
     verify();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [code, token_hash, type]);
 
   return (
     <PageFrame
