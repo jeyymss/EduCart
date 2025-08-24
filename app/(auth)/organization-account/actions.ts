@@ -38,7 +38,7 @@ export async function OrgRegister(formData: FormData) {
     email: OrgEmail,
     password: OrgPassword,
     options: {
-      emailRedirectTo: `${origin}/(auth)/confirm?email=${encodeURIComponent(
+      emailRedirectTo: `${origin}/confirm?email=${encodeURIComponent(
         OrgEmail
       )}`,
       data: {

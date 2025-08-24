@@ -52,9 +52,7 @@ export async function register(formData: FormData) {
     email,
     password,
     options: {
-      emailRedirectTo: `${origin}/(auth)/confirm?email=${encodeURIComponent(
-        email
-      )}`,
+      emailRedirectTo: `${origin}/confirm?email=${encodeURIComponent(email)}`,
       data: {
         name,
         full_name: name,

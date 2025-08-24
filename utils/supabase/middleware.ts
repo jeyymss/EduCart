@@ -6,7 +6,7 @@ const publicPaths = [
   "/", // Landing page
   "/login",
   "/signup",
-  "/callback",
+  "/confirm",
   "/error",
   "/reset-password",
   "/organization-account",
