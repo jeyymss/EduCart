@@ -1,13 +1,12 @@
 "use client";
 
 import { Suspense, useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/client";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, Loader2, TriangleAlert, Mail } from "lucide-react";
 
-// Prevent static prerender for this query-param page
 export const dynamic = "force-dynamic";
 
 type State = "idle" | "verifying" | "success" | "already" | "error";
@@ -22,13 +21,18 @@ export default function ConfirmEmailPage() {
 
 function ConfirmEmailClient() {
   const sp = useSearchParams();
-  const code = sp.get("code"); // PKCE auth code when using redirect_to
-  const token_hash = sp.get("token_hash"); // when linking directly with {{ .TokenHash }}
+  const router = useRouter();
+  const supabase = createClient();
+
+  // Two possible shapes:
+  // 1) Default Supabase email with redirect_to => /confirm?code=...
+  // 2) Custom email link we crafted => /confirm?token_hash=...&type=signup
+  const code = sp.get("code");
+  const token_hash = sp.get("token_hash");
   const type =
     (sp.get("type") as "signup" | "recovery" | "invite" | "magiclink" | null) ??
     "signup";
   const emailFromQuery = sp.get("email") || "";
-  const supabase = createClient();
 
   const [state, setState] = useState<State>("idle");
   const [message, setMessage] = useState<string>("");
@@ -43,23 +47,17 @@ function ConfirmEmailClient() {
 
   useEffect(() => {
     const verify = async () => {
-      // Flow A: redirected with PKCE code (most common when using emailRedirectTo/Additional Redirect URLs)
+      // --- Flow A: got PKCE ?code param ---
+      // Do NOT call exchangeCodeForSession (prevents auto-login and avoids code_verifier error).
       if (code) {
-        setState("verifying");
-        const { error } = await supabase.auth.exchangeCodeForSession(code);
-        // Even if the session exchange fails because the code was used/expired,
-        // the email is already verified (the verify step happened server-side).
-        if (error && !/already|used/i.test(error.message)) {
-          setState("error");
-          setMessage(error.message || "Verification failed.");
-          return;
-        }
         setState("success");
         setMessage("Your email has been confirmed. You can now log in.");
+        // Optional: clean the URL so refreshes don't show the code again
+        router.replace("/confirm");
         return;
       }
 
-      // Flow B: direct link with token_hash + type (when you craft the email URL yourself)
+      // --- Flow B: got token_hash + type (direct verify) ---
       if (token_hash && type) {
         setState("verifying");
         const { error } = await supabase.auth.verifyOtp({ type, token_hash });
@@ -76,10 +74,11 @@ function ConfirmEmailClient() {
         }
         setState("success");
         setMessage("Your email has been confirmed. You can now log in.");
+        router.replace("/confirm");
         return;
       }
 
-      // Neither flow present
+      // --- Neither param present ---
       setState("error");
       setMessage("Invalid or missing confirmation link.");
     };
@@ -221,7 +220,7 @@ function ResendConfirmation({
         type: "signup",
         email,
         options: {
-          // Route groups like (auth) are not part of the URL
+          // Route groups do not appear in the URL
           emailRedirectTo: `${origin}/confirm?email=${encodeURIComponent(
             email
           )}`,
@@ -230,14 +229,8 @@ function ResendConfirmation({
       if (error) throw error;
       setDone(true);
       setCooldown(45);
-    } catch (e: unknown) {
-      const msg =
-        e instanceof Error
-          ? e.message
-          : typeof e === "string"
-          ? e
-          : "Failed to resend email.";
-      setErr(msg);
+    } catch (e: any) {
+      setErr(e?.message ?? "Failed to resend email.");
     } finally {
       setSending(false);
     }

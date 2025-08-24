@@ -10,15 +10,12 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-
-  // if current route is /confirm, just render children directly
-  if (pathname === "/confirm") {
-    return <>{children}</>;
-  }
+  const isConfirmPage = pathname.startsWith("/confirm");
 
   return (
     <>
-      <HeaderLogin />
+      {/* Show header only if NOT /confirm */}
+      {!isConfirmPage && <HeaderLogin />}
       <main className="flex">
         <div className="w-full md:w-[45%]">{children}</div>
         <AuthFeatureCard />
