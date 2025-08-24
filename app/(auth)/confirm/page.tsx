@@ -24,17 +24,19 @@ function ConfirmEmailClient() {
   const sp = useSearchParams();
   const supabase = createClient();
 
+  // A) redirect_to style → /confirm?code=...
   const code = sp.get("code");
+  // B) token-hash style → /confirm?token_hash=...&type=signup
   const token_hash = sp.get("token_hash");
   const type =
     (sp.get("type") as "signup" | "recovery" | "invite" | "magiclink" | null) ??
     "signup";
+
   const emailFromQuery = sp.get("email") || "";
 
   const [state, setState] = useState<State>("idle");
   const [message, setMessage] = useState<string>("");
 
-  // prevent the effect from running the fallback after we've handled once
   const handledRef = useRef(false);
 
   const origin = useMemo(() => {
@@ -45,7 +47,7 @@ function ConfirmEmailClient() {
     return "http://localhost:3000";
   }, []);
 
-  // clean the URL WITHOUT navigation (keeps current UI)
+  // remove query params WITHOUT navigation so we don't re-run into the error branch
   const stripQuerySilently = () => {
     if (typeof window !== "undefined") {
       const { pathname, hash } = window.location;
@@ -54,51 +56,50 @@ function ConfirmEmailClient() {
   };
 
   useEffect(() => {
-    if (handledRef.current) return; // already processed once
+    if (handledRef.current) return;
 
     (async () => {
       setState("verifying");
 
-      // Hard guarantee: do NOT keep any session here
-      try {
-        const { data } = await supabase.auth.getSession();
-        if (data.session) await supabase.auth.signOut();
-      } catch {}
-
-      // A) PKCE ?code=... -> treat as confirmed (no exchange; no login)
+      // --- Flow A: PKCE code (auto-login by exchanging for a session) ---
       if (code) {
         handledRef.current = true;
+        const { error } = await supabase.auth.exchangeCodeForSession(code);
         await sleep(2000);
-        setState("success");
-        setMessage("Your email has been confirmed. You can now log in.");
-        stripQuerySilently(); // do not trigger navigation
+        if (error) {
+          setState("error");
+          setMessage(error.message || "Verification failed.");
+        } else {
+          setState("success");
+          setMessage("You're signed in. Welcome back!");
+        }
+        stripQuerySilently();
         return;
       }
 
-      // B) token_hash verify flow
+      // --- Flow B: token_hash verify (auto-login on success) ---
       if (token_hash && type) {
         handledRef.current = true;
         const { error } = await supabase.auth.verifyOtp({ type, token_hash });
         await sleep(2000);
-
         if (error) {
           const msg = (error.message || "").toLowerCase();
           if (msg.includes("already confirmed")) {
             setState("already");
-            setMessage("Your email is already verified.");
+            setMessage("Your email is already verified. You're signed in.");
           } else {
             setState("error");
             setMessage(error.message || "Verification failed.");
           }
         } else {
           setState("success");
-          setMessage("Your email has been confirmed. You can now log in.");
+          setMessage("You're signed in. Welcome to EduCart!");
         }
         stripQuerySilently();
         return;
       }
 
-      // C) No params at all -> error (only if nothing handled yet)
+      // --- Neither param present ---
       await sleep(2000);
       setState("error");
       setMessage("Invalid or missing confirmation link.");
@@ -121,13 +122,18 @@ function ConfirmEmailClient() {
       message={message}
     >
       {(state === "success" || state === "already") && (
-        <div className="mt-6">
-          <Link href="/login">
-            <Button className="w-full bg-[#E59E2C] hover:bg-[#d08a1c] text-white font-medium py-2 rounded-lg">
-              Go to Login
-            </Button>
-          </Link>
-        </div>
+        <>
+          <div className="mt-6">
+            <Link href="/home">
+              <Button className="w-full bg-[#E59E2C] hover:bg-[#d08a1c] text-white font-medium py-2 rounded-lg">
+                Go to Home
+              </Button>
+            </Link>
+          </div>
+          <p className="text-xs text-gray-500 mt-2">
+            You&apos;re now signed in on this device.
+          </p>
+        </>
       )}
 
       {state === "error" && (
@@ -188,7 +194,8 @@ function PageFrame({
               "Please wait while we confirm your email."}
             {(state === "success" || state === "already") && (
               <>
-                {message} <br /> Click the button below to log in.
+                {message} <br />
+                Use the button below to continue.
               </>
             )}
             {state === "error" && (
@@ -238,8 +245,8 @@ function ResendConfirmation({
       const { error } = await supabase.auth.resend({
         type: "signup",
         email,
-        // If your email template uses token-hash links, this redirect is ignored, which is fine.
         options: {
+          // Ignored if your email template uses token-hash (which is fine).
           emailRedirectTo: `${origin}/confirm?email=${encodeURIComponent(
             email
           )}`,
@@ -248,7 +255,6 @@ function ResendConfirmation({
       if (error) throw error;
       setDone(true);
       setCooldown(45);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (e: any) {
       setErr(e?.message ?? "Failed to resend email.");
     } finally {
