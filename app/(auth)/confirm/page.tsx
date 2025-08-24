@@ -1,7 +1,7 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,6 @@ import { CheckCircle2, Loader2, TriangleAlert, Mail } from "lucide-react";
 export const dynamic = "force-dynamic";
 
 type State = "idle" | "verifying" | "success" | "already" | "error";
-
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 export default function ConfirmEmailPage() {
@@ -23,21 +22,20 @@ export default function ConfirmEmailPage() {
 
 function ConfirmEmailClient() {
   const sp = useSearchParams();
-  const router = useRouter();
   const supabase = createClient();
 
-  // A) default Supabase flow (redirect_to): /confirm?code=...
   const code = sp.get("code");
-  // B) direct verify flow: /confirm?token_hash=...&type=signup
   const token_hash = sp.get("token_hash");
   const type =
     (sp.get("type") as "signup" | "recovery" | "invite" | "magiclink" | null) ??
     "signup";
-
   const emailFromQuery = sp.get("email") || "";
 
   const [state, setState] = useState<State>("idle");
   const [message, setMessage] = useState<string>("");
+
+  // prevent the effect from running the fallback after we've handled once
+  const handledRef = useRef(false);
 
   const origin = useMemo(() => {
     if (typeof window !== "undefined") return window.location.origin;
@@ -47,33 +45,39 @@ function ConfirmEmailClient() {
     return "http://localhost:3000";
   }, []);
 
+  // clean the URL WITHOUT navigation (keeps current UI)
+  const stripQuerySilently = () => {
+    if (typeof window !== "undefined") {
+      const { pathname, hash } = window.location;
+      window.history.replaceState({}, "", pathname + hash);
+    }
+  };
+
   useEffect(() => {
+    if (handledRef.current) return; // already processed once
+
     (async () => {
       setState("verifying");
 
-      // Hard guarantee: do NOT keep/establish any session here.
-      // If something (elsewhere) created a session cookie, drop it.
+      // Hard guarantee: do NOT keep any session here
       try {
         const { data } = await supabase.auth.getSession();
-        if (data.session) {
-          await supabase.auth.signOut();
-        }
-      } catch {
-        /* ignore */
-      }
+        if (data.session) await supabase.auth.signOut();
+      } catch {}
 
-      // --- Flow A: got PKCE ?code -> treat as confirmed, but DO NOT exchange (prevents auto-login)
+      // A) PKCE ?code=... -> treat as confirmed (no exchange; no login)
       if (code) {
+        handledRef.current = true;
         await sleep(2000);
         setState("success");
         setMessage("Your email has been confirmed. You can now log in.");
-        // Clean URL so refresh doesn't re-run with ?code
-        router.replace("/confirm");
+        stripQuerySilently(); // do not trigger navigation
         return;
       }
 
-      // --- Flow B: direct verify with token_hash
+      // B) token_hash verify flow
       if (token_hash && type) {
+        handledRef.current = true;
         const { error } = await supabase.auth.verifyOtp({ type, token_hash });
         await sleep(2000);
 
@@ -90,11 +94,11 @@ function ConfirmEmailClient() {
           setState("success");
           setMessage("Your email has been confirmed. You can now log in.");
         }
-        router.replace("/confirm");
+        stripQuerySilently();
         return;
       }
 
-      // --- Neither param present -> error after the 2s UX
+      // C) No params at all -> error (only if nothing handled yet)
       await sleep(2000);
       setState("error");
       setMessage("Invalid or missing confirmation link.");
@@ -234,8 +238,8 @@ function ResendConfirmation({
       const { error } = await supabase.auth.resend({
         type: "signup",
         email,
+        // If your email template uses token-hash links, this redirect is ignored, which is fine.
         options: {
-          // Route groups do not appear in the URL
           emailRedirectTo: `${origin}/confirm?email=${encodeURIComponent(
             email
           )}`,
