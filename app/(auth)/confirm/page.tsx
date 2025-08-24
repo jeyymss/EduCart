@@ -11,6 +11,8 @@ export const dynamic = "force-dynamic";
 
 type State = "idle" | "verifying" | "success" | "already" | "error";
 
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
 export default function ConfirmEmailPage() {
   return (
     <Suspense fallback={<PageFrame title="Verifying..." state="verifying" />}>
@@ -24,14 +26,14 @@ function ConfirmEmailClient() {
   const router = useRouter();
   const supabase = createClient();
 
-  // Two possible shapes:
-  // 1) Default Supabase email with redirect_to => /confirm?code=...
-  // 2) Custom email link we crafted => /confirm?token_hash=...&type=signup
+  // A) default Supabase flow (redirect_to): /confirm?code=...
   const code = sp.get("code");
+  // B) direct verify flow: /confirm?token_hash=...&type=signup
   const token_hash = sp.get("token_hash");
   const type =
     (sp.get("type") as "signup" | "recovery" | "invite" | "magiclink" | null) ??
     "signup";
+
   const emailFromQuery = sp.get("email") || "";
 
   const [state, setState] = useState<State>("idle");
@@ -46,44 +48,57 @@ function ConfirmEmailClient() {
   }, []);
 
   useEffect(() => {
-    const verify = async () => {
-      // --- Flow A: got PKCE ?code param ---
-      // Do NOT call exchangeCodeForSession (prevents auto-login and avoids code_verifier error).
+    (async () => {
+      setState("verifying");
+
+      // Hard guarantee: do NOT keep/establish any session here.
+      // If something (elsewhere) created a session cookie, drop it.
+      try {
+        const { data } = await supabase.auth.getSession();
+        if (data.session) {
+          await supabase.auth.signOut();
+        }
+      } catch {
+        /* ignore */
+      }
+
+      // --- Flow A: got PKCE ?code -> treat as confirmed, but DO NOT exchange (prevents auto-login)
       if (code) {
+        await sleep(2000);
         setState("success");
         setMessage("Your email has been confirmed. You can now log in.");
-        // Optional: clean the URL so refreshes don't show the code again
+        // Clean URL so refresh doesn't re-run with ?code
         router.replace("/confirm");
         return;
       }
 
-      // --- Flow B: got token_hash + type (direct verify) ---
+      // --- Flow B: direct verify with token_hash
       if (token_hash && type) {
-        setState("verifying");
         const { error } = await supabase.auth.verifyOtp({ type, token_hash });
+        await sleep(2000);
+
         if (error) {
           const msg = (error.message || "").toLowerCase();
           if (msg.includes("already confirmed")) {
             setState("already");
             setMessage("Your email is already verified.");
-            return;
+          } else {
+            setState("error");
+            setMessage(error.message || "Verification failed.");
           }
-          setState("error");
-          setMessage(error.message || "Verification failed.");
-          return;
+        } else {
+          setState("success");
+          setMessage("Your email has been confirmed. You can now log in.");
         }
-        setState("success");
-        setMessage("Your email has been confirmed. You can now log in.");
         router.replace("/confirm");
         return;
       }
 
-      // --- Neither param present ---
+      // --- Neither param present -> error after the 2s UX
+      await sleep(2000);
       setState("error");
       setMessage("Invalid or missing confirmation link.");
-    };
-
-    verify();
+    })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [code, token_hash, type]);
 
@@ -229,7 +244,6 @@ function ResendConfirmation({
       if (error) throw error;
       setDone(true);
       setCooldown(45);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (e: any) {
       setErr(e?.message ?? "Failed to resend email.");
     } finally {
