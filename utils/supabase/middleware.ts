@@ -1,20 +1,32 @@
-import { createServerClient } from "@supabase/ssr";
+// middleware.ts
 import { NextResponse, type NextRequest } from "next/server";
+import { createServerClient } from "@supabase/ssr";
 
-// paths that don't require authentication
-const publicPaths = [
-  "/", // Landing page
+/** Public routes (no auth required). Include /confirm and any children. */
+const PUBLIC_ROUTES = [
+  "/",
   "/login",
   "/signup",
-  "/confirm",
-  "/error",
   "/reset-password",
-  "/organization-account",
+  "/error",
+  "/confirm",
 ];
 
-export async function updateSession(request: NextRequest) {
+/** Prefixes that should be protected behind auth. Adjust for your app. */
+const PROTECTED_PREFIXES = ["/home", "/dashboard", "/organization", "/admin"];
+
+/** Helper: is this pathname a public route (exact or child path)? */
+function isPublicPath(pathname: string) {
+  return PUBLIC_ROUTES.some(
+    (r) => pathname === r || pathname.startsWith(r + "/")
+  );
+}
+
+export async function middleware(request: NextRequest) {
+  // Set up response we can mutate cookies on
   let supabaseResponse = NextResponse.next({ request });
 
+  // Supabase SSR client with cookie passthrough
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -36,66 +48,64 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  // 1) Verify session
+  const { pathname, search } = request.nextUrl;
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const currentPath = request.nextUrl.pathname;
-
-  // 2) Is this a public path?
-  const isPublicPath = publicPaths.some((path) => {
-    const pattern = path.replace(":id", "[^/]+");
-    const regex = new RegExp(`^${pattern}$`);
-    return regex.test(currentPath);
-  });
-
-  // 3) If not logged in and not a public path → send to /login
-  if (!user && !isPublicPath) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    url.searchParams.set("next", currentPath);
-    return NextResponse.redirect(url);
+  // 1) Public routes are always allowed (e.g., /confirm won't bounce to /login)
+  if (isPublicPath(pathname)) {
+    return supabaseResponse;
   }
 
-  // 4) If logged in, compute isAdmin using admin_users view/table
-  //    (A row with is_enabled=true means the user is an Admin.)
-  let isAdmin = false;
-  if (user) {
+  // 2) Gate protected prefixes behind auth
+  if (PROTECTED_PREFIXES.some((p) => pathname.startsWith(p))) {
+    if (!user) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/login";
+      url.searchParams.set("next", pathname + search); // preserve query
+      return NextResponse.redirect(url);
+    }
+  }
+
+  // 3) (Optional) Admin gating: only allow admins to /admin
+  if (pathname.startsWith("/admin")) {
+    if (!user) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/login";
+      url.searchParams.set("next", pathname + search);
+      return NextResponse.redirect(url);
+    }
+
+    // look up admin flag (keep or remove if you don't need it)
     const { data: adminRow } = await supabase
-      .from("admin_users") // <-- public view recommended
+      .from("admin_users") // you mentioned this table/view
       .select("is_enabled")
       .eq("user_id", user.id)
       .maybeSingle();
 
-    isAdmin = !!adminRow?.is_enabled;
-  }
-
-  // 5) Protect /admin routes → only Admins may continue
-  if (currentPath.startsWith("/admin")) {
-    if (!user) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/login";
-      url.searchParams.set("next", currentPath);
-      return NextResponse.redirect(url);
-    }
+    const isAdmin = !!adminRow?.is_enabled;
     if (!isAdmin) {
-      // Non-admin trying to access /admin → bounce to user home (or your user dashboard)
       const url = new URL("/home", request.url);
       return NextResponse.redirect(url);
     }
   }
 
-  // 6) Smart redirects away from login/signup/root when already authenticated
+  // 4) (Optional) If already logged in, keep users away from auth pages
   if (
     user &&
-    (currentPath === "/login" ||
-      currentPath === "/signup" ||
-      currentPath === "/")
+    (pathname === "/login" || pathname === "/signup" || pathname === "/")
   ) {
-    const url = new URL(isAdmin ? "/admin/dashboard" : "/home", request.url);
+    const url = new URL("/home", request.url);
     return NextResponse.redirect(url);
   }
 
   return supabaseResponse;
 }
+
+/** Apply to all routes except static assets/images/icons. */
+export const config = {
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)).*)",
+  ],
+};
