@@ -14,8 +14,8 @@ export function HeaderWrapper() {
       pathname === "/signup" ||
       pathname === "/organization-account" ||
       pathname === "/reset-password" ||
-      pathname === "/organization/dashboard" ||
-      pathname === "/organization/wallet" ||
+      pathname === "/organization-account/dashboard" ||
+      pathname === "/organization-account/wallet" ||
       pathname === "/admin/dashboard" ||
       pathname === "/admin/accounts" ||
       pathname === "/admin/wallet" ||

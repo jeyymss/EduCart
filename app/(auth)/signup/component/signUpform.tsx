@@ -421,7 +421,7 @@ export default function SignUpForm() {
         <div>
           <h3>
             Register an Organiztion?{" "}
-            <Link href={"/organization-account"}>
+            <Link href={"/organization-signup"}>
               <span>Create</span>
             </Link>
           </h3>

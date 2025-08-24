@@ -9,6 +9,7 @@ const publicPaths = [
   "/confirm",
   "/error",
   "/reset-password",
+  "/organization-signup",
 ];
 
 export async function updateSession(request: NextRequest) {

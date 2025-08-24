@@ -47,11 +47,60 @@ function ConfirmEmailClient() {
     return "http://localhost:3000";
   }, []);
 
+  // NEW: dynamic redirect target based on account category (individual vs organization)
+  const [redirectHref, setRedirectHref] = useState<string>("/home");
+  const [redirectLabel, setRedirectLabel] = useState<string>("Go to Home");
+  const [resolvingRole, setResolvingRole] = useState<boolean>(false);
+
   // remove query params WITHOUT navigation so we don't re-run into the error branch
   const stripQuerySilently = () => {
     if (typeof window !== "undefined") {
       const { pathname, hash } = window.location;
       window.history.replaceState({}, "", pathname + hash);
+    }
+  };
+
+  // Resolve the correct redirect path by checking auth metadata, then DB view as fallback
+  const resolveRedirectForUser = async () => {
+    setResolvingRole(true);
+    try {
+      const { data: userRes } = await supabase.auth.getUser();
+      const user = userRes?.user || null;
+
+      // default → individual
+      let role: string | null =
+        (user?.user_metadata?.role as string | undefined) ?? null;
+
+      // Fallback: query your public_user_profiles view if role not in metadata
+      if (!role && user?.id) {
+        const { data: prof } = await supabase
+          .from("public_user_profiles")
+          .select("role")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        role = (prof?.role as string | undefined) ?? null;
+      }
+
+      const normalized = (role || "").trim().toLowerCase();
+
+      if (
+        normalized === "organization" ||
+        normalized === "organisational" ||
+        normalized === "org"
+      ) {
+        setRedirectHref("/organization-account/dashboard");
+        setRedirectLabel("Go to Organization Dashboard");
+      } else {
+        // Treat everything else as individual (Student / Faculty / Alumni)
+        setRedirectHref("/home");
+        setRedirectLabel("Go to Home");
+      }
+    } catch {
+      // If anything fails, stick to the safe individual default
+      setRedirectHref("/home");
+      setRedirectLabel("Go to Home");
+    } finally {
+      setResolvingRole(false);
     }
   };
 
@@ -65,13 +114,15 @@ function ConfirmEmailClient() {
       if (code) {
         handledRef.current = true;
         const { error } = await supabase.auth.exchangeCodeForSession(code);
-        await sleep(2000);
+        await sleep(1200);
         if (error) {
           setState("error");
           setMessage(error.message || "Verification failed.");
         } else {
           setState("success");
           setMessage("You're signed in. Welcome back!");
+          // Decide redirect path now that we have a session
+          await resolveRedirectForUser();
         }
         stripQuerySilently();
         return;
@@ -81,12 +132,13 @@ function ConfirmEmailClient() {
       if (token_hash && type) {
         handledRef.current = true;
         const { error } = await supabase.auth.verifyOtp({ type, token_hash });
-        await sleep(2000);
+        await sleep(1200);
         if (error) {
           const msg = (error.message || "").toLowerCase();
           if (msg.includes("already confirmed")) {
             setState("already");
             setMessage("Your email is already verified. You're signed in.");
+            await resolveRedirectForUser();
           } else {
             setState("error");
             setMessage(error.message || "Verification failed.");
@@ -94,13 +146,14 @@ function ConfirmEmailClient() {
         } else {
           setState("success");
           setMessage("You're signed in. Welcome to EduCart!");
+          await resolveRedirectForUser();
         }
         stripQuerySilently();
         return;
       }
 
       // --- Neither param present ---
-      await sleep(2000);
+      await sleep(800);
       setState("error");
       setMessage("Invalid or missing confirmation link.");
     })();
@@ -124,9 +177,13 @@ function ConfirmEmailClient() {
       {(state === "success" || state === "already") && (
         <>
           <div className="mt-6">
-            <Link href="/home">
-              <Button className="w-full bg-[#E59E2C] hover:bg-[#d08a1c] text-white font-medium py-2 rounded-lg">
-                Go to Home
+            {/* Use the resolved redirect path/label */}
+            <Link href={redirectHref} prefetch>
+              <Button
+                className="w-full bg-[#E59E2C] hover:bg-[#d08a1c] text-white font-medium py-2 rounded-lg"
+                disabled={resolvingRole}
+              >
+                {resolvingRole ? "Preparing your dashboard..." : redirectLabel}
               </Button>
             </Link>
           </div>
@@ -246,7 +303,7 @@ function ResendConfirmation({
         type: "signup",
         email,
         options: {
-          // Ignored if your email template uses token-hash (which is fine).
+          // Ignored if your template uses token-hash (OK).
           emailRedirectTo: `${origin}/confirm?email=${encodeURIComponent(
             email
           )}`,
