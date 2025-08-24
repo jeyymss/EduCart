@@ -89,16 +89,16 @@ function ConfirmEmailClient() {
         normalized === "org"
       ) {
         setRedirectHref("/organization-account/dashboard");
-        setRedirectLabel("Go to Organization Dashboard");
+        setRedirectLabel("Get Started");
       } else {
         // Treat everything else as individual (Student / Faculty / Alumni)
         setRedirectHref("/home");
-        setRedirectLabel("Go to Home");
+        setRedirectLabel("Get Started");
       }
     } catch {
       // If anything fails, stick to the safe individual default
       setRedirectHref("/home");
-      setRedirectLabel("Go to Home");
+      setRedirectLabel("Get Started");
     } finally {
       setResolvingRole(false);
     }
