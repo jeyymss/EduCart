@@ -244,6 +244,7 @@ function ResendConfirmation({
       if (error) throw error;
       setDone(true);
       setCooldown(45);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (e: any) {
       setErr(e?.message ?? "Failed to resend email.");
     } finally {
