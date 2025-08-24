@@ -22,7 +22,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem className="flex item-center justify-center">
-            <Link href={"/organization/dashboard"}>
+            <Link href={"/organization-account/dashboard"}>
               <Image
                 src={"/logo.png"}
                 alt="EduCart Logo"

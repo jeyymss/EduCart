@@ -1,7 +1,7 @@
-// app/(auth)/org-signup/actions.ts
 "use server";
 
 import { createClient } from "@/utils/supabase/server";
+import { getOrigin } from "@/lib/getOrigin";
 
 export async function OrgRegister(formData: FormData) {
   const supabase = await createClient();
@@ -32,12 +32,16 @@ export async function OrgRegister(formData: FormData) {
     return { error: "Invalid university." };
   }
 
+  const origin = getOrigin();
+
   const { data, error: signUpError } = await supabase.auth.signUp({
     email: OrgEmail,
     password: OrgPassword,
     options: {
+      emailRedirectTo: `${origin}/(auth)/confirm?email=${encodeURIComponent(
+        OrgEmail
+      )}`,
       data: {
-        // 👇 send both to be safe/compatible with dashboards & other libs
         name: OrgName,
         full_name: OrgName,
 
@@ -51,15 +55,12 @@ export async function OrgRegister(formData: FormData) {
   });
 
   if (signUpError) {
-    // This is where the “Database error saving new user” would show if role was missing.
     return { error: signUpError.message || "Signup failed." };
   }
 
-  // Supabase nuance: if identities is empty, the email is already registered.
   if (!data?.user || data.user.identities?.length === 0) {
     return { error: "Email already registered. Try logging in." };
   }
 
-  // 🚫 Do NOT manually insert into public.organizations — the DB trigger already did it.
-  return { ok: true };
+  return { ok: true, confirmationSent: true };
 }

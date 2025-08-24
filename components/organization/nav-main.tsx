@@ -17,7 +17,7 @@ export function OrgNavMain() {
       <SidebarGroupLabel>General</SidebarGroupLabel>
       <SidebarMenu>
         <SidebarMenuItem>
-          <Link href={"/organization/dashboard"}>
+          <Link href={"/organization-account/dashboard"}>
             <SidebarMenuButton className="hover: cursor-pointer">
               <LayoutDashboard />
               <span>Dashboard</span>
@@ -25,7 +25,7 @@ export function OrgNavMain() {
           </Link>
         </SidebarMenuItem>
         <SidebarMenuItem>
-          <Link href={"/organization/accounts"}>
+          <Link href={"/organization-account/accounts"}>
             <SidebarMenuButton className="hover: cursor-pointer">
               <UserPen />
               <span>Manage Accounts</span>
@@ -33,7 +33,7 @@ export function OrgNavMain() {
           </Link>
         </SidebarMenuItem>
         <SidebarMenuItem>
-          <Link href={"/organization/wallet"}>
+          <Link href={"/organization-account/wallet"}>
             <SidebarMenuButton className="hover: cursor-pointer">
               <Wallet />
               <span>Wallet</span>
@@ -41,7 +41,7 @@ export function OrgNavMain() {
           </Link>
         </SidebarMenuItem>
         <SidebarMenuItem>
-          <Link href={"/organization/reports"}>
+          <Link href={"/organization-account/reports"}>
             <SidebarMenuButton className="hover: cursor-pointer">
               <Flag />
               <span>Reports</span>

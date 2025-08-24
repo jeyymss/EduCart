@@ -2,13 +2,14 @@
 
 import { createClient } from "@/utils/supabase/server";
 import { uploadImage } from "@/app/api/uploadImage/route";
+import { getOrigin } from "@/lib/getOrigin";
 
 export async function register(formData: FormData) {
   const supabase = await createClient();
 
   // ---- extract & normalize inputs ----
   const roleRaw = (formData.get("role") as string) ?? "";
-  const role = roleRaw.trim(); // e.g., "Student" | "Faculty" | "Alumni"
+  const role = roleRaw.trim(); // "Student" | "Faculty" | "Alumni"
 
   const name = (formData.get("name") as string)?.trim() ?? "";
   const email = (formData.get("email") as string)?.trim() ?? "";
@@ -45,16 +46,19 @@ export async function register(formData: FormData) {
     idImageUrl = urls?.[0] ?? null;
   }
 
-  // ---- sign up (DB trigger will insert into public.users) ----
+  // ---- sign up + tell Supabase where to redirect after email click ----
+  const origin = getOrigin();
   const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
     email,
     password,
     options: {
+      emailRedirectTo: `${origin}/(auth)/confirm?email=${encodeURIComponent(
+        email
+      )}`,
       data: {
-        name, // 👈
-        full_name: name, // 👈
-
-        role, // "student" | "faculty" | "alumni"
+        name,
+        full_name: name,
+        role, // "Student" | "Faculty" | "Alumni"
         university_id: universityId,
         verification_status: verificationStatus,
         id_verification_url: idImageUrl,
@@ -62,7 +66,6 @@ export async function register(formData: FormData) {
     },
   });
 
-  // Real auth error handling
   if (signUpError) {
     const msg = signUpError.message?.toLowerCase?.() ?? "";
     if (
@@ -74,13 +77,9 @@ export async function register(formData: FormData) {
     return { error: signUpError.message || "Signup failed." };
   }
 
-  // Supabase quirk: already-registered email -> identities = []
   if (!signUpData?.user || signUpData.user.identities?.length === 0) {
     return { error: "Email already registered." };
   }
 
-  // ⛔️ No manual insert into public.users here.
-  // The SECURITY DEFINER trigger on auth.users will create the row.
-
-  return { success: true };
+  return { success: true, confirmationSent: true };
 }
