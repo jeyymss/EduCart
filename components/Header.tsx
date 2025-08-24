@@ -2,8 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useRouter, usePathname } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { Button } from "./ui/button";
 import {
@@ -32,35 +32,36 @@ import { RentForm } from "./forms/RentForm";
 import { TradeForm } from "./forms/TradeForm";
 import { EmergencyForm } from "./forms/EmergencyForm";
 import { PasaBuyForm } from "./forms/PasaBuyForm";
-
+import GiveawayForm from "./forms/GiveawayForm";
 import {
   NavigationMenu,
   NavigationMenuItem,
   NavigationMenuLink,
   NavigationMenuList,
 } from "./ui/navigation-menu";
-import { usePathname } from "next/navigation";
-import GiveawayForm from "./forms/GiveawayForm";
 
 export function Header() {
+  // ✅ Always call hooks in the same order
+  const pathname = usePathname();
+  const isConfirmPage = pathname?.startsWith("/confirm") ?? false;
+
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [selectedType, setSelectedType] = useState("");
+
   const router = useRouter();
-  const supabase = createClient();
-  const pathname = usePathname();
+  const supabase = useMemo(() => createClient(), []);
 
   useEffect(() => {
-    const checkSession = async () => {
+    if (isConfirmPage) return; // skip on /confirm
+    (async () => {
       const {
         data: { session },
       } = await supabase.auth.getSession();
       setIsLoggedIn(!!session);
-    };
-
-    checkSession();
-  }, [supabase]);
+    })();
+  }, [supabase, isConfirmPage]);
 
   const handleLogout = async () => {
     setShowLogoutModal(true);
@@ -72,6 +73,9 @@ export function Header() {
 
   const ProfilePage = () => router.push("/profile");
   const resetModal = () => setSelectedType("");
+
+  // ✅ Safe to return null after hooks were called
+  if (isConfirmPage) return null;
 
   const navItems = [
     { label: "Home", href: "/home" },
@@ -123,7 +127,7 @@ export function Header() {
                 Post
               </Button>
             </DialogTrigger>
-            <DialogContent className="">
+            <DialogContent>
               <DialogHeader>
                 <div className="text-center">
                   <DialogTitle>Create Listing</DialogTitle>
@@ -132,10 +136,7 @@ export function Header() {
                   </DialogDescription>
                 </div>
               </DialogHeader>
-              <Select
-                onValueChange={(value) => setSelectedType(value)}
-                value={selectedType}
-              >
+              <Select onValueChange={setSelectedType} value={selectedType}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select Listing Type" />
                 </SelectTrigger>
@@ -153,22 +154,22 @@ export function Header() {
 
               {/* Render the correct form */}
               <div>
-                {selectedType === "Sale" && selectedType && (
+                {selectedType === "Sale" && (
                   <ForSaleForm selectedType={selectedType} />
                 )}
-                {selectedType === "Rent" && selectedType && (
+                {selectedType === "Rent" && (
                   <RentForm selectedType={selectedType} />
                 )}
-                {selectedType === "Trade" && selectedType && (
+                {selectedType === "Trade" && (
                   <TradeForm selectedType={selectedType} />
                 )}
-                {selectedType === "Emergency Lending" && selectedType && (
+                {selectedType === "Emergency Lending" && (
                   <EmergencyForm selectedType={selectedType} />
                 )}
-                {selectedType === "PasaBuy" && selectedType && (
+                {selectedType === "PasaBuy" && (
                   <PasaBuyForm selectedType={selectedType} />
                 )}
-                {selectedType === "Giveaway" && selectedType && (
+                {selectedType === "Giveaway" && (
                   <GiveawayForm selectedType={selectedType} />
                 )}
               </div>
@@ -178,7 +179,10 @@ export function Header() {
           {/* USER MENU */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="hover:cursor-pointer">
+              <button
+                className="hover:cursor-pointer"
+                aria-label="Open user menu"
+              >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width={24}
@@ -225,7 +229,7 @@ export function Header() {
       {/* MOBILE MENU BUTTON */}
       {isLoggedIn === false && (
         <div className="md:hidden">
-          <button onClick={() => setIsOpen(!isOpen)}>
+          <button onClick={() => setIsOpen(!isOpen)} aria-label="Toggle menu">
             {isOpen ? (
               <svg
                 xmlns="http://www.w3.org/2000/svg"

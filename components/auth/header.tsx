@@ -13,8 +13,11 @@ export default function HeaderLogin() {
   const isLoginPage = pathname === "/login";
   const isSignupPage =
     pathname === "/signup" || pathname === "/organization-account";
+  const isConfirmPage = pathname.startsWith("/confirm");
 
-  if (!isLoginPage && !isSignupPage) return null; // don't show header on other pages
+  // don't show header on other pages, or on confirm
+  if (!isLoginPage && !isSignupPage) return null;
+  if (isConfirmPage) return null;
 
   return (
     <header className="relative w-full flex items-center justify-between md:px-10 lg:px-20 px-6 py-4 bg-white z-50">
