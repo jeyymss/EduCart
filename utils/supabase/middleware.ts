@@ -58,12 +58,11 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // 4) If logged in, compute isAdmin using admin_users view/table
-  //    (A row with is_enabled=true means the user is an Admin.)
+  // 4) If logged in, compute isAdmin
   let isAdmin = false;
   if (user) {
     const { data: adminRow } = await supabase
-      .from("admin_users") // <-- public view recommended
+      .from("admin_users")
       .select("is_enabled")
       .eq("user_id", user.id)
       .maybeSingle();
@@ -71,7 +70,20 @@ export async function updateSession(request: NextRequest) {
     isAdmin = !!adminRow?.is_enabled;
   }
 
-  // 5) Protect /admin routes → only Admins may continue
+  // 4b) Resolve the user's role
+  let role: string | null = null;
+  if (user) {
+    const { data: profile } = await supabase
+      .from("public_user_profiles") // or your "users" table
+      .select("role")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    role =
+      profile?.role ?? (user.user_metadata?.role as string | undefined) ?? null;
+  }
+
+  // 5) Protect /admin → only Admins may continue
   if (currentPath.startsWith("/admin")) {
     if (!user) {
       const url = request.nextUrl.clone();
@@ -80,8 +92,42 @@ export async function updateSession(request: NextRequest) {
       return NextResponse.redirect(url);
     }
     if (!isAdmin) {
-      // Non-admin trying to access /admin → bounce to user home (or your user dashboard)
       const url = new URL("/home", request.url);
+      return NextResponse.redirect(url);
+    }
+  }
+
+  // 5b) Protect /organization-account → only Organization role
+  if (currentPath.startsWith("/organization-account")) {
+    if (!user) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/login";
+      url.searchParams.set("next", currentPath);
+      return NextResponse.redirect(url);
+    }
+    const isOrg = (role ?? "").toLowerCase() === "organization";
+    if (!isOrg) {
+      const url = new URL("/home", request.url);
+      url.searchParams.set("blocked", "org-only");
+      return NextResponse.redirect(url);
+    }
+  }
+
+  // 5c) Block Organization role from user-only routes
+  const userOnlyPrefixes = [
+    "/home",
+    "/browse",
+    "/businesses",
+    "/organizations",
+  ];
+  if ((role ?? "").toLowerCase() === "organization") {
+    const isUserOnlyPath = userOnlyPrefixes.some((prefix) =>
+      currentPath.startsWith(prefix)
+    );
+    if (isUserOnlyPath) {
+      // bounce orgs away from student/faculty/alumni areas
+      const url = new URL("/organization-account/dashboard", request.url);
+      url.searchParams.set("blocked", "user-only");
       return NextResponse.redirect(url);
     }
   }
@@ -93,7 +139,14 @@ export async function updateSession(request: NextRequest) {
       currentPath === "/signup" ||
       currentPath === "/")
   ) {
-    const url = new URL(isAdmin ? "/admin/dashboard" : "/home", request.url);
+    const url = new URL(
+      isAdmin
+        ? "/admin/dashboard"
+        : (role ?? "").toLowerCase() === "organization"
+        ? "/organization-account"
+        : "/home",
+      request.url
+    );
     return NextResponse.redirect(url);
   }
 
