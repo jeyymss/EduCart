@@ -11,6 +11,7 @@ import RentDetails from "@/components/posts/itemDetails/rentDetails";
 import TradeDetails from "@/components/posts/itemDetails/tradeDetails";
 import { getRelativeTime } from "@/utils/getRelativeTime";
 import { usePublicProfile } from "@/hooks/queries/profiles";
+import MessageSellerButton from "@/components/MessageSellerBtn";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function renderDetails(item: any) {
@@ -54,6 +55,8 @@ export default function ItemDetailsPage() {
     .slice(0, 2)
     .toUpperCase();
 
+  console.log({ item_post_id: item.post_id, item });
+
   const avatarSrc = lister?.avatar_url ?? undefined;
 
   return (
@@ -80,9 +83,14 @@ export default function ItemDetailsPage() {
             </div>
           </div>
 
-          <Button asChild variant="secondary">
-            <Link href={`/${item.post_user_id}`}>View lister</Link>
-          </Button>
+          <div className="flex gap-2">
+            <Button asChild variant="secondary">
+              <Link href={`/${item.post_user_id}`}>View lister</Link>
+            </Button>
+
+            {/* ✅ New: Message Seller button */}
+            <MessageSellerButton postId={item.post_id} />
+          </div>
         </div>
       )}
 
