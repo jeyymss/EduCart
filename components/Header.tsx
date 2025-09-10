@@ -39,9 +39,11 @@ import {
   NavigationMenuLink,
   NavigationMenuList,
 } from "./ui/navigation-menu";
+import { useUserProfile } from "@/hooks/useUserProfile";
+import { BadgeCent } from "lucide-react";
 
 export function Header() {
-  // ✅ Always call hooks in the same order
+  const { data: user, isLoading } = useUserProfile();
   const pathname = usePathname();
   const isConfirmPage = pathname?.startsWith("/confirm") ?? false;
 
@@ -176,6 +178,11 @@ export function Header() {
             </DialogContent>
           </Dialog>
 
+          {/* DISPLAY USER CREDIT BALANCE */}
+          <div className="flex">
+              <BadgeCent /> 
+              {user?.post_credits_balance}
+          </div>
           {/* USER MENU */}
           <DropdownMenu>
             <Link href={"/messages"}>

@@ -9,18 +9,16 @@ export function HeaderWrapper() {
   const [showHeader, setShowHeader] = useState(true);
 
   useEffect(() => {
-    const hide =
-      pathname === "/login" ||
-      pathname === "/signup" ||
-      pathname === "/organization-account" ||
-      pathname === "/reset-password" ||
-      pathname === "/organization-account/dashboard" ||
-      pathname === "/organization-account/wallet" ||
-      pathname === "/admin/dashboard" ||
-      pathname === "/admin/accounts" ||
-      pathname === "/admin/wallet" ||
-      pathname === "/admin/reports";
-    setShowHeader(!hide);
+    if (!pathname) return;
+
+    const hiddenPrefixes = ["/admin", "/organization-account"];
+    const hiddenExact = ["/login", "/signup", "/reset-password"];
+
+    const shouldHide =
+      hiddenExact.includes(pathname) ||
+      hiddenPrefixes.some((prefix) => pathname.startsWith(prefix));
+
+    setShowHeader(!shouldHide);
   }, [pathname]);
 
   return showHeader ? <Header /> : null;

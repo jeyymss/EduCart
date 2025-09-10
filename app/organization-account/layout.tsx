@@ -45,7 +45,9 @@ export default function OrganizationLayout({
             </Breadcrumb>
           </div>
         </header>
-        {children}
+        <div className="space-y-6 p-6">
+          {children}
+        </div>
       </SidebarInset>
     </SidebarProvider>
   );

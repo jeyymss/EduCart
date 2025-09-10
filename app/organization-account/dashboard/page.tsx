@@ -11,7 +11,7 @@ export default function OrganizationDashboard() {
   if (!org) return <div>No organization profile found.</div>;
 
   return (
-    <div className="space-y-6 p-10">
+    <div className="space-y-6">
       {org.background_url && (
         <div className="relative h-40 w-full overflow-hidden rounded-xl">
           {/* eslint-disable-next-line @next/next/no-img-element */}
