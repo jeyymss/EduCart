@@ -15,7 +15,18 @@ import { useState } from "react"
 import Link from "next/link"
 import MessageSellerButton from "@/components/MessageSellerBtn"
 
-function renderDetails(item: any) {
+// Define the expected type of a product item
+type ProductItem = {
+  post_id: string
+  post_type_name: "Sale" | "Rent" | "Trade"
+  image_urls?: string[]
+  item_title: string
+  full_name?: string
+  created_at?: string
+  post_user_id?: string
+}
+
+function renderDetails(item: ProductItem) {
   switch (item.post_type_name) {
     case "Sale":
       return <SaleDetails item={item} />
@@ -37,8 +48,7 @@ export default function ItemDetailsPage() {
   const { data: item, isLoading, error } = useProductDetails(id)
 
   // once item is loaded, fetch seller public profile for avatar
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const listerUserId = (item as any)?.post_user_id as string | undefined
+  const listerUserId = item?.post_user_id
   const { data: lister } = usePublicProfile(listerUserId)
 
   if (!id) return <div className="text-red-600">Invalid or missing item ID</div>
@@ -47,7 +57,7 @@ export default function ItemDetailsPage() {
 
   const initials = (item.full_name ?? "U")
     .split(" ")
-    .map((s: string) => s[0])
+    .map((s) => s[0])
     .join("")
     .slice(0, 2)
     .toUpperCase()
@@ -91,15 +101,22 @@ export default function ItemDetailsPage() {
 
             {Array.isArray(item.image_urls) && item.image_urls.length > 1 && (
               <div className="flex gap-3">
-                {item.image_urls.slice(0, 5).map((url: string, index: number) => (
+                {item.image_urls.slice(0, 5).map((url, index) => (
                   <button
                     key={index}
                     onClick={() => setSelectedImageIndex(index)}
                     className={`relative w-20 h-20 bg-white rounded-lg overflow-hidden shadow-sm transition-all ${
-                      selectedImageIndex === index ? "ring-2 ring-[#102E4A]" : "hover:ring-2 hover:ring-gray-300"
+                      selectedImageIndex === index
+                        ? "ring-2 ring-[#102E4A]"
+                        : "hover:ring-2 hover:ring-gray-300"
                     }`}
                   >
-                    <Image src={url || "/placeholder.svg"} alt={`Image ${index + 1}`} fill className="object-cover" />
+                    <Image
+                      src={url || "/placeholder.svg"}
+                      alt={`Image ${index + 1}`}
+                      fill
+                      className="object-cover"
+                    />
                   </button>
                 ))}
               </div>
@@ -109,7 +126,7 @@ export default function ItemDetailsPage() {
           {/* Right side - Product details */}
           <div className="space-y-6">
             <div className="flex items-start justify-between">
-              <div className="flex-1">{renderDetails(item)}</div>
+              <div className="flex-1">{renderDetails(item as ProductItem)}</div>
               <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-600">
                 <Heart className="h-7 w-7" />
               </Button>
