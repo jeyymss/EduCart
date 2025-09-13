@@ -4,13 +4,13 @@ type TradeItem = {
   item_title: string
   category_name?: string
   item_description?: string
-  item_price?: number
+  item_price?: number | null // explicitly allow null just in case
   item_trade?: string
   item_condition?: string
 }
 
 export default function TradeDetails({ item }: { item: TradeItem }) {
-  const hasPrice = item.item_price !== undefined
+  const hasPrice = typeof item.item_price === "number" && !isNaN(item.item_price)
   const hasTrade = !!item.item_trade
 
   return (
