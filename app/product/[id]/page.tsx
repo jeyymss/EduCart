@@ -15,19 +15,8 @@ import { useState } from "react"
 import Link from "next/link"
 import MessageSellerButton from "@/components/MessageSellerBtn"
 
-// Define the expected type of a product item
-type ProductItem = {
-  post_id: string
-  post_type_name: "Sale" | "Rent" | "Trade"
-  image_urls?: string[]
-  item_title: string
-  full_name?: string
-  created_at?: string
-  post_user_id?: string
-}
-
-function renderDetails(item: ProductItem) {
-  switch (item.post_type_name) {
+function renderDetails(item: any) {
+  switch (item?.post_type_name) {
     case "Sale":
       return <SaleDetails item={item} />
     case "Rent":
@@ -42,14 +31,13 @@ function renderDetails(item: ProductItem) {
 export default function ItemDetailsPage() {
   const params = useParams()
   const router = useRouter()
-  const id = params.id as string
+  const id = params?.id as string | undefined
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
 
-  const { data: item, isLoading, error } = useProductDetails(id)
+  const { data: item, isLoading, error } = useProductDetails(id ?? "")
 
-  // once item is loaded, fetch seller public profile for avatar
-  const listerUserId = item?.post_user_id
-  const { data: lister } = usePublicProfile(listerUserId)
+  const listerUserId = item?.post_user_id as string | undefined
+  const { data: lister } = usePublicProfile(listerUserId ?? "")
 
   if (!id) return <div className="text-red-600">Invalid or missing item ID</div>
   if (error) return <div className="text-red-600">Item not found or error: {error.message}</div>
@@ -57,12 +45,10 @@ export default function ItemDetailsPage() {
 
   const initials = (item.full_name ?? "U")
     .split(" ")
-    .map((s) => s[0])
+    .map((s: string) => s[0])
     .join("")
     .slice(0, 2)
     .toUpperCase()
-
-  console.log({ item_post_id: item.post_id, item })
 
   const avatarSrc = lister?.avatar_url ?? undefined
 
@@ -92,7 +78,7 @@ export default function ItemDetailsPage() {
               <div className="relative aspect-square bg-white rounded-2xl overflow-hidden shadow-sm">
                 <Image
                   src={item.image_urls[selectedImageIndex] || "/placeholder.svg"}
-                  alt={item.item_title}
+                  alt={item.item_title ?? "Item image"}
                   fill
                   className="object-cover"
                 />
@@ -101,7 +87,7 @@ export default function ItemDetailsPage() {
 
             {Array.isArray(item.image_urls) && item.image_urls.length > 1 && (
               <div className="flex gap-3">
-                {item.image_urls.slice(0, 5).map((url, index) => (
+                {item.image_urls.slice(0, 5).map((url: string, index: number) => (
                   <button
                     key={index}
                     onClick={() => setSelectedImageIndex(index)}
@@ -126,7 +112,7 @@ export default function ItemDetailsPage() {
           {/* Right side - Product details */}
           <div className="space-y-6">
             <div className="flex items-start justify-between">
-              <div className="flex-1">{renderDetails(item as ProductItem)}</div>
+              <div className="flex-1">{renderDetails(item)}</div>
               <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-600">
                 <Heart className="h-7 w-7" />
               </Button>

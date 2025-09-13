@@ -10,6 +10,9 @@ type TradeItem = {
 }
 
 export default function TradeDetails({ item }: { item: TradeItem }) {
+  const hasPrice = item.item_price !== undefined
+  const hasTrade = !!item.item_trade
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
@@ -25,29 +28,24 @@ export default function TradeDetails({ item }: { item: TradeItem }) {
         <div>
           <h2 className="text-sm font-medium text-gray-500 mb-1">Description</h2>
           <p className="text-gray-700 leading-relaxed">
-            {item.item_description ?? "No description provided."}
+            {item.item_description || "No description provided."}
           </p>
         </div>
 
-        {item.item_price && (
+        {(hasPrice || hasTrade) && (
           <div>
-            <h2 className="text-sm font-medium text-gray-500 mb-1">Price + Trade</h2>
+            <h2 className="text-sm font-medium text-gray-500 mb-1">Offer</h2>
             <p className="text-2xl font-bold text-gray-900">
-              ₱{item.item_price.toLocaleString()} + trade
+              {hasPrice ? `₱${item.item_price!.toLocaleString()}` : ""}
+              {hasPrice && hasTrade ? " + " : ""}
+              {hasTrade ? `Trade for ${item.item_trade}` : ""}
             </p>
-          </div>
-        )}
-
-        {item.item_trade && (
-          <div>
-            <h2 className="text-sm font-medium text-gray-500 mb-1">Looking to Trade For</h2>
-            <p className="text-gray-700 italic">{item.item_trade}</p>
           </div>
         )}
 
         <div>
           <h2 className="text-sm font-medium text-gray-500 mb-1">Condition</h2>
-          <p className="text-gray-700">{item.item_condition ?? "Not specified"}</p>
+          <p className="text-gray-700">{item.item_condition || "Not specified"}</p>
         </div>
       </div>
     </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 
@@ -14,7 +14,10 @@ export default function MessagesRealtimeRefresher({
   conversationIds,
 }: Props) {
   const router = useRouter();
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []); // stable instance
+
+  // Create a stable reference for dependencies
+  const convIds = useMemo(() => conversationIds, [conversationIds]);
 
   useEffect(() => {
     if (!currentUserId) return;
@@ -47,10 +50,7 @@ export default function MessagesRealtimeRefresher({
         (payload) => {
           const convoId = (payload.new as { conversation_id: number })
             .conversation_id;
-          if (
-            conversationIds.length === 0 ||
-            conversationIds.includes(convoId)
-          ) {
+          if (convIds.length === 0 || convIds.includes(convoId)) {
             router.refresh();
           }
         }
@@ -61,7 +61,7 @@ export default function MessagesRealtimeRefresher({
       supabase.removeChannel(convPartChannel);
       supabase.removeChannel(messagesChannel);
     };
-  }, [currentUserId, JSON.stringify(conversationIds)]);
+  }, [currentUserId, convIds, router, supabase]);
 
   return null;
 }

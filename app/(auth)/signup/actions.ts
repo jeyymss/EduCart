@@ -47,7 +47,6 @@ export async function register(formData: FormData) {
   }
 
   // ---- sign up + tell Supabase where to redirect after email click ----
-  const origin = getOrigin();
   const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
     email,
     password,
