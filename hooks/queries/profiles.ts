@@ -7,6 +7,7 @@ export type PublicProfile = {
   university_abbreviation: string | null;
   university_name: string | null;
   avatar_url: string | null;
+  bio: string | null; // 👈 Added bio here (optional in DB, safe in TS)
 };
 
 export type PublicListing = {
