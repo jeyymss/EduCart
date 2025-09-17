@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import Image from "next/image";
 
 type ChatMessage = {
   id: number;
@@ -17,10 +18,14 @@ export default function ChatClient({
   conversationId,
   currentUserId,
   initialMessages,
+  otherUserName,
+  otherUserAvatarUrl,
 }: {
   conversationId: number;
   currentUserId: string;
   initialMessages: ChatMessage[];
+  otherUserName: string;
+  otherUserAvatarUrl: string | null;
 }) {
   const supabaseBrowserClient = createClient();
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
@@ -51,11 +56,8 @@ export default function ChatClient({
       )
       .subscribe();
 
-    // ✅ cleanup must return void, not a Promise
     return () => {
-      // either of these is fine; both return a Promise which we intentionally ignore
       supabaseBrowserClient.removeChannel(subscriptionChannel);
-      // or: subscriptionChannel.unsubscribe();
     };
   }, [conversationId, supabaseBrowserClient]);
 
@@ -77,7 +79,24 @@ export default function ChatClient({
   }
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="flex flex-col h-screen border rounded-2xl border-black">
+      {/* Header */}
+      <div className="flex items-center gap-3 p-4 border-b  rounded-t-2xl bg-white">
+        {otherUserAvatarUrl ? (
+          <Image
+            src={otherUserAvatarUrl}
+            alt="avatar"
+            width={40}
+            height={40}
+            className="h-10 w-10 rounded-full object-cover"
+          />
+        ) : (
+          <div className="h-10 w-10 rounded-full bg-slate-200" />
+        )}
+        <div className="font-medium">{otherUserName}</div>
+      </div>
+
+      {/* Messages */}
       <div
         ref={scrollContainerRef}
         className="flex-1 overflow-y-auto p-4 space-y-2 bg-slate-50"
@@ -107,7 +126,9 @@ export default function ChatClient({
           );
         })}
       </div>
-      <div className="border-t p-3 flex gap-2">
+
+      {/* Input */}
+      <div className="border-t p-3 flex gap-2 bg-white rounded-2xl">
         <Input
           value={pendingText}
           onChange={(e) => setPendingText(e.target.value)}

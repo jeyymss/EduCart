@@ -107,3 +107,27 @@ export const useProductDetails = (id: string) => {
     staleTime: 1000 * 60 * 5,
   });
 };
+
+//DISPLAY ITEMS LISTED IN USER PROFILE
+export function useUserPosts(userId: string | undefined, status?: string) {
+  return useQuery({
+    queryKey: ["userPosts", userId, status], // include status in cache key
+    queryFn: async () => {
+      if (!userId) return [];
+      const url = new URL(
+        "/api/user-profile-view/userPosts",
+        window.location.origin
+      );
+      url.searchParams.set("userId", userId);
+      if (status) url.searchParams.set("status", status); // ✅ add status filter
+
+      const res = await fetch(url.toString());
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error || "Failed to fetch user posts");
+      return data;
+    },
+    enabled: !!userId,
+    staleTime: 1000 * 60 * 5, // 5 minutes cache
+  });
+}

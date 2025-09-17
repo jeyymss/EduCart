@@ -1,8 +1,20 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Clock } from "lucide-react";
+import { Clock, MoreHorizontal } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getRelativeTime } from "@/utils/getRelativeTime";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { deletePost } from "@/app/user-posts/deletePost/actions";
+import {
+  markAsListed,
+  markAsUnlisted,
+} from "@/app/user-posts/editPostStatus/actions";
 
 type Props = {
   id: string;
@@ -14,6 +26,10 @@ type Props = {
   post_type: string;
   created_at: string;
   image_urls: string[];
+  status: "Listed" | "Sold" | "Unlisted";
+  isOwner?: boolean;
+  onEdit?: (id: string) => void;
+  onDelete?: (id: string) => void;
 };
 
 const typeBadgeStyles: Record<string, string> = {
@@ -33,15 +49,93 @@ export function ItemCard({
   post_type,
   created_at,
   image_urls,
+  status,
+  isOwner = false,
+  onEdit,
 }: Props) {
   const imageSrc =
     image_urls?.[0] && image_urls[0].trim() !== ""
       ? image_urls[0]
       : "/fallback.png";
 
+  async function handleDelete(id: string) {
+    const confirmed = confirm("🗑️ Are you sure you want to delete this post?");
+    if (!confirmed) return;
+
+    try {
+      await deletePost(id);
+      window.location.reload();
+    } catch (error) {
+      alert("❌ Failed to delete post");
+    }
+  }
+
+  async function handleMarkUnlisted(id: string) {
+    try {
+      await markAsUnlisted(id);
+      window.location.reload();
+    } catch (error) {
+      alert("❌ Failed to mark as unlisted");
+    }
+  }
+
+  async function handleMarkListed(id: string) {
+    try {
+      await markAsListed(id);
+      window.location.reload();
+    } catch (error) {
+      alert("❌ Failed to mark as listed");
+    }
+  }
+
+  console.log("ItemCard:", id, status);
+
   return (
-    <Link href={`/product/${id}`}>
-      <div className="rounded-md overflow-hidden border border-gray-200 shadow hover:shadow-md transition cursor-pointer bg-white flex flex-col h-full">
+    <div className="relative rounded-md overflow-hidden border border-gray-200 shadow hover:shadow-md transition bg-white flex flex-col h-full">
+      {/* ✅ Owner Menu (only in profile page) */}
+      {isOwner && (
+        <div className="absolute top-2 right-2 z-10 hover:cursor-pointer">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="icon" variant="ghost">
+                <MoreHorizontal className="h-5 w-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {/* Common option: Edit */}
+              <DropdownMenuItem onClick={() => onEdit?.(id)}>
+                ✏️ Edit Post
+              </DropdownMenuItem>
+
+              {/* Dynamic actions based on status */}
+              {status === "Listed" && (
+                <DropdownMenuItem onClick={() => handleMarkUnlisted(id)}>
+                  🚫 Mark as Unlisted
+                </DropdownMenuItem>
+              )}
+
+              {status === "Unlisted" && (
+                <DropdownMenuItem onClick={() => handleMarkListed(id)}>
+                  ✅ Mark as Listed
+                </DropdownMenuItem>
+              )}
+
+              {/* No extra options for "Sold" */}
+
+              {/* Common option: Delete */}
+              <DropdownMenuItem
+                className="text-red-600"
+                onClick={() => handleDelete(id)}
+              >
+                🗑️ Delete Post
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      )}
+
+      {/* ✅ Card content wrapped in Link */}
+      <Link href={`/product/${id}`} className="flex flex-col h-full">
         <div className="relative w-full h-60">
           <Image
             src={imageSrc}
@@ -81,11 +175,12 @@ export function ItemCard({
             </div>
           </div>
         </div>
-      </div>
-    </Link>
+      </Link>
+    </div>
   );
 }
 
+/* ✅ Skeleton stays as-is */
 export function ItemCardSkeleton() {
   return (
     <div className="rounded-md overflow-hidden border border-gray-200 shadow bg-white flex flex-col h-full animate-pulse">

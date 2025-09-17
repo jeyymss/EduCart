@@ -39,9 +39,9 @@ export default function PublicProfilePage() {
     .toUpperCase();
 
   const avatarSrc = profile.avatar_url
-    ? `${profile.avatar_url}${
-        profile.avatar_url.includes("?") ? "&" : "?"
-      }v=${profile.user_id ?? "1"}`
+    ? `${profile.avatar_url}${profile.avatar_url.includes("?") ? "&" : "?"}v=${
+        profile.user_id ?? "1"
+      }`
     : undefined;
 
   // 🔹 Start chat with this user's first listing
@@ -166,6 +166,7 @@ export default function PublicProfilePage() {
                       price={item.item_price ?? undefined}
                       post_type={item.post_type_name ?? ""}
                       seller={profile.full_name ?? "Unknown"}
+                      status={item.status}
                       created_at={item.created_at}
                     />
                   ))}

@@ -35,14 +35,14 @@ export default async function MessagesLayout({
   const convoIds = conversations.map((c) => c.conversation_id);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-[320px_1fr] h-[calc(100vh-64px)]">
+    <div className="grid grid-cols-1 md:grid-cols-[320px_1fr] max-h-screen m-2 gap-3">
       {/* 👇 Realtime refresher */}
       <MessagesRealtimeRefresher
         currentUserId={user?.id ?? ""}
         conversationIds={convoIds}
       />
 
-      <aside className="border-r bg-white overflow-y-auto">
+      <aside className="border-r bg-white overflow-y-auto p-2 border border-black rounded-2xl h-[89%]">
         <div className="p-4 border-b font-semibold">Messages</div>
 
         {conversations.length === 0 ? (
@@ -71,7 +71,7 @@ export default async function MessagesLayout({
         )}
       </aside>
 
-      <main className="min-h-0">{children}</main>
+      <main className="min-h-0 flex flex-col ">{children}</main>
     </div>
   );
 }

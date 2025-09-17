@@ -15,7 +15,9 @@ export type PublicListing = {
   user_id: string;
   item_title: string;
   item_price: number | null;
+  bio: string;
   item_description: string;
+  status: "Listed" | "Sold" | "Unlisted";
   created_at: string;
   image_urls: string[] | null;
   item_condition: string | null;

@@ -91,7 +91,7 @@ export default function SignUpForm() {
 
     try {
       const res = await fetch(
-        "https://ocr-api-production-53ff.up.railway.app/api/ocr",
+        "https://ocr-verification.up.railway.app/api/ocr",
         {
           method: "POST",
           body: formData,

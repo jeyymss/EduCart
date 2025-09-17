@@ -12,7 +12,7 @@ export async function GET(
   const { data, error } = await supabase
     .from("public_user_profiles")
     .select(
-      "user_id, full_name, role, university_abbreviation, university_name, avatar_url"
+      "user_id, full_name, role, university_abbreviation, university_name, avatar_url, bio, background_url"
     )
     .eq("user_id", userId)
     .single();
