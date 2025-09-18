@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 
 export type PublicProfile = {
+  background_url: string;
   user_id: string;
   full_name: string;
   role: string;

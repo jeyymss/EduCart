@@ -1,6 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 
 export type UserProfile = {
+  name: string | null;
+  bio: string;
   id: string;
   full_name: string | null;
   email: string;

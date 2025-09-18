@@ -44,6 +44,9 @@ export default function PublicProfilePage() {
       }`
     : undefined;
 
+  const backgroundSrc =
+    profile.background_url ?? "/placeholder-bg.jpg"; // 🔹 Use real background if set
+
   // 🔹 Start chat with this user's first listing
   const startChat = () => {
     if (!listings.data.length) {
@@ -67,7 +70,13 @@ export default function PublicProfilePage() {
   return (
     <div>
       {/* 🔹 Cover photo */}
-      <div className="w-full h-52 bg-gray-900 relative">
+      <div className="w-full h-52 relative">
+        <img
+          src={backgroundSrc}
+          alt="Background"
+          className="w-full h-full object-cover"
+        />
+
         {/* More options */}
         <button className="absolute top-4 right-6 p-2 hover:bg-gray-100 rounded-full bg-white/80">
           <MoreHorizontal className="h-6 w-6 text-gray-700" />
