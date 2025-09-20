@@ -88,7 +88,7 @@ export function Header() {
 
   return (
     <header
-      className={`relative w-full flex items-center justify-between md:px-10 lg:px-20 px-6 py-4 bg-white ${
+      className={`sticky top-0 z-50 w-full flex items-center justify-between md:px-10 lg:px-20 px-6 py-4 bg-white ${
         isLoggedIn ? "border-b border-[#DEDEDE]" : ""
       }`}
     >
@@ -180,9 +180,10 @@ export function Header() {
 
           {/* DISPLAY USER CREDIT BALANCE */}
           <div className="flex">
-              <BadgeCent /> 
-              {user?.post_credits_balance}
+            <BadgeCent />
+            {user?.post_credits_balance}
           </div>
+
           {/* USER MENU */}
           <DropdownMenu>
             <Link href={"/messages"}>
