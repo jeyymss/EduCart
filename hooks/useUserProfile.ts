@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 
 export type UserProfile = {
+  university_abbreviation: any;
   name: string | null;
   bio: string;
   id: string;

@@ -13,47 +13,75 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { UserPosts } from "@/components/profile/UserPosts";
+import type { AdvancedFilterValue } from "@/components/profile/AdvancedFilters";
 import { Button } from "@/components/ui/button";
 import { AdvancedFilters } from "@/components/profile/AdvancedFilters";
 import { SettingsPanel } from "@/components/profile/SettingsPanel";
 
 export default function ProfilePage() {
   const { data: user, isLoading, error } = useUserProfile();
+
+  // avatar & background editing
   const [isEditing, setIsEditing] = useState(false);
   const [newAvatar, setNewAvatar] = useState<string | null>(null);
   const [newBackground, setNewBackground] = useState<string | null>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const backgroundInputRef = useRef<HTMLInputElement>(null);
 
-  // ✅ Manage active tab from URL hash
-  const [activeTab, setActiveTab] = useState("posts");
-
+  // main profile tabs
+  const [activeTab, setActiveTab] = useState("listings");
   useEffect(() => {
     const hash = window.location.hash.replace("#", "");
     if (hash) setActiveTab(hash);
   }, []);
-
   const handleTabChange = (value: string) => {
     setActiveTab(value);
     window.history.replaceState(null, "", `#${value}`);
   };
 
-  if (isLoading) {
+  // sub-tabs inside listings
+  const [activeSubTab, setActiveSubTab] =
+    useState<"all" | "listed" | "sold" | "unlisted">("all");
+
+  // filters per sub-tab
+  type PerTab = { postType: string | null; search: string; adv: AdvancedFilterValue };
+
+  const EMPTY_ADV: AdvancedFilterValue = {
+    time: null,
+    price: null,
+    posts: [],
+    category: undefined,
+    minPrice: null,
+    maxPrice: null,
+  };
+
+  const [filtersByTab, setFiltersByTab] = useState<
+    Record<"all" | "listed" | "sold" | "unlisted", PerTab>
+  >({
+    all: { postType: null, search: "", adv: { ...EMPTY_ADV } },
+    listed: { postType: null, search: "", adv: { ...EMPTY_ADV } },
+    sold: { postType: null, search: "", adv: { ...EMPTY_ADV } },
+    unlisted: { postType: null, search: "", adv: { ...EMPTY_ADV } },
+  });
+
+  const updateFilters = (
+    tab: keyof typeof filtersByTab,
+    updates: Partial<PerTab>
+  ) => {
+    setFiltersByTab((prev) => ({
+      ...prev,
+      [tab]: { ...prev[tab], ...updates },
+    }));
+  };
+
+  if (isLoading)
+    return <div className="min-h-screen flex justify-center items-center">Loading…</div>;
+  if (error)
     return (
       <div className="min-h-screen flex justify-center items-center">
-        <p>Loading...</p>
+        Error: {(error as Error).message}
       </div>
     );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen flex justify-center items-center">
-        <p>Error fetching user: {(error as Error).message}</p>
-      </div>
-    );
-  }
-
   if (!user) return null;
 
   const initials = (user?.full_name ?? "U")
@@ -74,6 +102,32 @@ export default function ProfilePage() {
     if (e.target.files && e.target.files[0]) {
       setNewBackground(URL.createObjectURL(e.target.files[0]));
     }
+  };
+
+  const renderTabContent = (
+    key: "all" | "listed" | "sold" | "unlisted",
+    status?: "Listed" | "Sold" | "Unlisted"
+  ) => {
+    const { postType, search, adv } = filtersByTab[key];
+    return (
+      <div className="p-4">
+        <UserPosts
+          userId={user.id}
+          status={status}
+          postType={postType}
+          search={search}
+          filters={adv}
+        />
+      </div>
+    );
+  };
+
+  const setPostTypeAndClearAdvPosts = (tab: keyof typeof filtersByTab, value: string | null) => {
+    const currentAdv = filtersByTab[tab].adv;
+    updateFilters(tab, {
+      postType: value,
+      adv: { ...currentAdv, posts: [] }, 
+    });
   };
 
   return (
@@ -111,9 +165,7 @@ export default function ProfilePage() {
           {isEditing && (
             <div className="absolute bottom-3 right-3 flex gap-3">
               <Button
-                onClick={() => {
-                  setIsEditing(false);
-                }}
+                onClick={() => setIsEditing(false)}
                 className="bg-[#E59E2C] text-white hover:bg-[#d4881f]"
               >
                 Save
@@ -133,11 +185,7 @@ export default function ProfilePage() {
 
           {!isEditing && (
             <div className="absolute top-2 right-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsEditing(true)}
-              >
+              <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
                 Edit Profile
               </Button>
             </div>
@@ -147,13 +195,9 @@ export default function ProfilePage() {
         {/* Avatar + Info */}
         <div className="bg-white shadow-sm px-6 pb-4">
           <div className="flex items-start gap-4">
-            {/* Avatar */}
             <div className="relative -mt-16">
               <Avatar className="h-32 w-32 ring-4 ring-white shadow-md rounded-full">
-                <AvatarImage
-                  src={newAvatar ?? user.avatar_url ?? ""}
-                  alt={user?.full_name ?? "User"}
-                />
+                <AvatarImage src={newAvatar ?? user.avatar_url ?? ""} alt={user?.full_name ?? "User"} />
                 <AvatarFallback>{initials}</AvatarFallback>
               </Avatar>
 
@@ -176,11 +220,8 @@ export default function ProfilePage() {
               )}
             </div>
 
-            {/* User Info */}
             <div className="flex-1 mt-2">
-              <h1 className="text-2xl font-bold">
-                {user.full_name ?? "Unnamed User"}
-              </h1>
+              <h1 className="text-2xl font-bold">{user.full_name ?? "Unnamed User"}</h1>
               <p className="text-base text-muted-foreground">
                 {user.bio ?? "This user has no bio yet."}
               </p>
@@ -206,158 +247,152 @@ export default function ProfilePage() {
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
           <div className="sticky top-0 z-30 bg-white border-b">
             <TabsList className="flex w-full p-0 bg-transparent h-auto">
-              {["posts", "favorites", "transactions", "reviews", "settings"].map(
-                (tab) => (
-                  <TabsTrigger
-                    key={tab}
-                    value={tab}
-                    className="tab-trigger px-4 py-3"
-                  >
-                    {tab.charAt(0).toUpperCase() + tab.slice(1)}
-                  </TabsTrigger>
-                )
-              )}
+              {["listings", "favorites", "transactions", "reviews", "settings"].map((tab) => (
+                <TabsTrigger key={tab} value={tab} className="tab-trigger px-4 py-3">
+                  {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                </TabsTrigger>
+              ))}
             </TabsList>
           </div>
 
-          {/* -------------------- POSTS -------------------- */}
-          <TabsContent value="posts">
+          {/* -------------------- LISTINGS -------------------- */}
+          <TabsContent value="listings">
             <section className="border border-gray-300 rounded-2xl bg-white shadow-sm w-full overflow-hidden">
-              <Tabs defaultValue="posts" className="w-full">
+              <Tabs
+                value={activeSubTab}
+                onValueChange={(v) => setActiveSubTab(v as typeof activeSubTab)}
+                defaultValue="all"
+                className="w-full"
+              >
+                {/* Top toolbar row */}
                 <div className="sticky top-0 z-20 bg-white border-b flex justify-between items-center gap-4 px-2 py-2">
+                  {/* left: sub-tabs with counts */}
                   <TabsList className="flex bg-transparent h-auto">
-                    <TabsTrigger value="posts" className="tab-trigger">
-                      Posts (<UserPosts.Count userId={user.id} />)
+                    <TabsTrigger value="all" className="tab-trigger">
+                      All (
+                      <UserPosts.Count
+                        userId={user.id}
+                        postType={filtersByTab.all.postType}
+                        search={filtersByTab.all.search}
+                        filters={filtersByTab.all.adv}
+                      />
+                      )
                     </TabsTrigger>
                     <TabsTrigger value="listed" className="tab-trigger">
-                      Listed (<UserPosts.Count userId={user.id} status="Listed" />)
+                      Listed (
+                      <UserPosts.Count
+                        userId={user.id}
+                        status="Listed"
+                        postType={filtersByTab.listed.postType}
+                        search={filtersByTab.listed.search}
+                        filters={filtersByTab.listed.adv}
+                      />
+                      )
                     </TabsTrigger>
                     <TabsTrigger value="sold" className="tab-trigger">
-                      Sold (<UserPosts.Count userId={user.id} status="Sold" />)
+                      Sold (
+                      <UserPosts.Count
+                        userId={user.id}
+                        status="Sold"
+                        postType={filtersByTab.sold.postType}
+                        search={filtersByTab.sold.search}
+                        filters={filtersByTab.sold.adv}
+                      />
+                      )
                     </TabsTrigger>
                     <TabsTrigger value="unlisted" className="tab-trigger">
-                      Unlisted (<UserPosts.Count userId={user.id} status="Unlisted" />)
+                      Unlisted (
+                      <UserPosts.Count
+                        userId={user.id}
+                        status="Unlisted"
+                        postType={filtersByTab.unlisted.postType}
+                        search={filtersByTab.unlisted.search}
+                        filters={filtersByTab.unlisted.adv}
+                      />
+                      )
                     </TabsTrigger>
                   </TabsList>
+
+                  {/* right: filters */}
                   <div className="flex items-center gap-3">
-        
                     <DropdownMenu>
                       <DropdownMenuTrigger className="flex items-center gap-1 px-3 py-2 border rounded-lg bg-white shadow-sm text-sm font-medium hover:bg-gray-50">
-                        Post Type <ChevronDown className="w-4 h-4" />
+                        {filtersByTab[activeSubTab]?.postType ?? "Post Type"}
+                        <ChevronDown className="w-4 h-4" />
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem>Sell</DropdownMenuItem>
-                        <DropdownMenuItem>Rent</DropdownMenuItem>
-                        <DropdownMenuItem>Trade</DropdownMenuItem>
-                        <DropdownMenuItem>Emergency Lending</DropdownMenuItem>
-                        <DropdownMenuItem>Pasabuy</DropdownMenuItem>
-                        <DropdownMenuItem>Giveaway</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setPostTypeAndClearAdvPosts(activeSubTab, null)}>
+                          All
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setPostTypeAndClearAdvPosts(activeSubTab, "Sale")}>
+                          Sale
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setPostTypeAndClearAdvPosts(activeSubTab, "Rent")}>
+                          Rent
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setPostTypeAndClearAdvPosts(activeSubTab, "Trade")}>
+                          Trade
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setPostTypeAndClearAdvPosts(activeSubTab, "Emergency Lending")}>
+                          Emergency Lending
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setPostTypeAndClearAdvPosts(activeSubTab, "Pasabuy")}>
+                          Pasabuy
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setPostTypeAndClearAdvPosts(activeSubTab, "Giveaway")}>
+                          Giveaway
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
+
                     <Input
                       type="text"
                       placeholder="Search items"
                       className="h-9 w-[200px] text-sm"
+                      value={filtersByTab[activeSubTab]?.search ?? ""}
+                      onChange={(e) => updateFilters(activeSubTab, { search: e.target.value })}
                     />
-                    <AdvancedFilters onApply={(f) => console.log("Post filters:", f)} />
+
+                    {/* ✅ Advanced Filters (controlled) */}
+                    <AdvancedFilters
+                      value={filtersByTab[activeSubTab]?.adv}
+                      onApply={(adv) =>
+                        updateFilters(activeSubTab, {
+                          // clone to guarantee new reference -> triggers rerender
+                          adv: { ...adv, posts: [...(adv.posts ?? [])] },
+                        })
+                      }
+                    />
                   </div>
                 </div>
 
-                <TabsContent value="posts">
-                  <div className="p-4">
-                    <UserPosts userId={user.id} />
-                  </div>
-                </TabsContent>
-                <TabsContent value="listed">
-                  <div className="p-4">
-                    <UserPosts userId={user.id} status="Listed" />
-                  </div>
-                </TabsContent>
-                <TabsContent value="sold">
-                  <div className="p-4">
-                    <UserPosts userId={user.id} status="Sold" />
-                  </div>
-                </TabsContent>
-                <TabsContent value="unlisted">
-                  <div className="p-4">
-                    <UserPosts userId={user.id} status="Unlisted" />
-                  </div>
-                </TabsContent>
+                {/* sub-tab content */}
+                <TabsContent value="all">{renderTabContent("all")}</TabsContent>
+                <TabsContent value="listed">{renderTabContent("listed", "Listed")}</TabsContent>
+                <TabsContent value="sold">{renderTabContent("sold", "Sold")}</TabsContent>
+                <TabsContent value="unlisted">{renderTabContent("unlisted", "Unlisted")}</TabsContent>
               </Tabs>
             </section>
           </TabsContent>
 
           {/* -------------------- FAVORITES -------------------- */}
           <TabsContent value="favorites">
-            <section className="border border-gray-300 rounded-2xl bg-white shadow-sm w-full p-4">
-              <p className="text-sm text-muted-foreground">Favorites go here.</p>
-            </section>
+            <section className="border rounded-2xl bg-white shadow-sm p-4">Favorites go here.</section>
           </TabsContent>
 
           {/* -------------------- TRANSACTIONS -------------------- */}
           <TabsContent value="transactions">
-            <section className="border border-gray-300 rounded-2xl bg-white shadow-sm w-full p-4">
-              <Tabs defaultValue="active" className="w-full">
-                <div className="sticky top-0 z-20 bg-white border-b flex justify-between items-center gap-4 px-2 py-2">
-                  <TabsList className="flex bg-transparent h-auto">
-                    <TabsTrigger value="active" className="tab-trigger">
-                      Active
-                    </TabsTrigger>
-                    <TabsTrigger value="completed" className="tab-trigger">
-                      Completed
-                    </TabsTrigger>
-                    <TabsTrigger value="cancelled" className="tab-trigger">
-                      Cancelled
-                    </TabsTrigger>
-                  </TabsList>
-                  <div className="flex items-center gap-3">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger className="flex items-center gap-1 px-3 py-2 border rounded-lg bg-white shadow-sm text-sm font-medium hover:bg-gray-50">
-                        Type <ChevronDown className="w-4 h-4" />
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem>Purchases</DropdownMenuItem>
-                        <DropdownMenuItem>Sales</DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                    <Input
-                      type="text"
-                      placeholder="Search items"
-                      className="h-9 w-[200px] text-sm"
-                    />
-                    <AdvancedFilters onApply={(f) => console.log("Transaction filters:", f)} />
-                  </div>
-                </div>
-
-                <TabsContent value="active">
-                  <p className="text-sm text-muted-foreground p-4">
-                    Active transactions go here.
-                  </p>
-                </TabsContent>
-                <TabsContent value="completed">
-                  <p className="text-sm text-muted-foreground p-4">
-                    Completed transactions go here.
-                  </p>
-                </TabsContent>
-                <TabsContent value="cancelled">
-                  <p className="text-sm text-muted-foreground p-4">
-                    Cancelled transactions go here.
-                  </p>
-                </TabsContent>
-              </Tabs>
-            </section>
+            <section className="border rounded-2xl bg-white shadow-sm p-4">Transactions go here.</section>
           </TabsContent>
 
           {/* -------------------- REVIEWS -------------------- */}
           <TabsContent value="reviews">
-            <section className="border border-gray-300 rounded-2xl bg-white shadow-sm w-full p-4">
-              <p className="text-sm text-muted-foreground">Reviews go here.</p>
-            </section>
+            <section className="border rounded-2xl bg-white shadow-sm p-4">Reviews go here.</section>
           </TabsContent>
 
           {/* -------------------- SETTINGS -------------------- */}
           <TabsContent value="settings">
-            <section className="border border-gray-300 rounded-2xl bg-white shadow-sm w-full p-4">
+            <section className="border rounded-2xl bg-white shadow-sm p-4">
               <SettingsPanel />
             </section>
           </TabsContent>
