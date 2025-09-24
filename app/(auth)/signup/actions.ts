@@ -2,7 +2,6 @@
 
 import { createClient } from "@/utils/supabase/server";
 import { uploadImage } from "@/app/api/uploadImage/route";
-import { getOrigin } from "@/lib/getOrigin";
 
 export async function register(formData: FormData) {
   const supabase = await createClient();

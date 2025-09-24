@@ -128,7 +128,7 @@ export default function OrganizationAccountSignUpForm() {
 
   const isCurrentStepValid = useMemo(
     () => currentStepFields.every((f) => getError(f) === ""),
-    [currentStepFields, formData]
+    [currentStepFields, formData, getError]
   );
 
   const handleNext = () => {

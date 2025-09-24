@@ -80,7 +80,6 @@ export default function AvatarUploader({ currentUrl, onUploaded }: Props) {
       router.refresh();
       setFile(null);
       if (inputRef.current) inputRef.current.value = "";
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (e: any) {
       setErr(e?.message ?? "Upload failed");
     } finally {

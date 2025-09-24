@@ -14,7 +14,6 @@ import {
 } from "../ui/collapsible";
 import {
   SidebarGroup,
-  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -38,9 +37,7 @@ export function OrgNavMain() {
         {/* Collapsible Product section */}
         <SidebarMenuItem>
           <Collapsible>
-            <CollapsibleTrigger
-              className="flex w-full items-center justify-between text-sm font-medium px-2 py-2 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground rounded-md group"
-            >
+            <CollapsibleTrigger className="flex w-full items-center justify-between text-sm font-medium px-2 py-2 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground rounded-md group">
               <div className="flex items-center gap-2 font-normal">
                 <ShoppingBag className="h-4 w-4" />
                 <span>Product</span>

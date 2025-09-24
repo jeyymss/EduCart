@@ -9,8 +9,10 @@ export async function GET(req: NextRequest) {
   const query = supabase
     .from("posts_with_user")
     .select("*")
+    .eq("status", "Listed")
     .neq("post_type_name", "Emergency Lending")
     .neq("post_type_name", "PasaBuy")
+    .neq("post_type_name", "Giveaway")
     .order("created_at", { ascending: false });
 
   if (limit > 0) query.limit(limit);

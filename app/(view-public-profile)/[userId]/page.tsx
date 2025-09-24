@@ -18,13 +18,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  AdvancedFilters,
-} from "@/components/profile/AdvancedFilters";
+import { AdvancedFilters } from "@/components/profile/AdvancedFilters";
 import type {
   AdvancedFilterValue,
   PostOpt,
 } from "@/components/profile/AdvancedFilters";
+import Image from "next/image";
 
 type PublicListing = {
   id: string;
@@ -32,8 +31,8 @@ type PublicListing = {
   item_price: number | null;
   item_condition: string | null;
   category_name: string | null;
-  post_type_name: string | null; 
-  created_at: string;        
+  post_type_name: string | null;
+  created_at: string;
   image_urls: string[] | null;
   status: "Listed" | "Sold" | "Unlisted";
 };
@@ -152,10 +151,17 @@ export default function PublicProfilePage() {
         : true;
 
       let matchesAdv = true;
-      if (adv.category && item.category_name !== adv.category) matchesAdv = false;
-      if (adv.minPrice != null && Number(item.item_price ?? 0) < Number(adv.minPrice))
+      if (adv.category && item.category_name !== adv.category)
         matchesAdv = false;
-      if (adv.maxPrice != null && Number(item.item_price ?? 0) > Number(adv.maxPrice))
+      if (
+        adv.minPrice != null &&
+        Number(item.item_price ?? 0) < Number(adv.minPrice)
+      )
+        matchesAdv = false;
+      if (
+        adv.maxPrice != null &&
+        Number(item.item_price ?? 0) > Number(adv.maxPrice)
+      )
         matchesAdv = false;
 
       return matchesSearch && matchesPostType && matchesAdv;
@@ -169,20 +175,26 @@ export default function PublicProfilePage() {
   return (
     <div>
       {/* Cover photo */}
-      <div className="w-full h-52 relative">
-        <img
-          src={backgroundSrc}
-          alt="Background"
-          className="w-full h-full object-cover"
-        />
+      <div className="w-full h-52 relative bg-black">
+        {profile.background_url ? (
+          <Image
+            src={profile.background_url}
+            alt="Background"
+            fill
+            className="object-cover"
+            priority
+          />
+        ) : null}
+
         <button className="absolute top-4 right-6 p-2 hover:bg-gray-100 rounded-full bg-white/80">
           <MoreHorizontal className="h-6 w-6 text-gray-700" />
         </button>
-        <div className="absolute -bottom-14 left-35">
+
+        <div className="absolute -bottom-14 left-36">
           <Avatar className="h-28 w-28 ring-4 ring-white">
             <AvatarImage
               key={profile.avatar_url ?? "no-avatar"}
-              src={avatarSrc}
+              src={avatarSrc ?? ""}
               alt={profile.full_name}
             />
             <AvatarFallback>{initials}</AvatarFallback>
@@ -248,7 +260,9 @@ export default function PublicProfilePage() {
                       <DropdownMenuItem onClick={() => setPostType("Trade")}>
                         Trade
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setPostType("Emergency Lending")}>
+                      <DropdownMenuItem
+                        onClick={() => setPostType("Emergency Lending")}
+                      >
                         Emergency Lending
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => setPostType("Pasabuy")}>

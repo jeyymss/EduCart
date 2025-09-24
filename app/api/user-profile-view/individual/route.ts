@@ -33,7 +33,8 @@ export async function GET() {
       universities:university_id (
         id,
         abbreviation
-      )
+      ),
+      bio
     `
     )
     .eq("user_id", user.id)

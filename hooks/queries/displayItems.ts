@@ -8,6 +8,7 @@ type PostWithUser = {
   item_price: number;
   item_trade: string | null;
   full_name: string;
+  status: "Listed" | "Sold" | "Unlisted";
   item_condition: string;
   category_name: string;
   post_type_name: string;

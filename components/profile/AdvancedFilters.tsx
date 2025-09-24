@@ -64,12 +64,12 @@ export function AdvancedFilters({ value, onApply }: Props) {
       ...value,
       posts: value?.posts ?? [],
     });
-  }, [value?.time, value?.price, JSON.stringify(value?.posts)]);
+  }, [value]);
 
   const apply = () => {
     onApply({
       ...draft,
-      posts: [...draft.posts]
+      posts: [...draft.posts],
     });
     setOpen(false);
   };
@@ -98,11 +98,16 @@ export function AdvancedFilters({ value, onApply }: Props) {
 
         {/* Time (single select) */}
         <div>
-          <div className="text-xs font-medium text-muted-foreground mb-1">Time</div>
+          <div className="text-xs font-medium text-muted-foreground mb-1">
+            Time
+          </div>
           <DropdownMenuRadioGroup
             value={draft.time ?? ""}
             onValueChange={(v) =>
-              setDraft((d) => ({ ...d, time: (v || null) as "newest" | "oldest" | null }))
+              setDraft((d) => ({
+                ...d,
+                time: (v || null) as "newest" | "oldest" | null,
+              }))
             }
           >
             {[
@@ -113,7 +118,9 @@ export function AdvancedFilters({ value, onApply }: Props) {
                 key={opt.value}
                 value={opt.value}
                 onSelect={(e) => e.preventDefault()} // keep open
-                className={draft.time === opt.value ? "text-[#E59E2C] font-medium" : ""}
+                className={
+                  draft.time === opt.value ? "text-[#E59E2C] font-medium" : ""
+                }
               >
                 {opt.label}
               </DropdownMenuRadioItem>
@@ -123,11 +130,16 @@ export function AdvancedFilters({ value, onApply }: Props) {
 
         {/* Price (single select) */}
         <div>
-          <div className="text-xs font-medium text-muted-foreground mb-1">Price</div>
+          <div className="text-xs font-medium text-muted-foreground mb-1">
+            Price
+          </div>
           <DropdownMenuRadioGroup
             value={draft.price ?? ""}
             onValueChange={(v) =>
-              setDraft((d) => ({ ...d, price: (v || null) as "low" | "high" | null }))
+              setDraft((d) => ({
+                ...d,
+                price: (v || null) as "low" | "high" | null,
+              }))
             }
           >
             {[
@@ -138,7 +150,9 @@ export function AdvancedFilters({ value, onApply }: Props) {
                 key={opt.value}
                 value={opt.value}
                 onSelect={(e) => e.preventDefault()}
-                className={draft.price === opt.value ? "text-[#E59E2C] font-medium" : ""}
+                className={
+                  draft.price === opt.value ? "text-[#E59E2C] font-medium" : ""
+                }
               >
                 {opt.label}
               </DropdownMenuRadioItem>
@@ -148,7 +162,9 @@ export function AdvancedFilters({ value, onApply }: Props) {
 
         {/* Post (multi-select) */}
         <div>
-          <div className="text-xs font-medium text-muted-foreground mb-1">Post</div>
+          <div className="text-xs font-medium text-muted-foreground mb-1">
+            Post
+          </div>
           {(
             [
               "Sell",
@@ -165,7 +181,10 @@ export function AdvancedFilters({ value, onApply }: Props) {
                 key={opt}
                 checked={checked}
                 onCheckedChange={() =>
-                  setDraft((d) => ({ ...d, posts: toggleArrayItem(d.posts, opt) }))
+                  setDraft((d) => ({
+                    ...d,
+                    posts: toggleArrayItem(d.posts, opt),
+                  }))
                 }
                 onSelect={(e) => e.preventDefault()}
                 className={checked ? "text-[#E59E2C] font-medium" : ""}
