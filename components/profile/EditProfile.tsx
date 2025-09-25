@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useRouter } from "next/navigation";
+import { Camera } from "lucide-react";
 
 type Props = {
   userId: string;
@@ -14,8 +15,14 @@ type Props = {
   currentAvatar?: string | null;
   currentBackground?: string | null;
   currentBio?: string | null;
-  onDone?: () => void; // callback after save
+  onDone?: (updated?: {
+    avatar_url?: string | null;
+    background_url?: string | null;
+    bio?: string;
+  }) => void;
 };
+
+const AVATAR_DIM = 128;
 
 export default function EditProfile({
   userId,
@@ -28,24 +35,15 @@ export default function EditProfile({
   const supabase = createClient();
   const router = useRouter();
 
-  // avatar
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
-  const [avatarPreview, setAvatarPreview] = useState<string | null>(
-    currentAvatar ?? null
-  );
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(currentAvatar ?? null);
 
-  // background
   const bgInputRef = useRef<HTMLInputElement>(null);
   const [bgFile, setBgFile] = useState<File | null>(null);
-  const [bgPreview, setBgPreview] = useState<string | null>(
-    currentBackground ?? null
-  );
+  const [bgPreview, setBgPreview] = useState<string | null>(currentBackground ?? null);
 
-  // bio
   const [bio, setBio] = useState<string>(currentBio ?? "");
-
-  // states
   const [uploading, setUploading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
@@ -77,9 +75,7 @@ export default function EditProfile({
       if (avatarFile) {
         const ext = avatarFile.name.split(".").pop() || "jpg";
         const path = `${uid}/avatar-${Date.now()}.${ext}`;
-        const { error: upErr } = await supabase.storage
-          .from("avatars")
-          .upload(path, avatarFile, { upsert: false });
+        const { error: upErr } = await supabase.storage.from("avatars").upload(path, avatarFile, { upsert: false });
         if (upErr) throw upErr;
         const { data } = supabase.storage.from("avatars").getPublicUrl(path);
         avatarUrl = data.publicUrl;
@@ -88,30 +84,25 @@ export default function EditProfile({
       if (bgFile) {
         const ext = bgFile.name.split(".").pop() || "jpg";
         const path = `${uid}/background-${Date.now()}.${ext}`;
-        const { error: upErr } = await supabase.storage
-          .from("profile-backgrounds")
-          .upload(path, bgFile, { upsert: false });
+        const { error: upErr } = await supabase.storage.from("profile-backgrounds").upload(path, bgFile, { upsert: false });
         if (upErr) throw upErr;
-        const { data } = supabase.storage
-          .from("profile-backgrounds")
-          .getPublicUrl(path);
+        const { data } = supabase.storage.from("profile-backgrounds").getPublicUrl(path);
         bgUrl = data.publicUrl;
       }
 
       if (role === "individual") {
-        await supabase
-          .from("individuals")
-          .update({ avatar_url: avatarUrl, background_url: bgUrl, bio })
-          .eq("user_id", uid);
+        await supabase.from("individuals").update({ avatar_url: avatarUrl, background_url: bgUrl, bio }).eq("user_id", uid);
       } else {
-        await supabase
-          .from("organizations")
-          .update({ avatar_url: avatarUrl, background_url: bgUrl, bio })
-          .eq("user_id", uid);
+        await supabase.from("organizations").update({ avatar_url: avatarUrl, background_url: bgUrl, bio }).eq("user_id", uid);
       }
 
+      // Return updated values so parent can optimistically update UI
       if (onDone) {
-        onDone();
+        onDone({
+          avatar_url: avatarUrl,
+          background_url: bgUrl,
+          bio,
+        });
       } else {
         router.refresh();
       }
@@ -124,7 +115,7 @@ export default function EditProfile({
 
   return (
     <div className="relative w-full">
-      {/* Background */}
+      {/* Cover */}
       <div className="relative w-full h-40 md:h-60">
         {bgPreview ? (
           <Image
@@ -134,80 +125,82 @@ export default function EditProfile({
             fill
             unoptimized
             className="object-cover"
+            priority
           />
         ) : (
           <div className="flex h-full items-center justify-center bg-gray-200 text-gray-500">
             No background
           </div>
         )}
-        <Input
-          ref={bgInputRef}
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={onPickBackground}
-        />
+
+        <Input ref={bgInputRef} type="file" accept="image/*" className="hidden" onChange={onPickBackground} />
+
+        {/* Camera icon centered on cover */}
         <button
           onClick={() => bgInputRef.current?.click()}
-          className="absolute inset-0 flex items-center justify-center bg-black/40 text-white opacity-0 hover:opacity-100 transition"
+          className="absolute inset-0 flex items-center justify-center bg-black/30 text-white opacity-0 hover:opacity-100 transition"
+          aria-label="Change cover photo"
+          type="button"
         >
-          Change Background
+          <Camera className="h-8 w-8" />
         </button>
+
+        {/* Save / Cancel top-right */}
+        <div className="absolute top-3 right-3 flex gap-2">
+          <Button onClick={onSave} disabled={uploading} className="bg-[#E59E2C] text-white hover:bg-[#d4881f]">
+            {uploading ? "Saving…" : "Save"}
+          </Button>
+          <Button variant="outline" onClick={() => onDone?.()}>
+            Cancel
+          </Button>
+        </div>
       </div>
 
-      {/* Avatar + Bio + Buttons */}
-      <div className="bg-white shadow-sm px-6 pb-6 flex items-start gap-4 -mt-16">
-        {/* Avatar */}
-        <div className="relative">
-          {avatarPreview ? (
-            <Image
-              key={avatarPreview}
-              src={avatarPreview}
-              alt="Avatar preview"
-              width={128}
-              height={128}
-              unoptimized
-              className="h-32 w-32 rounded-full ring-4 ring-white object-cover shadow-md"
-            />
-          ) : (
-            <div className="h-32 w-32 rounded-full bg-gray-200 ring-4 ring-white" />
-          )}
-          <Input
-            ref={avatarInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={onPickAvatar}
-          />
-          <button
-            onClick={() => avatarInputRef.current?.click()}
-            className="absolute inset-0 flex items-center justify-center bg-black/50 text-white rounded-full opacity-0 hover:opacity-100 transition"
+      {/* Avatar + Bio section — matches view-mode structure/offsets */}
+      <div className="bg-white shadow-sm px-6 pb-6">
+        <div className="flex items-start gap-4">
+          {/* Avatar positioned exactly like view mode */}
+          <div
+            className="relative -mt-16 rounded-full ring-4 ring-white shadow-md overflow-hidden shrink-0"
+            style={{ width: AVATAR_DIM, height: AVATAR_DIM }}
           >
-            Change
-          </button>
-        </div>
+            {avatarPreview ? (
+              <Image
+                key={avatarPreview}
+                src={avatarPreview}
+                alt="Avatar preview"
+                width={AVATAR_DIM}
+                height={AVATAR_DIM}
+                unoptimized
+                className="h-full w-full object-cover"
+                priority
+              />
+            ) : (
+              <div className="w-full h-full bg-gray-200" />
+            )}
 
-        {/* Bio + Save/Cancel */}
-        <div className="flex-1 mt-2">
-          <Textarea
-            value={bio}
-            onChange={(e) => setBio(e.target.value)}
-            placeholder="Write your bio..."
-            className="w-full text-base"
-          />
+            <Input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={onPickAvatar} />
 
-          {/* Buttons inside the card */}
-          <div className="flex justify-end gap-2 mt-3">
-            <Button
-              onClick={onSave}
-              disabled={uploading}
-              className="bg-[#E59E2C] text-white hover:bg-[#d4881f]"
+            {/* Camera overlay centered on avatar */}
+            <button
+              onClick={() => avatarInputRef.current?.click()}
+              className="absolute inset-0 flex items-center justify-center bg-black/40 text-white opacity-0 hover:opacity-100 transition"
+              aria-label="Change avatar"
+              type="button"
             >
-              {uploading ? "Saving…" : "Save"}
-            </Button>
-            <Button variant="outline" onClick={onDone}>
-              Cancel
-            </Button>
+              <Camera className="h-5 w-5" />
+            </button>
+          </div>
+
+          {/* Bio editor */}
+          <div className="flex-1 mt-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Bio</label>
+            <Textarea
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+              placeholder="Write your bio..."
+              className="w-full text-base resize-y min-h-[140px]"
+            />
           </div>
         </div>
       </div>
