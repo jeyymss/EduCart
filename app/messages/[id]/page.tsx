@@ -37,22 +37,27 @@ export default async function ConversationPage({
     .order("created_at", { ascending: true })
     .limit(200);
 
-  const { data: convoMeta } = await supabase
+  const { data: convoMeta, error: metaError } = await supabase
     .from("my_convo")
     .select(
       `
-      other_user_id,
-      other_user_name,
-      other_user_avatar_url,
-      post_id,
-      item_title,
-      image_urls,
-      post_type,
-      item_price
-    `
+    other_user_id,
+    other_user_name,
+    other_user_avatar_url,
+    post_id,
+    item_title,
+    image_urls,
+    post_type,
+    item_price
+  `
     )
     .eq("conversation_id", conversationIdNumber)
+    .eq("current_user_id", currentUserId)
     .single();
+
+  if (metaError) {
+    console.error("❌ Failed to fetch convoMeta:", metaError.message);
+  }
 
   return (
     <ChatClient

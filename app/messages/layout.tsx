@@ -53,7 +53,7 @@ export default async function MessagesLayout({
     post_type,
     last_message_body,
     last_message_created_at,
-    has_unread
+    has_unread  
   `
     )
     .eq("current_user_id", user?.id)
