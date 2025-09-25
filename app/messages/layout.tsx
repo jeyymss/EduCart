@@ -1,90 +1,86 @@
 // app/messages/layout.tsx
 import { ReactNode } from "react";
-import Link from "next/link";
-import Image from "next/image";
 import { createClient } from "@/utils/supabase/server";
 import MessagesRealtimeRefresher from "@/components/messages/MessagesRealtimeRefresher";
+import SidebarList from "@/components/messages/SideBarList";
 
 type Row = {
   conversation_id: number;
+  other_user_id: string | null;
   other_user_name: string | null;
   other_user_avatar_url: string | null;
+  item_title: string | null;
+  item_price: number | null;
+  image_urls: string[] | null;
+  post_type: string | null;
   last_message_body: string | null;
-  last_message_at: string | null;
   last_message_created_at: string | null;
+  has_unread: boolean;
 };
-
 export default async function MessagesLayout({
   children,
 }: {
   children: ReactNode;
 }) {
   const supabase = await createClient();
+
+  // ✅ Get current logged-in user
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { data } = await supabase
+  if (!user) {
+    // not logged in, no access
+    return (
+      <div className="flex items-center justify-center h-full">
+        <p className="text-slate-500">Please log in to view your messages.</p>
+      </div>
+    );
+  }
+
+  // ✅ Fetch only conversations the current user is part of
+  const { data, error } = await supabase
     .from("my_convo")
     .select(
-      "conversation_id, other_user_name, other_user_avatar_url, last_message_body, last_message_at, last_message_created_at"
+      `
+    conversation_id,
+    other_user_id,              
+    other_user_name,
+    other_user_avatar_url,
+    item_title,
+    item_price,
+    image_urls,
+    post_type,
+    last_message_body,
+    last_message_created_at,
+    has_unread
+  `
     )
-    .order("last_message_at", { ascending: false });
+    .eq("current_user_id", user?.id)
+    .order("last_message_created_at", { ascending: false });
+
+  if (error) {
+    console.error("❌ Failed to fetch conversations:", error.message);
+  }
 
   const conversations: Row[] = data ?? [];
   const convoIds = conversations.map((c) => c.conversation_id);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-[320px_1fr] max-h-screen m-2 gap-3">
-      {/* 👇 Realtime refresher */}
+    <div className="grid grid-cols-[320px_1fr] h-[calc(100vh-64px)] p-5 pt-10 gap-3 overflow-hidden">
       <MessagesRealtimeRefresher
-        currentUserId={user?.id ?? ""}
+        currentUserId={user.id}
         conversationIds={convoIds}
       />
 
-      <aside className="border-r bg-white overflow-y-auto p-2 border border-black rounded-2xl h-[89%]">
+      {/* Sidebar */}
+      <aside className="border border-black rounded-xl overflow-y-auto">
         <div className="p-4 border-b font-semibold">Messages</div>
-
-        {conversations.length === 0 ? (
-          <div className="p-6 text-sm text-slate-500">No messages yet.</div>
-        ) : (
-          <ul className="divide-y">
-            {conversations.map((row) => (
-              <li key={row.conversation_id}>
-                <Link
-                  href={`/messages/${row.conversation_id}`}
-                  className="flex gap-3 items-center p-3 hover:bg-slate-50"
-                >
-                  <Avatar url={row.other_user_avatar_url} />
-                  <div className="min-w-0">
-                    <div className="text-sm font-medium truncate">
-                      {row.other_user_name ?? "User"}
-                    </div>
-                    <div className="text-xs text-slate-500 truncate">
-                      {row.last_message_body ?? "No messages yet"}
-                    </div>
-                  </div>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
+        <SidebarList conversations={conversations} />
       </aside>
 
-      <main className="min-h-0 flex flex-col ">{children}</main>
+      {/* Chat Window */}
+      <main className="h-full flex flex-col overflow-hidden">{children}</main>
     </div>
-  );
-}
-
-function Avatar({ url }: { url: string | null }) {
-  if (!url) return <div className="h-10 w-10 rounded-full bg-slate-200" />;
-  return (
-    <Image
-      src={url}
-      alt="avatar"
-      width={40}
-      height={40}
-      className="h-10 w-10 rounded-full object-cover"
-    />
   );
 }

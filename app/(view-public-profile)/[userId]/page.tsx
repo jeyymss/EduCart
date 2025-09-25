@@ -111,8 +111,6 @@ export default function PublicProfilePage() {
       }`
     : undefined;
 
-  const backgroundSrc = profile.background_url ?? "/placeholder-bg.jpg";
-
   // Start chat
   const startChat = () => {
     if (!listings.data.length) {

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { login } from "../actions";
 
@@ -15,13 +14,12 @@ import {
   DialogContent,
   DialogHeader,
   DialogTrigger,
-  DialogTitle, // ✅ use shadcn's DialogTitle
+  DialogTitle,
 } from "@/components/ui/dialog";
 import Link from "next/link";
 
 export default function LoginForm() {
   const supabase = createClient();
-  const router = useRouter();
 
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
@@ -51,7 +49,7 @@ export default function LoginForm() {
       }
 
       // success branch
-      router.replace(result.redirect);
+      window.location.href = result.redirect;
     } catch (err) {
       console.error("Login failed:", err);
       setShowLoadingModal(false);

@@ -190,6 +190,7 @@ export default function HomePage() {
                 post_type={item.post_type_name}
                 seller={item.full_name || "Unknown"}
                 created_at={item.created_at}
+                status={item.status}
               />
             ))}
           </div>

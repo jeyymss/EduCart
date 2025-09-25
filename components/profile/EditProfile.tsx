@@ -25,7 +25,6 @@ type Props = {
 const AVATAR_DIM = 128;
 
 export default function EditProfile({
-  userId,
   role,
   currentAvatar,
   currentBackground,
@@ -37,11 +36,15 @@ export default function EditProfile({
 
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
-  const [avatarPreview, setAvatarPreview] = useState<string | null>(currentAvatar ?? null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(
+    currentAvatar ?? null
+  );
 
   const bgInputRef = useRef<HTMLInputElement>(null);
   const [bgFile, setBgFile] = useState<File | null>(null);
-  const [bgPreview, setBgPreview] = useState<string | null>(currentBackground ?? null);
+  const [bgPreview, setBgPreview] = useState<string | null>(
+    currentBackground ?? null
+  );
 
   const [bio, setBio] = useState<string>(currentBio ?? "");
   const [uploading, setUploading] = useState(false);
@@ -75,7 +78,9 @@ export default function EditProfile({
       if (avatarFile) {
         const ext = avatarFile.name.split(".").pop() || "jpg";
         const path = `${uid}/avatar-${Date.now()}.${ext}`;
-        const { error: upErr } = await supabase.storage.from("avatars").upload(path, avatarFile, { upsert: false });
+        const { error: upErr } = await supabase.storage
+          .from("avatars")
+          .upload(path, avatarFile, { upsert: false });
         if (upErr) throw upErr;
         const { data } = supabase.storage.from("avatars").getPublicUrl(path);
         avatarUrl = data.publicUrl;
@@ -84,16 +89,26 @@ export default function EditProfile({
       if (bgFile) {
         const ext = bgFile.name.split(".").pop() || "jpg";
         const path = `${uid}/background-${Date.now()}.${ext}`;
-        const { error: upErr } = await supabase.storage.from("profile-backgrounds").upload(path, bgFile, { upsert: false });
+        const { error: upErr } = await supabase.storage
+          .from("profile-backgrounds")
+          .upload(path, bgFile, { upsert: false });
         if (upErr) throw upErr;
-        const { data } = supabase.storage.from("profile-backgrounds").getPublicUrl(path);
+        const { data } = supabase.storage
+          .from("profile-backgrounds")
+          .getPublicUrl(path);
         bgUrl = data.publicUrl;
       }
 
       if (role === "individual") {
-        await supabase.from("individuals").update({ avatar_url: avatarUrl, background_url: bgUrl, bio }).eq("user_id", uid);
+        await supabase
+          .from("individuals")
+          .update({ avatar_url: avatarUrl, background_url: bgUrl, bio })
+          .eq("user_id", uid);
       } else {
-        await supabase.from("organizations").update({ avatar_url: avatarUrl, background_url: bgUrl, bio }).eq("user_id", uid);
+        await supabase
+          .from("organizations")
+          .update({ avatar_url: avatarUrl, background_url: bgUrl, bio })
+          .eq("user_id", uid);
       }
 
       // Return updated values so parent can optimistically update UI
@@ -133,7 +148,13 @@ export default function EditProfile({
           </div>
         )}
 
-        <Input ref={bgInputRef} type="file" accept="image/*" className="hidden" onChange={onPickBackground} />
+        <Input
+          ref={bgInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={onPickBackground}
+        />
 
         {/* Camera icon centered on cover */}
         <button
@@ -147,7 +168,11 @@ export default function EditProfile({
 
         {/* Save / Cancel top-right */}
         <div className="absolute top-3 right-3 flex gap-2">
-          <Button onClick={onSave} disabled={uploading} className="bg-[#E59E2C] text-white hover:bg-[#d4881f]">
+          <Button
+            onClick={onSave}
+            disabled={uploading}
+            className="bg-[#E59E2C] text-white hover:bg-[#d4881f]"
+          >
             {uploading ? "Saving…" : "Save"}
           </Button>
           <Button variant="outline" onClick={() => onDone?.()}>
@@ -179,7 +204,13 @@ export default function EditProfile({
               <div className="w-full h-full bg-gray-200" />
             )}
 
-            <Input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={onPickAvatar} />
+            <Input
+              ref={avatarInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={onPickAvatar}
+            />
 
             {/* Camera overlay centered on avatar */}
             <button
@@ -194,7 +225,9 @@ export default function EditProfile({
 
           {/* Bio editor */}
           <div className="flex-1 mt-2">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Bio</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Bio
+            </label>
             <Textarea
               value={bio}
               onChange={(e) => setBio(e.target.value)}

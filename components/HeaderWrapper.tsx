@@ -12,11 +12,10 @@ export function HeaderWrapper() {
     if (!pathname) return;
 
     const hiddenPrefixes = ["/admin", "/organization-account"];
-    const hiddenExact = ["/login", "/signup", "/reset-password"];
 
-    const shouldHide =
-      hiddenExact.includes(pathname) ||
-      hiddenPrefixes.some((prefix) => pathname.startsWith(prefix));
+    const shouldHide = hiddenPrefixes.some((prefix) =>
+      pathname.startsWith(prefix)
+    );
 
     setShowHeader(!shouldHide);
   }, [pathname]);

@@ -23,10 +23,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={poppins.className}>
+      <body className={`${poppins.className}`}>
         <Providers>
           <HeaderWrapper />
-          {children}
+          <main className="pt-16">{children}</main>
         </Providers>
       </body>
     </html>

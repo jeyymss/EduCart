@@ -20,7 +20,7 @@ export default function HeaderLogin() {
   if (isConfirmPage) return null;
 
   return (
-    <header className="relative w-full flex items-center justify-between md:px-10 lg:px-20 px-6 py-4 bg-white z-50">
+    <header className="fixed w-full flex items-center justify-between md:px-10 lg:px-20 px-6 py-4 bg-white z-50">
       {/* LOGO */}
       <div>
         <Link href={"/"}>
