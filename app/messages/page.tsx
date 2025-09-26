@@ -9,14 +9,14 @@ export default async function MessagesIndexPage() {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect("/login"); // 👈 protect the page
+    redirect("/login");
   }
 
   // ✅ query conversations
   const { data, error } = await supabase
     .from("my_convo")
     .select("conversation_id, last_message_created_at")
-    .eq("current_user_id", user.id) // 👈 only for this user
+    .eq("current_user_id", user.id)
     .order("last_message_created_at", { ascending: false })
     .limit(1);
 

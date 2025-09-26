@@ -152,94 +152,124 @@ export default function ChatClient({
   }
 
   return (
-    <div className="flex flex-col h-full border rounded-2xl border-black">
-      {/* Header */}
-      <div className="flex items-center justify-between gap-3 p-4 border-b rounded-t-2xl bg-white shrink-0">
-        <div className="flex items-center gap-3">
-          {otherUserAvatarUrl ? (
-            <Image
-              src={otherUserAvatarUrl}
-              alt="avatar"
-              width={40}
-              height={40}
-              className="h-10 w-10 rounded-full object-cover"
-            />
-          ) : (
-            <div className="h-10 w-10 rounded-full bg-slate-200" />
-          )}
-          <div className="font-medium">{otherUserName}</div>
-        </div>
+    <>
+      <div className="flex flex-col h-full border rounded-2xl border-black">
+        {/* Header */}
+        <div className="flex items-center justify-between gap-3 p-4 border-b rounded-t-2xl bg-white shrink-0">
+          <div className="flex items-center gap-3">
+            {otherUserAvatarUrl ? (
+              <Image
+                src={otherUserAvatarUrl}
+                alt="avatar"
+                width={40}
+                height={40}
+                className="h-10 w-10 rounded-full object-cover"
+              />
+            ) : (
+              <div className="h-10 w-10 rounded-full bg-slate-200" />
+            )}
+            <div className="font-medium">{otherUserName}</div>
+          </div>
 
-        {/* Visit button */}
-        <Link href={`/${otherUserId}`}>
-          <button className="px-3 py-1 border rounded-full text-sm hover:bg-gray-100 hover:cursor-pointer">
-            Visit
-          </button>
-        </Link>
-      </div>
-
-      {/* Divider */}
-      <div className="border-t" />
-
-      {/* Item Preview */}
-      {itemImage && (
-        <div>
-          <Link
-            href={`/product/${postId}`}
-            className="flex items-center gap-3 p-4 border-b bg-white shrink-0"
-          >
-            <Image
-              src={itemImage}
-              alt={itemTitle ?? "Item"}
-              width={56}
-              height={56}
-              className="h-20 w-20 rounded-md object-fill"
-            />
-            <div className="min-w-0">
-              <p className="text-sm font-medium truncate">{itemTitle}</p>
-              <p className="text-xs text-slate-500">{postType}</p>
-              {itemPrice && (
-                <p className="text-xs text-[#E59E2C]">
-                  ₱{itemPrice.toLocaleString()}
-                </p>
-              )}
-            </div>
+          {/* Visit button */}
+          <Link href={`/${otherUserId}`}>
+            <button className="px-3 py-1 border rounded-full text-sm hover:bg-gray-100 hover:cursor-pointer">
+              Visit
+            </button>
           </Link>
         </div>
-      )}
 
-      {/* Messages - only this scrolls */}
-      <div
-        ref={scrollContainerRef}
-        className="flex-1 overflow-y-auto p-4 space-y-2 bg-slate-50"
-      >
-        {messages.map((messageRow) => {
-          const isFromCurrentUser = messageRow.sender_user_id === currentUserId;
+        {/* Divider */}
+        <div className="border-t" />
 
-          // if multiple images
-          if (messageRow.attachments && messageRow.attachments.length > 0) {
-            return messageRow.attachments.map((url, idx) => (
+        {/* Item Preview */}
+        {itemImage && (
+          <div>
+            <Link
+              href={`/product/${postId}`}
+              className="flex items-center gap-3 p-4 border-b bg-white shrink-0"
+            >
+              <Image
+                src={itemImage}
+                alt={itemTitle ?? "Item"}
+                width={56}
+                height={56}
+                className="h-20 w-20 rounded-md object-fill"
+              />
+              <div className="min-w-0">
+                <p className="text-sm font-medium truncate">{itemTitle}</p>
+                <p className="text-xs text-slate-500">{postType}</p>
+                {itemPrice && (
+                  <p className="text-xs text-[#E59E2C]">
+                    ₱{itemPrice.toLocaleString()}
+                  </p>
+                )}
+              </div>
+            </Link>
+          </div>
+        )}
+
+        {/* Messages - only this scrolls */}
+        <div
+          ref={scrollContainerRef}
+          className="flex-1 overflow-y-auto p-4 space-y-2 bg-slate-50"
+        >
+          {messages.map((messageRow) => {
+            const isFromCurrentUser =
+              messageRow.sender_user_id === currentUserId;
+
+            // if multiple images
+            if (messageRow.attachments && messageRow.attachments.length > 0) {
+              return messageRow.attachments.map((url, idx) => (
+                <div
+                  key={`${messageRow.id}-${idx}`}
+                  className={`flex ${
+                    isFromCurrentUser ? "justify-end" : "justify-start"
+                  }`}
+                >
+                  <div
+                    className={`max-w-[75%] rounded-2xl p-2 ${
+                      isFromCurrentUser
+                        ? "bg-blue-600 text-white"
+                        : "bg-white border"
+                    }`}
+                  >
+                    <Image
+                      src={url}
+                      alt="uploaded"
+                      width={250}
+                      height={250}
+                      className="rounded-lg object-cover w-full h-auto cursor-pointer"
+                      onClick={() => setPreviewUrl(url)}
+                    />
+                    <div
+                      className={`text-[10px] opacity-60 mt-1 ${
+                        isFromCurrentUser ? "text-white" : "text-gray-600"
+                      }`}
+                    >
+                      {new Date(messageRow.created_at).toLocaleString()}
+                    </div>
+                  </div>
+                </div>
+              ));
+            }
+
+            // normal text message
+            return (
               <div
-                key={`${messageRow.id}-${idx}`}
+                key={messageRow.id}
                 className={`flex ${
                   isFromCurrentUser ? "justify-end" : "justify-start"
                 }`}
               >
                 <div
-                  className={`max-w-[75%] rounded-2xl p-2 ${
+                  className={`max-w-[75%] rounded-2xl px-4 py-2 ${
                     isFromCurrentUser
                       ? "bg-blue-600 text-white"
                       : "bg-white border"
                   }`}
                 >
-                  <Image
-                    src={url}
-                    alt="uploaded"
-                    width={250}
-                    height={250}
-                    className="rounded-lg object-cover w-full h-auto cursor-pointer"
-                    onClick={() => setPreviewUrl(url)}
-                  />
+                  {messageRow.body}
                   <div
                     className={`text-[10px] opacity-60 mt-1 ${
                       isFromCurrentUser ? "text-white" : "text-gray-600"
@@ -249,91 +279,66 @@ export default function ChatClient({
                   </div>
                 </div>
               </div>
-            ));
-          }
-
-          // normal text message
-          return (
-            <div
-              key={messageRow.id}
-              className={`flex ${
-                isFromCurrentUser ? "justify-end" : "justify-start"
-              }`}
-            >
-              <div
-                className={`max-w-[75%] rounded-2xl px-4 py-2 ${
-                  isFromCurrentUser
-                    ? "bg-blue-600 text-white"
-                    : "bg-white border"
-                }`}
-              >
-                {messageRow.body}
-                <div
-                  className={`text-[10px] opacity-60 mt-1 ${
-                    isFromCurrentUser ? "text-white" : "text-gray-600"
-                  }`}
-                >
-                  {new Date(messageRow.created_at).toLocaleString()}
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {selectedFiles.length > 0 && (
-        <div className="flex gap-2 p-2 border-t bg-white">
-          {selectedFiles.map((file, idx) => {
-            const previewUrl = URL.createObjectURL(file);
-            return (
-              <div key={idx} className="relative">
-                <Image
-                  src={previewUrl}
-                  alt="preview"
-                  width={60}
-                  height={60}
-                  className="h-16 w-16 rounded-md object-cover"
-                />
-                <button
-                  type="button"
-                  onClick={() =>
-                    setSelectedFiles((prev) => prev.filter((_, i) => i !== idx))
-                  }
-                  className="absolute top-0 right-0 bg-black/70 text-white rounded-full h-5 w-5 flex items-center justify-center text-xs"
-                >
-                  ✕
-                </button>
-              </div>
             );
           })}
         </div>
-      )}
 
-      {/* Input stays pinned */}
-      <div className="border-t p-3 flex gap-2 bg-white rounded-b-2xl shrink-0">
-        <button
-          type="button"
-          onClick={() => fileInputRef.current?.click()}
-          className="px-3 py-2 rounded hover:bg-gray-100"
-        >
-          📎
-        </button>
-        <input
-          type="file"
-          accept="image/*"
-          multiple
-          ref={fileInputRef}
-          onChange={handleFileChange}
-          className="hidden"
-        />
+        {selectedFiles.length > 0 && (
+          <div className="flex gap-2 p-2 border-t bg-white">
+            {selectedFiles.map((file, idx) => {
+              const previewUrl = URL.createObjectURL(file);
+              return (
+                <div key={idx} className="relative">
+                  <Image
+                    src={previewUrl}
+                    alt="preview"
+                    width={60}
+                    height={60}
+                    className="h-16 w-16 rounded-md object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setSelectedFiles((prev) =>
+                        prev.filter((_, i) => i !== idx)
+                      )
+                    }
+                    className="absolute top-0 right-0 bg-black/70 text-white rounded-full h-5 w-5 flex items-center justify-center text-xs"
+                  >
+                    ✕
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
 
-        <Input
-          value={pendingText}
-          onChange={(e) => setPendingText(e.target.value)}
-          placeholder="Type a message…"
-          onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-        />
-        <Button onClick={sendMessage}>Send</Button>
+        {/* Input stays pinned */}
+        <div className="border-t p-3 flex gap-2 bg-white rounded-b-2xl shrink-0">
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="px-3 py-2 rounded hover:bg-gray-100"
+          >
+            📎
+          </button>
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            className="hidden"
+          />
+
+          <Input
+            value={pendingText}
+            onChange={(e) => setPendingText(e.target.value)}
+            placeholder="Type a message…"
+            onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+          />
+          <Button onClick={sendMessage}>Send</Button>
+        </div>
       </div>
 
       <Dialog open={!!previewUrl} onOpenChange={() => setPreviewUrl(null)}>
@@ -351,6 +356,6 @@ export default function ChatClient({
           )}
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   );
 }

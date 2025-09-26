@@ -19,6 +19,7 @@ import { AdvancedFilters } from "@/components/profile/AdvancedFilters";
 import { SettingsPanel } from "@/components/profile/SettingsPanel";
 import EditProfile from "@/components/profile/EditProfile";
 import Image from "next/image";
+import { FavoritesList } from "@/components/profile/FavoriteList";
 
 const AVATAR_DIM = 128;
 
@@ -48,7 +49,11 @@ export default function ProfilePage() {
     "all" | "listed" | "sold" | "unlisted"
   >("all");
 
-  type PerTab = { postType: string | null; search: string; adv: AdvancedFilterValue };
+  type PerTab = {
+    postType: string | null;
+    search: string;
+    adv: AdvancedFilterValue;
+  };
 
   const EMPTY_ADV: AdvancedFilterValue = {
     time: null,
@@ -79,7 +84,11 @@ export default function ProfilePage() {
   };
 
   if (isLoading)
-    return <div className="min-h-screen flex justify-center items-center">Loading…</div>;
+    return (
+      <div className="min-h-screen flex justify-center items-center">
+        Loading…
+      </div>
+    );
   if (error)
     return (
       <div className="min-h-screen flex justify-center items-center">
@@ -106,12 +115,17 @@ export default function ProfilePage() {
     );
   };
 
-  const setPostTypeAndClearAdvPosts = (tab: keyof typeof filtersByTab, value: string | null) => {
+  const setPostTypeAndClearAdvPosts = (
+    tab: keyof typeof filtersByTab,
+    value: string | null
+  ) => {
     const currentAdv = filtersByTab[tab].adv;
     updateFilters(tab, { postType: value, adv: { ...currentAdv, posts: [] } });
   };
 
-  const coverObjectPosition = `${displayUser.coverX ?? 50}% ${displayUser.coverY ?? 50}%`;
+  const coverObjectPosition = `${displayUser.coverX ?? 50}% ${
+    displayUser.coverY ?? 50
+  }%`;
 
   return (
     <div className="min-h-screen flex flex-col relative">
@@ -119,17 +133,24 @@ export default function ProfilePage() {
         {isEditing ? (
           <EditProfile
             userId={displayUser.id}
-            role={displayUser.role === "Organization" ? "organization" : "individual"}
+            role={
+              displayUser.role === "Organization"
+                ? "organization"
+                : "individual"
+            }
             currentAvatar={displayUser.avatar_url}
             currentBackground={displayUser.background_url}
             currentBio={displayUser.bio}
             onDone={(updated) => {
               setIsEditing(false);
               if (updated) {
-                setLocalUser((prev) => ({
-                  ...(prev ?? displayUser),
-                  ...updated,
-                }) as typeof user);
+                setLocalUser(
+                  (prev) =>
+                    ({
+                      ...(prev ?? displayUser),
+                      ...updated,
+                    } as typeof user)
+                );
               }
               router.refresh();
             }}
@@ -148,14 +169,18 @@ export default function ProfilePage() {
               />
               {/* Edit Profile button slightly lower */}
               <div className="absolute top-10 right-4">
-                <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsEditing(true)}
+                >
                   Edit Profile
                 </Button>
               </div>
             </div>
 
             <div className="bg-white shadow-sm px-6 pb-4">
-             <div className="flex items-start gap-4 pl-6">
+              <div className="flex items-start gap-4 pl-6">
                 <div
                   className="relative -mt-16 rounded-full ring-4 ring-white shadow-md overflow-hidden"
                   style={{ width: AVATAR_DIM, height: AVATAR_DIM }}
@@ -172,7 +197,9 @@ export default function ProfilePage() {
                 </div>
 
                 <div className="flex-1 mt-2">
-                  <h1 className="text-2xl font-bold">{displayUser.full_name ?? "Unnamed User"}</h1>
+                  <h1 className="text-2xl font-bold">
+                    {displayUser.full_name ?? "Unnamed User"}
+                  </h1>
                   <p className="text-base text-muted-foreground">
                     {displayUser.bio ?? "This user has no bio yet."}
                   </p>
@@ -197,10 +224,20 @@ export default function ProfilePage() {
 
       {/* Main Content */}
       <div className="flex-1 px-6">
-        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+        <Tabs
+          value={activeTab}
+          onValueChange={handleTabChange}
+          className="w-full"
+        >
           <div className="sticky top-0 z-30 bg-white border-b">
             <TabsList className="flex w-full p-0 bg-transparent h-auto">
-              {["listings", "favorites", "transactions", "reviews", "settings"].map((tab) => (
+              {[
+                "listings",
+                "favorites",
+                "transactions",
+                "reviews",
+                "settings",
+              ].map((tab) => (
                 <TabsTrigger
                   key={tab}
                   value={tab}
@@ -274,7 +311,15 @@ export default function ProfilePage() {
                         <ChevronDown className="w-4 h-4" />
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        {["All", "Sale", "Rent", "Trade", "Emergency Lending", "PasaBuy", "Giveaway"].map((label) => (
+                        {[
+                          "All",
+                          "Sale",
+                          "Rent",
+                          "Trade",
+                          "Emergency Lending",
+                          "PasaBuy",
+                          "Giveaway",
+                        ].map((label) => (
                           <DropdownMenuItem
                             key={label}
                             onClick={() =>
@@ -295,7 +340,9 @@ export default function ProfilePage() {
                       placeholder="Search items"
                       className="h-9 w-[200px] text-sm"
                       value={filtersByTab[activeSubTab]?.search ?? ""}
-                      onChange={(e) => updateFilters(activeSubTab, { search: e.target.value })}
+                      onChange={(e) =>
+                        updateFilters(activeSubTab, { search: e.target.value })
+                      }
                     />
 
                     <AdvancedFilters
@@ -310,23 +357,37 @@ export default function ProfilePage() {
                 </div>
 
                 <TabsContent value="all">{renderTabContent("all")}</TabsContent>
-                <TabsContent value="listed">{renderTabContent("listed", "Listed")}</TabsContent>
-                <TabsContent value="sold">{renderTabContent("sold", "Sold")}</TabsContent>
-                <TabsContent value="unlisted">{renderTabContent("unlisted", "Unlisted")}</TabsContent>
+                <TabsContent value="listed">
+                  {renderTabContent("listed", "Listed")}
+                </TabsContent>
+                <TabsContent value="sold">
+                  {renderTabContent("sold", "Sold")}
+                </TabsContent>
+                <TabsContent value="unlisted">
+                  {renderTabContent("unlisted", "Unlisted")}
+                </TabsContent>
               </Tabs>
             </section>
           </TabsContent>
 
           <TabsContent value="favorites">
-            <section className="border rounded-2xl bg-white shadow-sm p-4">Favorites go here.</section>
+            <section className="border rounded-2xl bg-white shadow-sm p-4">
+              <h2 className="text-lg font-semibold mb-4">My Favorites</h2>
+
+              {displayUser?.id && <FavoritesList userId={displayUser.id} />}
+            </section>
           </TabsContent>
 
           <TabsContent value="transactions">
-            <section className="border rounded-2xl bg-white shadow-sm p-4">Transactions go here.</section>
+            <section className="border rounded-2xl bg-white shadow-sm p-4">
+              Transactions go here.
+            </section>
           </TabsContent>
 
           <TabsContent value="reviews">
-            <section className="border rounded-2xl bg-white shadow-sm p-4">Reviews go here.</section>
+            <section className="border rounded-2xl bg-white shadow-sm p-4">
+              Reviews go here.
+            </section>
           </TabsContent>
 
           <TabsContent value="settings">

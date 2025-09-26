@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Clock, MoreHorizontal } from "lucide-react";
+import { Clock, MoreHorizontal, Heart } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getRelativeTime } from "@/utils/getRelativeTime";
 import {
@@ -28,8 +28,11 @@ type Props = {
   image_urls: string[];
   status: "Listed" | "Sold" | "Unlisted";
   isOwner?: boolean;
+  isFav?: boolean;
   onEdit?: (id: string) => void;
   onDelete?: (id: string) => void;
+
+  onToggleFavorite?: (id: string, isFav: boolean) => void;
 
   /** When provided, use this to open a modal for PasaBuy / Emergency Lending */
   onOpenSpecialModal?: (id: string, postType: string) => void;
@@ -54,6 +57,8 @@ export function ItemCard({
   image_urls,
   status,
   isOwner = false,
+  isFav = false,
+  onToggleFavorite,
   onEdit,
   onOpenSpecialModal,
 }: Props) {
@@ -93,11 +98,10 @@ export function ItemCard({
     }
   }
 
-  const isSpecial = post_type === "Emergency Lending" || post_type === "PasaBuy";
+  const isSpecial =
+    post_type === "Emergency Lending" || post_type === "PasaBuy";
 
-  function handleCardClick(
-    e: React.MouseEvent<HTMLAnchorElement, MouseEvent>
-  ) {
+  function handleCardClick(e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) {
     if (isSpecial && onOpenSpecialModal) {
       e.preventDefault();
       onOpenSpecialModal(id, post_type);
@@ -106,6 +110,7 @@ export function ItemCard({
 
   return (
     <div className="relative rounded-md overflow-hidden border border-gray-200 shadow hover:shadow-md transition bg-white flex flex-col h-full">
+      {/* Owner menu (edit/unlist/delete) */}
       {isOwner && (
         <div className="absolute top-2 right-2 z-10 hover:cursor-pointer">
           <DropdownMenu>
@@ -141,7 +146,22 @@ export function ItemCard({
           </DropdownMenu>
         </div>
       )}
-
+      {/* Favorite heart – only show if it is already favorite */}
+      {!isOwner && isFav && (
+        <div className="absolute top-2 right-2 z-10">
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={(e) => {
+              e.preventDefault(); // ✅ prevent link navigation
+              onToggleFavorite?.(id, isFav);
+            }}
+            className="text-red-500 hover:text-red-600 transition-colors"
+          >
+            <Heart className="h-5 w-5 fill-red-500" />
+          </Button>
+        </div>
+      )}
       <Link
         href={`/product/${id}`}
         className="flex flex-col h-full"
@@ -176,7 +196,9 @@ export function ItemCard({
           </div>
           <div className="flex items-center justify-between mt-2">
             <span className="text-[#E59E2C] font-medium text-sm">
-              {price != null ? `₱${price.toLocaleString()}` : "Price not listed"}
+              {price != null
+                ? `₱${price.toLocaleString()}`
+                : "Price not listed"}
             </span>
             <div className="flex items-center text-xs text-gray-500">
               <Clock className="w-4 h-4 mr-1" />
