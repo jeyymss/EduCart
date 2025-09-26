@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useCallback } from "react";
 
 const steps = [
   "Organization",
@@ -29,6 +29,9 @@ const UNIVERSITY_LABELS: Record<string, string> = {
   NCF: "Naga College Foundation (NCF)",
   BISCAST: "BISCAST",
 };
+
+// Move regex to module scope so hooks don't need to depend on it
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function OrganizationAccountSignUpForm() {
   const [activeStep, setActiveStep] = useState(0);
@@ -70,43 +73,45 @@ export default function OrganizationAccountSignUpForm() {
   const markTouched = (name: keyof FormDataShape | string) =>
     setTouched((t) => ({ ...t, [name]: true }));
 
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
   // ---------------- Validation ----------------
-  const getError = (name: keyof FormDataShape): string => {
-    const f = formData;
-    switch (name) {
-      case "orgName":
-        if (!f.orgName.trim()) return "Organization name is required.";
-        if (f.orgName.trim().length < 3) return "Enter at least 3 characters.";
-        return "";
-      case "email":
-        if (!f.email.trim()) return "Email is required.";
-        if (!emailRegex.test(f.email)) return "Enter a valid email address.";
-        return "";
-      case "university":
-        if (!f.university) return "Please select a university.";
-        return "";
-      case "description":
-        if (!f.description.trim()) return "Description is required.";
-        if (f.description.trim().length < 20)
-          return "Please add at least 20 characters.";
-        return "";
-      case "password":
-        if (!f.password) return "Password is required.";
-        if (f.password.length < 8) return "Use at least 8 characters.";
-        return "";
-      case "confirmPassword":
-        if (!f.confirmPassword) return "Confirm your password.";
-        if (f.confirmPassword !== f.password) return "Passwords do not match.";
-        return "";
-      case "agree":
-        if (!f.agree) return "You must accept the Terms and Privacy Policy.";
-        return "";
-      default:
-        return "";
-    }
-  };
+  // Make getError stable and depend on formData only
+  const getError = useCallback(
+    (name: keyof FormDataShape): string => {
+      const f = formData;
+      switch (name) {
+        case "orgName":
+          if (!f.orgName.trim()) return "Organization name is required.";
+          if (f.orgName.trim().length < 3) return "Enter at least 3 characters.";
+          return "";
+        case "email":
+          if (!f.email.trim()) return "Email is required.";
+          if (!EMAIL_REGEX.test(f.email)) return "Enter a valid email address.";
+          return "";
+        case "university":
+          if (!f.university) return "Please select a university.";
+          return "";
+        case "description":
+          if (!f.description.trim()) return "Description is required.";
+          if (f.description.trim().length < 20)
+            return "Please add at least 20 characters.";
+          return "";
+        case "password":
+          if (!f.password) return "Password is required.";
+          if (f.password.length < 8) return "Use at least 8 characters.";
+          return "";
+        case "confirmPassword":
+          if (!f.confirmPassword) return "Confirm your password.";
+          if (f.confirmPassword !== f.password) return "Passwords do not match.";
+          return "";
+        case "agree":
+          if (!f.agree) return "You must accept the Terms and Privacy Policy.";
+          return "";
+        default:
+          return "";
+      }
+    },
+    [formData]
+  );
 
   // Keys to validate per step (Review has no fields)
   const currentStepFields = useMemo<(keyof FormDataShape)[]>(() => {
@@ -126,9 +131,10 @@ export default function OrganizationAccountSignUpForm() {
     }
   }, [activeStep]);
 
+  // Depend on currentStepFields + getError (no need for formData here)
   const isCurrentStepValid = useMemo(
     () => currentStepFields.every((f) => getError(f) === ""),
-    [currentStepFields, formData, getError]
+    [currentStepFields, getError]
   );
 
   const handleNext = () => {

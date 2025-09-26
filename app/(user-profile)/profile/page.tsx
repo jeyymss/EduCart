@@ -28,7 +28,6 @@ export default function ProfilePage() {
 
   const [isEditing, setIsEditing] = useState(false);
 
-  // Local overlay so changes reflect instantly after Save
   const [localUser, setLocalUser] = useState<typeof user | null>(null);
   const displayUser = (localUser ?? user) as typeof user & {
     coverX?: number;
@@ -112,7 +111,6 @@ export default function ProfilePage() {
     updateFilters(tab, { postType: value, adv: { ...currentAdv, posts: [] } });
   };
 
-  // Cover style with focal point
   const coverObjectPosition = `${displayUser.coverX ?? 50}% ${displayUser.coverY ?? 50}%`;
 
   return (
@@ -127,21 +125,19 @@ export default function ProfilePage() {
             currentBio={displayUser.bio}
             onDone={(updated) => {
               setIsEditing(false);
-
-              // Optimistically patch what the user sees right away
               if (updated) {
                 setLocalUser((prev) => ({
                   ...(prev ?? displayUser),
                   ...updated,
                 }) as typeof user);
               }
-
               router.refresh();
             }}
           />
         ) : (
           <div className="relative">
-            <div className="relative w-full h-40 md:h-60 overflow-hidden">
+            {/* Taller cover */}
+            <div className="relative w-full h-60 md:h-80 lg:h-96 overflow-hidden">
               <Image
                 src={displayUser.background_url ?? "/placeholder-bg.jpg"}
                 alt="Background"
@@ -150,7 +146,8 @@ export default function ProfilePage() {
                 style={{ objectPosition: coverObjectPosition }}
                 priority
               />
-              <div className="absolute top-4 right-4">
+              {/* Edit Profile button slightly lower */}
+              <div className="absolute top-10 right-4">
                 <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
                   Edit Profile
                 </Button>
@@ -158,7 +155,7 @@ export default function ProfilePage() {
             </div>
 
             <div className="bg-white shadow-sm px-6 pb-4">
-              <div className="flex items-start gap-4">
+             <div className="flex items-start gap-4 pl-6">
                 <div
                   className="relative -mt-16 rounded-full ring-4 ring-white shadow-md overflow-hidden"
                   style={{ width: AVATAR_DIM, height: AVATAR_DIM }}
@@ -277,7 +274,7 @@ export default function ProfilePage() {
                         <ChevronDown className="w-4 h-4" />
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        {["All", "Sale", "Rent", "Trade", "Emergency Lending", "Pasabuy", "Giveaway"].map((label) => (
+                        {["All", "Sale", "Rent", "Trade", "Emergency Lending", "PasaBuy", "Giveaway"].map((label) => (
                           <DropdownMenuItem
                             key={label}
                             onClick={() =>

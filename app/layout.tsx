@@ -3,6 +3,7 @@ import "./globals.css";
 import { HeaderWrapper } from "@/components/HeaderWrapper";
 import { Poppins } from "next/font/google";
 import Providers from "./providers";
+import ScrollToTop from "@/components/ScrollToTop";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -16,17 +17,14 @@ export const metadata: Metadata = {
   description: "Marketplace for Universities",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={`${poppins.className}`}>
+      <body className={poppins.className}>
         <Providers>
           <HeaderWrapper />
           <main className="pt-16">{children}</main>
+          <ScrollToTop />
         </Providers>
       </body>
     </html>

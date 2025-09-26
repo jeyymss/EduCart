@@ -10,7 +10,7 @@ import {
 } from "@/components/posts/displayposts/ItemCard";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/utils/supabase/client";
-import { useTransition, useState } from "react";
+import { useTransition, useState, useMemo } from "react";
 import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
@@ -24,7 +24,16 @@ import type {
   PostOpt,
 } from "@/components/profile/AdvancedFilters";
 import Image from "next/image";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { getRelativeTime } from "@/utils/getRelativeTime";
 
+// ---- Types ----
 type PublicListing = {
   id: string;
   item_title: string | null;
@@ -35,14 +44,15 @@ type PublicListing = {
   created_at: string;
   image_urls: string[] | null;
   status: "Listed" | "Sold" | "Unlisted";
+  item_description?: string | null;
 };
 
 const POST_VALUE_MAP: Record<PostOpt, string> = {
-  Sell: "Sale",
+  Sale: "Sale",
   Rent: "Rent",
   Trade: "Trade",
   "Emergency Lending": "Emergency Lending",
-  Pasabuy: "Pasabuy",
+  PasaBuy: "PasaBuy",
   "Donation and Giveaway": "Giveaway",
 };
 
@@ -75,11 +85,9 @@ export default function PublicProfilePage() {
   const [pending, start] = useTransition();
 
   const { data: profile, isLoading, error } = usePublicProfile(userId);
-
   const {
     data: listings = { data: [] as PublicListing[] },
     isLoading: listingsLoading,
-    error: listingsError,
   } = usePublicListings(userId, 1, 12);
 
   // Filters
@@ -94,9 +102,46 @@ export default function PublicProfilePage() {
     maxPrice: null,
   });
 
+  // Special modal state
+  const [selectedSpecial, setSelectedSpecial] = useState<PublicListing | null>(
+    null
+  );
+
+  // --- MEMOS (called unconditionally before any return) ---
+  const allowedPostTypes = useMemo<string[] | null>(() => {
+    if (adv.posts && adv.posts.length > 0) {
+      return (adv.posts as PostOpt[]).flatMap(expandToAllSpellings);
+    }
+    return postType ? [postType] : null;
+  }, [adv.posts, postType]);
+
+  const filteredListings = useMemo(() => {
+    return (listings.data ?? [])
+      .filter((item) => {
+        const matchesSearch = (item.item_title ?? "")
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase());
+        const matchesPostType = allowedPostTypes
+          ? allowedPostTypes.includes(item.post_type_name ?? "")
+          : true;
+
+        let matchesAdv = true;
+        if (adv.category && item.category_name !== adv.category) matchesAdv = false;
+        if (adv.minPrice != null && Number(item.item_price ?? 0) < Number(adv.minPrice)) matchesAdv = false;
+        if (adv.maxPrice != null && Number(item.item_price ?? 0) > Number(adv.maxPrice)) matchesAdv = false;
+
+        return matchesSearch && matchesPostType && matchesAdv;
+      })
+      .sort((a, b) => {
+        if (adv.price) return byPrice(a, b, adv.price);
+        if (adv.time) return byTime(a, b, adv.time);
+        return 0;
+      });
+  }, [listings.data, searchTerm, allowedPostTypes, adv]);
+
+  // Early returns AFTER hooks
   if (isLoading) return <div className="p-6">Loading…</div>;
-  if (error || !profile)
-    return <div className="p-6 text-red-600">Profile not found.</div>;
+  if (error || !profile) return <div className="p-6 text-red-600">Profile not found.</div>;
 
   const initials = profile.full_name
     .split(" ")
@@ -130,51 +175,11 @@ export default function PublicProfilePage() {
     });
   };
 
-  // ----- Apply filters to listings -----
-  const allowedPostTypes: string[] | null =
-    adv.posts && adv.posts.length > 0
-      ? (adv.posts as PostOpt[]).flatMap(expandToAllSpellings)
-      : postType
-      ? [postType]
-      : null;
-
-  const filteredListings = listings.data
-    .filter((item) => {
-      const matchesSearch = (item.item_title ?? "")
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase());
-
-      const matchesPostType = allowedPostTypes
-        ? allowedPostTypes.includes(item.post_type_name ?? "")
-        : true;
-
-      let matchesAdv = true;
-      if (adv.category && item.category_name !== adv.category)
-        matchesAdv = false;
-      if (
-        adv.minPrice != null &&
-        Number(item.item_price ?? 0) < Number(adv.minPrice)
-      )
-        matchesAdv = false;
-      if (
-        adv.maxPrice != null &&
-        Number(item.item_price ?? 0) > Number(adv.maxPrice)
-      )
-        matchesAdv = false;
-
-      return matchesSearch && matchesPostType && matchesAdv;
-    })
-    .sort((a, b) => {
-      if (adv.price) return byPrice(a, b, adv.price);
-      if (adv.time) return byTime(a, b, adv.time);
-      return 0;
-    });
-
   return (
     <div>
       {/* Cover photo */}
-      <div className="w-full h-52 relative bg-black">
-        {profile.background_url ? (
+      <div className="relative w-full h-60 md:h-80 lg:h-96 overflow-hidden">
+        {profile.background_url && (
           <Image
             src={profile.background_url}
             alt="Background"
@@ -182,36 +187,42 @@ export default function PublicProfilePage() {
             className="object-cover"
             priority
           />
-        ) : null}
+        )}
 
-        <button className="absolute top-4 right-6 p-2 hover:bg-gray-100 rounded-full bg-white/80">
+        {/* 3-dots button */}
+        <button className="absolute top-8 md:top-8 right-6 p-2 hover:bg-gray-100 rounded-full bg-white/80">
           <MoreHorizontal className="h-6 w-6 text-gray-700" />
         </button>
-
-        <div className="absolute -bottom-14 left-36">
-          <Avatar className="h-28 w-28 ring-4 ring-white">
-            <AvatarImage
-              key={profile.avatar_url ?? "no-avatar"}
-              src={avatarSrc ?? ""}
-              alt={profile.full_name}
-            />
-            <AvatarFallback>{initials}</AvatarFallback>
-          </Avatar>
-        </div>
       </div>
 
       {/* Profile info */}
-      <div className="px-10 mt-2">
-        <div className="ml-57 flex justify-between items-start">
-          <div className="space-y-2">
-            <h1 className="text-3xl font-bold">{profile.full_name}</h1>
+      <div className="bg-white shadow-sm px-6 pb-4">
+        <div className="flex items-start gap-4">
+          <div
+            className="relative -mt-16 rounded-full ring-4 ring-white shadow-md overflow-hidden"
+            style={{ width: 128, height: 128 }}
+          >
+            <Avatar className="h-full w-full">
+              <AvatarImage
+                key={profile.avatar_url ?? "no-avatar"}
+                src={avatarSrc ?? ""}
+                alt={profile.full_name}
+              />
+              <AvatarFallback>{initials}</AvatarFallback>
+            </Avatar>
+          </div>
+
+          <div className="flex-1 mt-2">
+            <h1 className="text-2xl font-bold">{profile.full_name}</h1>
             <p className="text-base text-muted-foreground">
               {profile.bio ?? "This user has no bio yet."}
             </p>
-            <div className="flex gap-2">
-              <span className="px-3 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">
-                {profile.role}
-              </span>
+            <div className="flex gap-2 mt-2">
+              {profile.role && (
+                <span className="px-3 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">
+                  {profile.role}
+                </span>
+              )}
               {profile.university_abbreviation && (
                 <span className="px-3 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">
                   {profile.university_abbreviation}
@@ -220,19 +231,20 @@ export default function PublicProfilePage() {
             </div>
           </div>
 
+          {/* Message button */}
           <Button
             onClick={startChat}
             disabled={pending}
-            className="flex items-center gap-2 bg-[#F3D58D] hover:bg-[#F3D58D]/90 text-black font-medium px-4 py-2 rounded-lg"
+            className="self-start mt-5 md:mt-2 flex items-center gap-2 bg-[#F3D58D] hover:bg-[#F3D58D]/90 text-black font-medium px-4 py-2 rounded-lg"
           >
             <MessageCircle className="h-5 w-5" />
             {pending ? "Starting…" : "Message"}
           </Button>
         </div>
+      </div>
 
-        <div className="mb-7"></div>
-
-        {/* Content grid */}
+      {/* Content grid */}
+      <div className="px-10 mt-6">
         <div className="grid grid-cols-1 lg:grid-cols-[3fr_1fr] gap-8">
           {/* Listings */}
           <section>
@@ -243,12 +255,14 @@ export default function PublicProfilePage() {
                 </h2>
 
                 <div className="flex items-center gap-3">
-                  {/* Post Type Dropdown */}
                   <DropdownMenu>
                     <DropdownMenuTrigger className="flex items-center gap-1 px-3 py-2 border rounded-lg bg-white shadow-sm text-sm font-medium hover:bg-gray-50">
                       Post Type <ChevronDown className="w-4 h-4" />
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => setPostType(null)}>
+                        All
+                      </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => setPostType("Sale")}>
                         Sale
                       </DropdownMenuItem>
@@ -263,19 +277,15 @@ export default function PublicProfilePage() {
                       >
                         Emergency Lending
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setPostType("Pasabuy")}>
-                        Pasabuy
+                      <DropdownMenuItem onClick={() => setPostType("PasaBuy")}>
+                        PasaBuy
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => setPostType("Giveaway")}>
                         Giveaway
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setPostType(null)}>
-                        All
-                      </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
 
-                  {/* Search */}
                   <Input
                     type="text"
                     placeholder="Search items"
@@ -284,7 +294,6 @@ export default function PublicProfilePage() {
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
 
-                  {/* Advanced Filters */}
                   <AdvancedFilters
                     value={adv}
                     onApply={(next) =>
@@ -294,19 +303,17 @@ export default function PublicProfilePage() {
                 </div>
               </div>
 
-              {/* Listings Grid */}
+              {/* Grid */}
               {listingsLoading ? (
                 <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                  {Array.from({ length: 4 }).map((_, i) => (
+                  {Array.from({ length: 8 }).map((_, i) => (
                     <ItemCardSkeleton key={i} />
                   ))}
                 </div>
-              ) : listingsError ? (
-                <p className="text-red-600">Error loading listings.</p>
               ) : filteredListings.length === 0 ? (
                 <p className="text-gray-500">No listings match your filters.</p>
               ) : (
-                <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl-grid-cols-4">
+                <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                   {filteredListings.map((item) => (
                     <ItemCard
                       key={item.id}
@@ -320,6 +327,7 @@ export default function PublicProfilePage() {
                       seller={profile.full_name ?? "Unknown"}
                       status={item.status}
                       created_at={item.created_at}
+                      onOpenSpecialModal={() => setSelectedSpecial(item)}
                     />
                   ))}
                 </div>
@@ -332,14 +340,52 @@ export default function PublicProfilePage() {
             <div className="sticky top-20">
               <div className="border border-gray-300 rounded-2xl bg-white p-6 shadow-sm space-y-4">
                 <h2 className="text-xl font-semibold">Reviews</h2>
-                <div className="text-sm text-muted-foreground">
-                  No reviews yet.
-                </div>
+                <div className="text-sm text-muted-foreground">No reviews yet.</div>
               </div>
             </div>
           </aside>
         </div>
       </div>
+
+      {/* Special modal */}
+      {selectedSpecial &&
+        (selectedSpecial.post_type_name === "Emergency Lending" ||
+          selectedSpecial.post_type_name === "PasaBuy") && (
+          <Dialog open onOpenChange={(o) => !o && setSelectedSpecial(null)}>
+            <DialogContent className="sm:max-w-lg">
+              <DialogHeader>
+                <DialogTitle>{selectedSpecial.item_title}</DialogTitle>
+              </DialogHeader>
+
+              <div className="space-y-2 text-sm text-gray-600 mt-2">
+                <p>
+                  <strong>Description:</strong>{" "}
+                  {selectedSpecial.item_description ?? "No description."}
+                </p>
+                <p>
+                  <strong>Name:</strong> {profile.full_name ?? ""}
+                </p>
+                <p>
+                  <strong>University:</strong>{" "}
+                  {profile.university_abbreviation ?? ""}
+                </p>
+                <p>
+                  <strong>Role:</strong> {profile.role ?? ""}
+                </p>
+                <p>
+                  <strong>Posted:</strong>{" "}
+                  <span>{getRelativeTime(selectedSpecial.created_at)}</span>
+                </p>
+              </div>
+
+              <DialogFooter>
+                <Button className="hover:cursor-pointer" onClick={startChat}>
+                  Message
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )}
     </div>
   );
 }

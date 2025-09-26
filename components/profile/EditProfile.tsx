@@ -111,13 +111,9 @@ export default function EditProfile({
           .eq("user_id", uid);
       }
 
-      // Return updated values so parent can optimistically update UI
+      // ✅ FIXED: no-unused-expressions warning removed
       if (onDone) {
-        onDone({
-          avatar_url: avatarUrl,
-          background_url: bgUrl,
-          bio,
-        });
+        onDone({ avatar_url: avatarUrl, background_url: bgUrl, bio });
       } else {
         router.refresh();
       }
@@ -130,8 +126,8 @@ export default function EditProfile({
 
   return (
     <div className="relative w-full">
-      {/* Cover */}
-      <div className="relative w-full h-40 md:h-60">
+      {/* Taller cover */}
+      <div className="relative w-full h-60 md:h-80 lg:h-96 overflow-hidden">
         {bgPreview ? (
           <Image
             key={bgPreview}
@@ -156,7 +152,7 @@ export default function EditProfile({
           onChange={onPickBackground}
         />
 
-        {/* Camera icon centered on cover */}
+        {/* Camera overlay for background */}
         <button
           onClick={() => bgInputRef.current?.click()}
           className="absolute inset-0 flex items-center justify-center bg-black/30 text-white opacity-0 hover:opacity-100 transition"
@@ -166,8 +162,8 @@ export default function EditProfile({
           <Camera className="h-8 w-8" />
         </button>
 
-        {/* Save / Cancel top-right */}
-        <div className="absolute top-3 right-3 flex gap-2">
+        {/* Save / Cancel */}
+        <div className="absolute top-10 right-4 flex gap-2">
           <Button
             onClick={onSave}
             disabled={uploading}
@@ -181,10 +177,9 @@ export default function EditProfile({
         </div>
       </div>
 
-      {/* Avatar + Bio section — matches view-mode structure/offsets */}
+      {/* Avatar + Bio */}
       <div className="bg-white shadow-sm px-6 pb-6">
         <div className="flex items-start gap-4">
-          {/* Avatar positioned exactly like view mode */}
           <div
             className="relative -mt-16 rounded-full ring-4 ring-white shadow-md overflow-hidden shrink-0"
             style={{ width: AVATAR_DIM, height: AVATAR_DIM }}
@@ -212,7 +207,7 @@ export default function EditProfile({
               onChange={onPickAvatar}
             />
 
-            {/* Camera overlay centered on avatar */}
+            {/* Camera overlay for avatar */}
             <button
               onClick={() => avatarInputRef.current?.click()}
               className="absolute inset-0 flex items-center justify-center bg-black/40 text-white opacity-0 hover:opacity-100 transition"

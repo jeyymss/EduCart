@@ -30,6 +30,9 @@ type Props = {
   isOwner?: boolean;
   onEdit?: (id: string) => void;
   onDelete?: (id: string) => void;
+
+  /** When provided, use this to open a modal for PasaBuy / Emergency Lending */
+  onOpenSpecialModal?: (id: string, postType: string) => void;
 };
 
 const typeBadgeStyles: Record<string, string> = {
@@ -52,20 +55,22 @@ export function ItemCard({
   status,
   isOwner = false,
   onEdit,
+  onOpenSpecialModal,
 }: Props) {
+  const firstValid = image_urls?.find((u) => u && u.trim() !== "");
   const imageSrc =
-    image_urls?.[0] && image_urls[0].trim() !== ""
-      ? image_urls[0]
-      : "/fallback.png";
+    firstValid ??
+    (post_type === "Emergency Lending" || post_type === "PasaBuy"
+      ? "/bluecart.png"
+      : "/fallback.png");
 
   async function handleDelete(id: string) {
     const confirmed = confirm("🗑️ Are you sure you want to delete this post?");
     if (!confirmed) return;
-
     try {
       await deletePost(id);
       window.location.reload();
-    } catch (error) {
+    } catch {
       alert("❌ Failed to delete post");
     }
   }
@@ -74,7 +79,7 @@ export function ItemCard({
     try {
       await markAsUnlisted(id);
       window.location.reload();
-    } catch (error) {
+    } catch {
       alert("❌ Failed to mark as unlisted");
     }
   }
@@ -83,16 +88,24 @@ export function ItemCard({
     try {
       await markAsListed(id);
       window.location.reload();
-    } catch (error) {
+    } catch {
       alert("❌ Failed to mark as listed");
     }
   }
 
-  console.log("ItemCard:", id, status);
+  const isSpecial = post_type === "Emergency Lending" || post_type === "PasaBuy";
+
+  function handleCardClick(
+    e: React.MouseEvent<HTMLAnchorElement, MouseEvent>
+  ) {
+    if (isSpecial && onOpenSpecialModal) {
+      e.preventDefault();
+      onOpenSpecialModal(id, post_type);
+    }
+  }
 
   return (
     <div className="relative rounded-md overflow-hidden border border-gray-200 shadow hover:shadow-md transition bg-white flex flex-col h-full">
-      {/* ✅ Owner Menu (only in profile page) */}
       {isOwner && (
         <div className="absolute top-2 right-2 z-10 hover:cursor-pointer">
           <DropdownMenu>
@@ -102,12 +115,10 @@ export function ItemCard({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              {/* Common option: Edit */}
               <DropdownMenuItem onClick={() => onEdit?.(id)}>
                 ✏️ Edit Post
               </DropdownMenuItem>
 
-              {/* Dynamic actions based on status */}
               {status === "Listed" && (
                 <DropdownMenuItem onClick={() => handleMarkUnlisted(id)}>
                   🚫 Mark as Unlisted
@@ -120,9 +131,6 @@ export function ItemCard({
                 </DropdownMenuItem>
               )}
 
-              {/* No extra options for "Sold" */}
-
-              {/* Common option: Delete */}
               <DropdownMenuItem
                 className="text-red-600"
                 onClick={() => handleDelete(id)}
@@ -134,8 +142,11 @@ export function ItemCard({
         </div>
       )}
 
-      {/* ✅ Card content wrapped in Link */}
-      <Link href={`/product/${id}`} className="flex flex-col h-full">
+      <Link
+        href={`/product/${id}`}
+        className="flex flex-col h-full"
+        onClick={handleCardClick}
+      >
         <div className="relative w-full h-60">
           <Image
             src={imageSrc}
@@ -165,9 +176,7 @@ export function ItemCard({
           </div>
           <div className="flex items-center justify-between mt-2">
             <span className="text-[#E59E2C] font-medium text-sm">
-              {price != null
-                ? `₱${price.toLocaleString()}`
-                : "Price not listed"}
+              {price != null ? `₱${price.toLocaleString()}` : "Price not listed"}
             </span>
             <div className="flex items-center text-xs text-gray-500">
               <Clock className="w-4 h-4 mr-1" />
@@ -180,7 +189,6 @@ export function ItemCard({
   );
 }
 
-/* ✅ Skeleton stays as-is */
 export function ItemCardSkeleton() {
   return (
     <div className="rounded-md overflow-hidden border border-gray-200 shadow bg-white flex flex-col h-full animate-pulse">

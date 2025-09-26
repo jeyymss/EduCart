@@ -10,8 +10,8 @@ import RentDetails from "@/components/posts/itemDetails/rentDetails";
 import TradeDetails from "@/components/posts/itemDetails/tradeDetails";
 import { getRelativeTime } from "@/utils/getRelativeTime";
 import { usePublicProfile } from "@/hooks/queries/profiles";
-import { ArrowLeft, Heart } from "lucide-react";
-import { useState } from "react";
+import { ArrowLeft, Heart, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import MessageSellerButton from "@/components/messages/MessageSellerBtn";
 
@@ -32,15 +32,57 @@ export default function ItemDetailsPage() {
   const params = useParams();
   const router = useRouter();
   const id = params?.id as string | undefined;
+
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const { data: item, isLoading, error } = useProductDetails(id ?? "");
-
   const listerUserId = item?.post_user_id as string | undefined;
   const { data: lister } = usePublicProfile(listerUserId ?? "");
 
-  if (!id)
-    return <div className="text-red-600">Invalid or missing item ID</div>;
+  const images: string[] = useMemo(
+    () => (Array.isArray(item?.image_urls) ? item!.image_urls : []),
+    [item]
+  );
+  const imgCount = images.length;
+
+  // Keep index valid if image set changes
+  useEffect(() => {
+    if (imgCount === 0) setSelectedImageIndex(0);
+    else if (selectedImageIndex >= imgCount) setSelectedImageIndex(0);
+  }, [imgCount, selectedImageIndex]);
+
+  const goPrev = useCallback(() => {
+    setSelectedImageIndex((i) => (imgCount ? (i - 1 + imgCount) % imgCount : 0));
+  }, [imgCount]);
+
+  const goNext = useCallback(() => {
+    setSelectedImageIndex((i) => (imgCount ? (i + 1) % imgCount : 0));
+  }, [imgCount]);
+
+  // Keyboard controls for modal
+  useEffect(() => {
+    if (!isModalOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setIsModalOpen(false);
+      if (e.key === "ArrowLeft") goPrev();
+      if (e.key === "ArrowRight") goNext();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [isModalOpen, goPrev, goNext]);
+
+  // Lock page scroll while modal is open
+  useEffect(() => {
+    if (!isModalOpen) return;
+    const original = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = original;
+    };
+  }, [isModalOpen]);
+
+  if (!id) return <div className="text-red-600">Invalid or missing item ID</div>;
   if (error)
     return (
       <div className="text-red-600">
@@ -60,7 +102,8 @@ export default function ItemDetailsPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      <div className="bg-white px-6 py-4">
+      {/* Back button header (lowered with mt-6) */}
+      <div className="bg-white px-6 py-4 mt-6">
         <div className="max-w-7xl mx-auto">
           <Button
             variant="ghost"
@@ -80,41 +123,47 @@ export default function ItemDetailsPage() {
           {/* Left side - Images */}
           <div className="space-y-4">
             {/* Main image */}
-            {Array.isArray(item.image_urls) && item.image_urls.length > 0 && (
-              <div className="relative aspect-square bg-white rounded-2xl overflow-hidden shadow-sm">
+            {imgCount > 0 && (
+              <div
+                className="relative aspect-square bg-white rounded-2xl overflow-hidden shadow-sm cursor-pointer"
+                onClick={() => setIsModalOpen(true)}
+              >
                 <Image
-                  src={
-                    item.image_urls[selectedImageIndex] || "/placeholder.svg"
-                  }
+                  src={images[selectedImageIndex] || "/placeholder.svg"}
                   alt={item.item_title ?? "Item image"}
                   fill
+                  sizes="(min-width: 1024px) 50vw, 100vw"
                   className="object-cover"
+                  priority
                 />
               </div>
             )}
 
-            {Array.isArray(item.image_urls) && item.image_urls.length > 1 && (
-              <div className="flex gap-3">
-                {item.image_urls
-                  .slice(0, 5)
-                  .map((url: string, index: number) => (
+            {/* Thumbnails */}
+            {imgCount > 1 && (
+              <div className="overflow-x-auto">
+                <div className="flex gap-3 min-w-max pr-2">
+                  {images.map((url, index) => (
                     <button
                       key={index}
                       onClick={() => setSelectedImageIndex(index)}
-                      className={`relative w-20 h-20 bg-white rounded-lg overflow-hidden shadow-sm transition-all ${
+                      className={`relative w-20 h-20 flex-none bg-white rounded-lg overflow-hidden shadow-sm transition-all ${
                         selectedImageIndex === index
                           ? "ring-2 ring-[#102E4A]"
                           : "hover:ring-2 hover:ring-gray-300"
                       }`}
+                      aria-label={`Show image ${index + 1}`}
                     >
                       <Image
                         src={url || "/placeholder.svg"}
                         alt={`Image ${index + 1}`}
                         fill
+                        sizes="80px"
                         className="object-cover"
                       />
                     </button>
                   ))}
+                </div>
               </div>
             )}
           </div>
@@ -148,7 +197,7 @@ export default function ItemDetailsPage() {
               <MessageSellerButton
                 className="flex-1 bg-[#F3D58D] hover:bg-[#F3D58D]/90 text-black font-medium py-3"
                 postId={item.post_id}
-                sellerId={item.post_user_id} // ✅ pass seller here
+                sellerId={item.post_user_id}
               />
               <Button variant="outline" className="flex-1 py-3 bg-transparent">
                 Make an Offer
@@ -188,6 +237,71 @@ export default function ItemDetailsPage() {
           </div>
         </div>
       </div>
+
+      {/* Lightbox Modal */}
+      {isModalOpen && imgCount > 0 && (
+        <div
+          className="fixed inset-0 bg-black/80 flex items-center justify-center z-50"
+          onClick={() => setIsModalOpen(false)}
+        >
+          <div
+            className="relative w-full max-w-6xl h-[90vh] px-12"
+            onClick={(e) => e.stopPropagation()} // keep clicks inside modal from closing
+          >
+            {/* Close */}
+            <button
+              type="button"
+              className="absolute top-4 right-4 bg-white/95 hover:bg-white rounded-full p-2 shadow z-50"
+              onClick={() => setIsModalOpen(false)}
+              aria-label="Close image viewer"
+            >
+              <X className="h-6 w-6 text-black" />
+            </button>
+
+            {/* Prev */}
+            {imgCount > 1 && (
+              <button
+                type="button"
+                className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/95 hover:bg-white rounded-full p-3 shadow z-50"
+                onClick={goPrev}
+                aria-label="Previous image"
+              >
+                <ChevronLeft className="h-6 w-6 text-black" />
+              </button>
+            )}
+
+            {/* Next */}
+            {imgCount > 1 && (
+              <button
+                type="button"
+                className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/95 hover:bg-white rounded-full p-3 shadow z-50"
+                onClick={goNext}
+                aria-label="Next image"
+              >
+                <ChevronRight className="h-6 w-6 text-black" />
+              </button>
+            )}
+
+            {/* Image viewer – fully visible & centered */}
+            <div className="flex items-center justify-center w-full h-full">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={images[selectedImageIndex] || "/placeholder.svg"}
+                alt="Full view"
+                className="max-h-[90vh] max-w-full object-contain"
+                draggable={false}
+              />
+            </div>
+
+            {/* Counter */}
+            {imgCount > 1 && (
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white text-sm bg-black/50 px-3 py-1 rounded-full z-50">
+                {selectedImageIndex + 1} / {imgCount}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
