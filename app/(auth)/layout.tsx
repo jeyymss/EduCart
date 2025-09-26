@@ -17,10 +17,13 @@ export default function AuthLayout({
 
   return (
     <>
-      <main className="flex">
-        <div className="w-full md:w-[45%]">{children}</div>
-        <AuthFeatureCard />
-      </main>
+      <main className="flex items-center min-h-screen">
+  <div className="w-full md:w-[45%] ml-50">{children}</div>
+  <div className="flex-1 mr-8">
+    <AuthFeatureCard />
+  </div>
+</main>
+
     </>
   );
 }

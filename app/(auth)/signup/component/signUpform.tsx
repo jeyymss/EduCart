@@ -1,466 +1,653 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
+import { createClient } from "@/utils/supabase/client";
 import { register } from "../actions";
 
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
-  SelectTrigger,
-  SelectValue,
   SelectContent,
   SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
-import { createClient } from "@/utils/supabase/client";
-import Image from "next/image";
 
 type Role = "Student" | "Faculty" | "Alumni";
+type Uni = { id: number; abbreviation: string; domain: string };
+
+const steps = ["Account Type", "University", "Valid ID", "Password", "Review"] as const;
+
+// Palette
+const COLOR_DONE = "#577C8E";
+const COLOR_CURRENT = "#102E4A";
+const COLOR_UPCOMING = "#DEDEDE";
+const COLOR_NEXT_OK = "#C7D9E5";
+
+/* ===================== Helpers ===================== */
+
+// Strong email check + special guard for incomplete Gmail like ".c" or ".co"
+function emailLooksValid(val: string) {
+  const v = val.trim();
+  if (!v || v.endsWith(".") || v.endsWith("@")) return false;
+
+  // basic RFC-ish pattern with TLD >= 2
+  const basic = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
+  if (!basic.test(v)) return false;
+
+  const [, domain] = v.split("@");
+  if (!domain || domain.includes("..")) return false;
+
+  const labels = domain.split(".");
+  if (
+    !labels.every(
+      (l) => l.length > 0 && /^[A-Z0-9-]+$/i.test(l) && !l.startsWith("-") && !l.endsWith("-")
+    )
+  ) {
+    return false;
+  }
+
+  // block incomplete Gmail ".c" or ".co" while typing
+  if (/@gmail\.(c|co)$/i.test(v)) return false;
+
+  return true;
+}
+
+// ensure it always returns "@host.tld" (lower-cased)
+function normalizeDomain(d?: string) {
+  const v = (d || "").trim().toLowerCase();
+  if (!v) return "";
+  return v.startsWith("@") ? v : `@${v}`;
+}
+
+// returns "host.tld" (no leading "@") for display
+function cleanDomainForExample(d?: string) {
+  const v = normalizeDomain(d);
+  return v.startsWith("@") ? v.slice(1) : v;
+}
+
+/* ===================== Component ===================== */
 
 export default function SignUpForm() {
+  // data
+  const [universities, setUniversities] = useState<Uni[]>([]);
+
+  // form state
   const [selectedRole, setSelectedRole] = useState<Role | "">("");
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [showLoadingModal, setShowLoadingModal] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [universities, setUniversities] = useState<
-    { id: number; abbreviation: string; domain: string }[]
-  >([]);
-  const [selectedUniversityId, setSelectedUniversityId] = useState<
-    string | null
-  >(null);
+  const [selectedUniversityId, setSelectedUniversityId] = useState<string | null>(null);
 
   const [idImage, setIdImage] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [verificationStatus, setVerificationStatus] = useState<
-    "Verified" | "Failed" | null
-  >(null);
+  const [verificationStatus, setVerificationStatus] = useState<"Verified" | "Failed" | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
+
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [agree, setAgree] = useState(false);
+
+  // UI state
+  const [activeStep, setActiveStep] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [showLoadingModal, setShowLoadingModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // inline errors
+  const [emailError, setEmailError] = useState("");
+  const [emailDomainError, setEmailDomainError] = useState("");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const roles: Role[] = ["Student", "Faculty", "Alumni"];
-
+  // fetch universities
   useEffect(() => {
-    const fetchUniversities = async () => {
+    (async () => {
       const supabase = createClient();
       const { data } = await supabase
         .from("universities")
-        .select("id, abbreviation, domain");
-
+        .select("id, abbreviation, domain")
+        .order("abbreviation", { ascending: true });
       setUniversities(data ?? []);
-    };
-
-    fetchUniversities();
+    })();
   }, []);
 
-  const handleSelect = (role: Role) => {
-    setSelectedRole(role);
-  };
+  const selectedUniversity = useMemo(
+    () => universities.find((u) => String(u.id) === selectedUniversityId) || null,
+    [universities, selectedUniversityId]
+  );
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  function validateEmailInline(value: string) {
+    if (!value.trim()) return "Email is required.";
+    if (!emailLooksValid(value)) return "Not a valid email address.";
+    return "";
+  }
 
-    setIdImage(file);
-    setPreviewUrl(URL.createObjectURL(file));
+  // domain error sync
+  useEffect(() => {
+    const needsDomain = selectedRole === "Student" || selectedRole === "Faculty";
+    const uniDomain = normalizeDomain(selectedUniversity?.domain);
+    const uniExample = cleanDomainForExample(selectedUniversity?.domain);
+
+    if (!needsDomain || !uniDomain) {
+      setEmailDomainError("");
+      return;
+    }
+    if (!email || !emailLooksValid(email)) {
+      setEmailDomainError("");
+      return;
+    }
+    if (!email.toLowerCase().endsWith(uniDomain)) {
+      setEmailDomainError(`Use your university email (e.g., *@${uniExample}).`);
+    } else {
+      setEmailDomainError("");
+    }
+  }, [email, selectedRole, selectedUniversity]);
+
+  function onFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    setIdImage(f);
+    setPreviewUrl(URL.createObjectURL(f));
     setVerificationStatus(null);
-  };
+  }
 
-  const verifyID = async () => {
+  async function verifyID() {
     if (!idImage || !fullName) return;
-
     setIsVerifying(true);
     setVerificationStatus(null);
 
-    const formData = new FormData();
-    formData.append("image", idImage);
-
     try {
-      const res = await fetch(
-        "https://ocr-verification.up.railway.app/api/ocr",
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
-
+      const fd = new FormData();
+      fd.append("image", idImage);
+      const res = await fetch("https://ocr-verification.up.railway.app/api/ocr", {
+        method: "POST",
+        body: fd,
+      });
       const data = await res.json();
       const extracted = data?.Name?.toLowerCase().trim();
       const typed = fullName.toLowerCase().trim();
-
-      if (extracted && typed && extracted === typed) {
-        setVerificationStatus("Verified");
-      } else {
-        setVerificationStatus("Failed");
-      }
-    } catch (err) {
+      setVerificationStatus(extracted && typed && extracted === typed ? "Verified" : "Failed");
+    } catch (e) {
+      console.error(e);
       setVerificationStatus("Failed");
-      console.error(err);
     } finally {
       setIsVerifying(false);
     }
-  };
+  }
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  // strict gating per step
+  const stepIsValid = useMemo(() => {
+    if (activeStep === 0) {
+      // If a uni is already chosen (user navigated back), enforce domain here too.
+      const uniDomain = normalizeDomain(selectedUniversity?.domain);
+      const domainOK =
+        !selectedUniversity ||
+        selectedRole === "Alumni" ||
+        (emailLooksValid(email) && uniDomain && email.toLowerCase().endsWith(uniDomain));
+
+      return (
+        !!selectedRole &&
+        !!fullName &&
+        emailLooksValid(email) &&
+        emailError === "" &&
+        (emailDomainError === "" || domainOK)
+      );
+    }
+    if (activeStep === 1) {
+      // Require university AND domain match (for Student/Faculty).
+      const needsDomain = selectedRole === "Student" || selectedRole === "Faculty";
+      const uniDomain = normalizeDomain(selectedUniversity?.domain);
+      const domainOK =
+        !needsDomain ||
+        !selectedUniversity ||
+        (emailLooksValid(email) && uniDomain && email.toLowerCase().endsWith(uniDomain));
+
+      return !!selectedUniversityId && domainOK;
+    }
+    if (activeStep === 2) return !!idImage && verificationStatus === "Verified";
+    if (activeStep === 3) {
+      const strongEnough = password.length >= 8;
+      return strongEnough && confirmPassword === password && agree;
+    }
+    if (activeStep === 4) return true;
+    return false;
+  }, [
+    activeStep,
+    selectedRole,
+    fullName,
+    email,
+    emailError,
+    emailDomainError,
+    selectedUniversity,
+    selectedUniversityId,
+    idImage,
+    verificationStatus,
+    password,
+    confirmPassword,
+    agree,
+  ]);
+
+  function next() {
+    if (!stepIsValid) return;
     setError(null);
+    if (activeStep < steps.length - 1) setActiveStep((s) => s + 1);
+  }
+  function prev() {
+    setError(null);
+    if (activeStep > 0) setActiveStep((s) => s - 1);
+  }
 
-    if (!selectedRole) {
-      setError("Please select a role.");
-      return;
-    }
+  // submit (no backend changes)
+  async function onSubmitFinal(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!stepIsValid) return;
 
-    if (password !== confirmPassword) {
-      setError("Passwords do not match.");
-      return;
-    }
+    if (!selectedRole) return setError("Please select a role.");
+    if (!selectedUniversity) return setError("Please select a university.");
 
-    if (verificationStatus !== "Verified") {
-      setError("Please verify your ID before registering.");
-      return;
-    }
-
-    const selectedUniversity = universities.find(
-      (u) => String(u.id) === selectedUniversityId
-    );
-
-    if (!selectedUniversity) {
-      setError("Please select a university.");
-      return;
-    }
-
+    const uniDomain = normalizeDomain(selectedUniversity.domain);
     if (
       (selectedRole === "Student" || selectedRole === "Faculty") &&
-      !email.endsWith(selectedUniversity.domain)
+      uniDomain &&
+      !email.toLowerCase().endsWith(uniDomain)
     ) {
-      setError(`Email must end with ${selectedUniversity.domain}`);
-      return;
+      return setError(`Email must end with ${uniDomain}`);
     }
+    if (password !== confirmPassword) return setError("Passwords do not match.");
+    if (verificationStatus !== "Verified") return setError("Please verify your ID.");
+
+    const formData = new FormData();
+    formData.append("role", selectedRole);
+    formData.append("name", fullName);
+    formData.append("email", email);
+    formData.append("password", password);
+    formData.append("confirmPassword", confirmPassword);
+    formData.append("university", String(selectedUniversity.id));
+    formData.append("verificationStatus", "Verified");
+    if (idImage) formData.append("idImage", idImage);
 
     setLoading(true);
     setShowLoadingModal(true);
-
-    const formData = new FormData(e.currentTarget);
-
     const res = await register(formData);
-
     setShowLoadingModal(false);
+    setLoading(false);
 
-    if (res?.error) {
-      setError(res.error);
-      return;
-    }
-
+    if (res?.error) return setError(res.error);
     setShowSuccessModal(true);
-  };
+  }
+
+  // stepper visual
+  const Stepper = () => (
+    <div className="flex items-center gap-3">
+      {steps.map((_, i) => {
+        const state =
+          i < activeStep ? "done" : i === activeStep ? "current" : "upcoming";
+        const dotColor =
+          state === "current" ? COLOR_CURRENT : state === "done" ? COLOR_DONE : COLOR_UPCOMING;
+        const dashColor = i < activeStep ? COLOR_DONE : COLOR_UPCOMING;
+        return (
+          <div key={i} className="flex items-center gap-3">
+            <span className="h-3 w-3 rounded-full" style={{ backgroundColor: dotColor }} />
+            {i !== steps.length - 1 && (
+              <span className="h-[2px] w-10 rounded-full" style={{ backgroundColor: dashColor }} />
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+
+  // aria helper to avoid empty ids
+  const emailDescribedBy =
+    [emailError ? "email-error" : "", !emailError && emailDomainError ? "email-domain-error" : ""]
+      .filter(Boolean)
+      .join(" ") || undefined;
 
   return (
-    <div className="flex items-center justify-center min-h-screen p-4">
-      <div className="flex flex-col">
-        <Card className="w-full max-w-sm">
-          <CardHeader>
-            <div className="flex justify-between items-center">
-              <CardTitle>Register your account</CardTitle>
-              <Link href="/login">
-                <Button variant="link">Log In</Button>
-              </Link>
-            </div>
-            <CardDescription>
-              Enter your details below to create your account
-            </CardDescription>
-          </CardHeader>
+    <>
+      <div className="w-full min-h-screen flex items-start justify-center px-6 py-8 md:py-14">
+        <div className="w-full max-w-2xl">
+          {/* Make the card a column so the footer stays fixed and height is uniform */}
+          <Card className="rounded-2xl border shadow-sm">
+            <CardContent className="p-6 md:p-8 flex flex-col min-h-[640px]">
+              {/* stepper */}
+              <div className="mt-2 mb-6">
+                <Stepper />
+              </div>
 
-          <CardContent>
-            <form onSubmit={handleSubmit}>
-              <div className="flex flex-col gap-4">
-                {/* Role Selection */}
-                <div>
-                  <Label>I am:</Label>
-                  <Input type="hidden" name="role" value={selectedRole} />
-                  <div className="flex justify-center gap-2 mt-2">
-                    {roles.map((role) => (
-                      <Button
-                        key={role}
-                        type="button"
-                        className={`rounded-full px-4 ${
-                          selectedRole === role
-                            ? "bg-blue-600 text-white"
-                            : "bg-white border border-gray-300 text-gray-700"
-                        }`}
-                        onClick={() => handleSelect(role)}
-                      >
-                        {role}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
+              {/* title */}
+              <h1 className="text-3xl md:text-[32px] font-semibold tracking-tight">
+                <span className="font-bold" style={{ color: COLOR_DONE }}>Create</span> an Account
+              </h1>
+              <p className="mt-1 text-slate-500">Get started in less than 5 minutes</p>
 
-                {/* University */}
-                <div className="grid gap-2">
-                  <Label>University</Label>
-                  <Select
-                    onValueChange={(value) => setSelectedUniversityId(value)}
-                    name="university"
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Choose a university" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {universities.map((uni) => (
-                        <SelectItem key={uni.id} value={String(uni.id)}>
-                          {uni.abbreviation}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+              {/* STEP CONTENT */}
+              <form onSubmit={onSubmitFinal} className="mt-6 flex-1 flex flex-col">
+                {/* Give the content area a consistent min height so the card doesn't jump */}
+                <div className="space-y-6 flex-1 min-h-[360px]">
+                  {/* STEP 0 */}
+                  {activeStep === 0 && (
+                    <div className="space-y-5">
+                      <div>
+                        <Label className="text-sm">I am a:</Label>
+                        <div className="mt-2 flex gap-3">
+                          {(["Student", "Faculty", "Alumni"] as Role[]).map((r) => {
+                            const isActive = selectedRole === r;
+                            return (
+                              <button
+                                key={r}
+                                type="button"
+                                onClick={() => setSelectedRole(r)}
+                                className={`rounded-full px-4 py-2 border transition
+                                  ${isActive ? "text-white" : "text-slate-700 bg-white"}
+                                `}
+                                style={{
+                                  borderColor: isActive ? COLOR_CURRENT : "#e5e7eb",
+                                  backgroundColor: isActive ? COLOR_CURRENT : undefined,
+                                }}
+                              >
+                                {r}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
 
-                {/* Full Name */}
-                <div className="grid gap-2">
-                  <Label htmlFor="name">Full Name</Label>
-                  <Input
-                    id="name"
-                    name="name"
-                    type="text"
-                    placeholder="Enter Full Name"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    required
-                  />
-                  <p className="text-xs text-center text-gray-500">
-                    Do not include your middle initial.
-                  </p>
-                </div>
-
-                {/* Enter Email */}
-                <div className="grid gap-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    name="email"
-                    type="email"
-                    placeholder="@university.edu"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
-                </div>
-
-                {/* Enter Password */}
-                <div className="grid gap-2">
-                  <Label htmlFor="password">Password</Label>
-                  <Input
-                    id="password"
-                    name="password"
-                    type="password"
-                    placeholder="Enter Password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
-                </div>
-
-                {/* Enter Confirm Password */}
-                <div className="grid gap-2">
-                  <Label htmlFor="confirmPassword">Confirm Password</Label>
-                  <Input
-                    id="confirmPassword"
-                    name="confirmPassword"
-                    placeholder="Confirm Password"
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    required
-                  />
-                </div>
-
-                {/* ID Upload and Verification */}
-                <div className="grid gap-2">
-                  <Label htmlFor="idImage">University/Alumni ID</Label>
-
-                  <div
-                    onClick={() => fileInputRef.current?.click()}
-                    className="relative border border-dashed border-gray-300 h-40 w-full mt-2 rounded-md cursor-pointer flex justify-center items-center bg-white overflow-hidden"
-                  >
-                    {previewUrl ? (
-                      <>
-                        <Image
-                          alt="Upload ID Preview"
-                          fill
-                          sizes="100vw"
-                          src={previewUrl}
-                          className="object-cover w-full h-full rounded-md"
+                      <div className="grid gap-2">
+                        <Label htmlFor="name">Full name</Label>
+                        <Input
+                          id="name"
+                          name="name"
+                          placeholder="Enter Full Name"
+                          value={fullName}
+                          onChange={(e) => setFullName(e.target.value)}
+                          required
                         />
+                        <p className="text-xs text-slate-500">
+                          Do not include your middle initial.
+                        </p>
+                      </div>
 
-                        {/* Status or Verify Button */}
-                        <div className="absolute bottom-1 right-1">
-                          {isVerifying ? (
-                            <span className="text-xs text-green-700 animate-pulse">
-                              Verifying...
-                            </span>
-                          ) : verificationStatus ? (
-                            <div
-                              className={`text-xs px-2 py-1 rounded-full ${
-                                verificationStatus === "Verified"
-                                  ? "bg-green-100 text-green-700"
-                                  : "bg-red-100 text-red-700"
-                              }`}
-                            >
-                              {verificationStatus === "Verified"
-                                ? "✔ Verified"
-                                : "✖ Failed"}
+                      <div className="grid gap-2">
+                        <Label htmlFor="email">Email Address</Label>
+                        <Input
+                          id="email"
+                          name="email"
+                          type="email"
+                          placeholder="@university.edu.ph"
+                          value={email}
+                          onChange={(e) => {
+                            const v = e.target.value;
+                            setEmail(v);
+                            setEmailError(validateEmailInline(v));
+                          }}
+                          required
+                          aria-invalid={!!(emailError || emailDomainError)}
+                          aria-describedby={emailDescribedBy}
+                        />
+                        {emailError && (
+                          <p id="email-error" className="text-xs text-red-600">{emailError}</p>
+                        )}
+                        {!emailError && emailDomainError && (
+                          <p id="email-domain-error" className="text-xs text-red-600">{emailDomainError}</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* STEP 1 */}
+                  {activeStep === 1 && (
+                    <div className="space-y-5">
+                      <div className="grid gap-2">
+                        <Label>University</Label>
+                        <Select
+                          onValueChange={setSelectedUniversityId}
+                          value={selectedUniversityId ?? undefined}
+                          name="university"
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select University" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {universities.map((u) => (
+                              <SelectItem key={u.id} value={String(u.id)}>
+                                {u.abbreviation}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {emailDomainError && (
+                          <p className="text-xs text-red-600">{emailDomainError}</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* STEP 2 - ID Upload (only ONE Verify ID button — the overlay) */}
+                  {activeStep === 2 && (
+                    <div className="space-y-4">
+                      <Label>Upload Valid ID</Label>
+                      <div
+                        onClick={() => fileInputRef.current?.click()}
+                        className="mt-1 h-40 rounded-xl border-2 border-dashed border-slate-300 bg-white flex items-center justify-center text-center cursor-pointer"
+                      >
+                        {previewUrl ? (
+                          <div className="relative h-full w-full overflow-hidden rounded-xl">
+                            <Image src={previewUrl} alt="ID Preview" fill className="object-cover" />
+                            <div className="absolute bottom-2 right-2">
+                              {isVerifying ? (
+                                <span className="text-xs bg-white/80 px-2 py-1 rounded">Verifying…</span>
+                              ) : verificationStatus ? (
+                                <span
+                                  className={`text-xs px-2 py-1 rounded ${
+                                    verificationStatus === "Verified"
+                                      ? "bg-green-100 text-green-700"
+                                      : "bg-red-100 text-red-700"
+                                  }`}
+                                >
+                                  {verificationStatus === "Verified" ? "✔ Verified" : "✖ Failed"}
+                                </span>
+                              ) : (
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="secondary"
+                                  className="text-xs"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    verifyID();
+                                  }}
+                                >
+                                  Verify ID
+                                </Button>
+                              )}
                             </div>
-                          ) : (
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="secondary"
-                              className="text-xs px-2 py-1"
-                              onClick={(e) => {
-                                e.stopPropagation(); // prevent file picker from triggering
-                                verifyID();
-                              }}
-                            >
-                              Verify ID
-                            </Button>
-                          )}
+                          </div>
+                        ) : (
+                          <div className="text-slate-500">
+                            <div className="mb-1 text-2xl">⬆</div>
+                            <div>Click to upload your ID or drag and drop</div>
+                            <div className="text-xs">PNG or JPG up to 10MB</div>
+                          </div>
+                        )}
+                      </div>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        name="idImage"
+                        onChange={onFileChange}
+                      />
+                      <p className="text-xs text-slate-500">
+                        This ID will be used for verification purposes.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* STEP 3 - Passwords (aligned) */}
+                  {activeStep === 3 && (
+                    <div className="space-y-5">
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <div className="grid gap-2">
+                          <Label htmlFor="password">Password</Label>
+                          <Input
+                            id="password"
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder="Enter Password"
+                            required
+                          />
+                          <p className="text-xs text-slate-500">At least 8 characters</p>
                         </div>
-                      </>
-                    ) : (
-                      <span className="text-gray-400 text-sm text-center px-4">
-                        <div className="flex flex-col items-center">
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="h-6 w-6 mb-1 text-gray-300"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M4 16l4-4m0 0l4-4m-4 4h12"
-                            />
-                          </svg>
-                          Upload your University/Alumni ID
+
+                        <div className="grid gap-2">
+                          <Label htmlFor="confirmPassword">Confirm Password</Label>
+                          <Input
+                            id="confirmPassword"
+                            type="password"
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            placeholder="Confirm Password"
+                            required
+                          />
+                          {/* keep an empty spacer line to keep heights equal */}
+                          <p className="text-xs invisible select-none">spacer</p>
                         </div>
-                      </span>
-                    )}
-                  </div>
+                      </div>
 
-                  <input
-                    type="file"
-                    accept="image/*"
-                    name="idImage"
-                    ref={fileInputRef}
-                    onChange={handleFileChange}
-                    className="hidden"
-                  />
+                      <label className="flex items-start gap-3 text-sm text-slate-600">
+                        <input
+                          type="checkbox"
+                          className="mt-1"
+                          checked={agree}
+                          onChange={(e) => setAgree(e.target.checked)}
+                        />
+                        <span>
+                          I agree with the <a className="underline">Terms of Service</a> and{" "}
+                          <a className="underline">Privacy Policy</a>
+                        </span>
+                      </label>
+                    </div>
+                  )}
 
-                  <Button
-                    type="button"
-                    onClick={verifyID}
-                    disabled={!idImage || !fullName || isVerifying}
-                    className="mt-1"
-                  >
-                    {isVerifying ? "Verifying..." : "Verify ID"}
-                  </Button>
+                  {/* STEP 4 */}
+                  {activeStep === 4 && (
+                    <div className="space-y-4 text-sm">
+                      <div className="rounded-lg border p-4">
+                        <div className="grid grid-cols-2 gap-2">
+                          <span className="text-slate-500">Role</span>
+                          <span className="font-medium">{selectedRole || "—"}</span>
 
-                  <p className="text-xs text-center text-gray-500">
-                    This ID will be used for verification purposes.
-                  </p>
-                  {verificationStatus === "Failed" && (
-                    <p className="text-xs text-red-600 text-center">
-                      ID verification failed.
-                    </p>
+                          <span className="text-slate-500">Full Name</span>
+                          <span className="font-medium">{fullName || "—"}</span>
+
+                          <span className="text-slate-500">Email</span>
+                          <span className="font-medium break-all">{email || "—"}</span>
+
+                          <span className="text-slate-500">University</span>
+                          <span className="font-medium">{selectedUniversity?.abbreviation || "—"}</span>
+
+                          <span className="text-slate-500">ID Status</span>
+                          <span className="font-medium">
+                            {verificationStatus || (idImage ? "Not verified" : "No file")}
+                          </span>
+                        </div>
+                      </div>
+                      <p className="text-xs text-slate-500">Make sure your details are correct before registering.</p>
+                    </div>
+                  )}
+
+                  {/* global error */}
+                  {error && <p className="text-sm text-red-600">{error}</p>}
+
+                  {/* hidden mirrors for final submit */}
+                  <input type="hidden" name="role" value={selectedRole} />
+                  <input type="hidden" name="name" value={fullName} />
+                  <input type="hidden" name="email" value={email} />
+                  {selectedUniversity && (
+                    <input type="hidden" name="university" value={String(selectedUniversity.id)} />
+                  )}
+                  <input type="hidden" name="password" value={password} />
+                  <input type="hidden" name="confirmPassword" value={confirmPassword} />
+                  {verificationStatus === "Verified" && (
+                    <input type="hidden" name="verificationStatus" value="Verified" />
                   )}
                 </div>
 
-                {/* Errors */}
-                {error && (
-                  <p className="text-sm text-red-600 text-center">{error}</p>
-                )}
+                {/* FOOTER (fixed place; card height uniform) */}
+                <div className="mt-4 flex items-center justify-between">
+                  <button
+                    type="button"
+                    className="rounded-md px-4 py-2 border bg-white text-slate-600 disabled:opacity-60"
+                    onClick={prev}
+                    disabled={activeStep === 0}
+                  >
+                    Previous
+                  </button>
 
-                {/* Updates the status of user to Verified */}
-                {verificationStatus === "Verified" && (
-                  <input
-                    type="hidden"
-                    name="verificationStatus"
-                    value="Verified"
-                  />
-                )}
+                  {activeStep < steps.length - 1 ? (
+                    <button
+                      type="button"
+                      onClick={next}
+                      disabled={!stepIsValid}
+                      className="rounded-md px-6 py-2 text-slate-900 disabled:text-slate-600"
+                      style={{
+                        backgroundColor: stepIsValid ? COLOR_NEXT_OK : COLOR_UPCOMING,
+                        cursor: stepIsValid ? "pointer" : "not-allowed",
+                      }}
+                    >
+                      Next
+                    </button>
+                  ) : (
+                    <Button type="submit" disabled={loading || !stepIsValid}>
+                      {loading ? "Registering..." : "Register"}
+                    </Button>
+                  )}
+                </div>
+              </form>
+            </CardContent>
+          </Card>
 
-                {/* Submit */}
-                <Button
-                  type="submit"
-                  className="w-full mt-2"
-                  disabled={verificationStatus !== "Verified" && loading}
-                >
-                  Register
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-
-        <div>
-          <h3>
-            Register an Organiztion?{" "}
-            <Link href={"/organization-signup"}>
-              <span>Create</span>
+          <p className="mt-4 text-center text-slate-600">
+            Register an Organization?{" "}
+            <Link href="/organization-signup" className="font-medium" style={{ color: COLOR_DONE }}>
+              Create
             </Link>
-          </h3>
+          </p>
         </div>
       </div>
 
       {/* Loading Modal */}
       {showLoadingModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full text-center space-y-4">
-            <h2 className="text-lg font-medium text-gray-700 animate-pulse">
-              Creating your account...
-            </h2>
-            <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+            <h2 className="text-lg font-medium text-gray-700 animate-pulse">Creating your account...</h2>
+            <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto" />
           </div>
         </div>
       )}
 
       {/* Success Modal */}
       {showSuccessModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full text-center space-y-4">
-            <h2 className="text-xl font-bold text-green-700">
-              Registered Successfully!
-            </h2>
-            <p className="text-sm text-gray-600">
-              Please check your email to confirm your account.
-            </p>
-            <Link href={"/login"}>
-              <Button
-                onClick={() => setShowSuccessModal(false)}
-                className="w-full"
-              >
-                Close
-              </Button>
+            <h2 className="text-xl font-bold text-green-700">Registered Successfully!</h2>
+            <p className="text-sm text-gray-600">Please check your email to confirm your account.</p>
+            <Link href="/login">
+              <Button className="w-full">Close</Button>
             </Link>
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
