@@ -17,8 +17,8 @@ export function SettingsPanel() {
   // ✅ Decide credits link based on role
   const role = user?.role;
   const creditsLink =
-    role === "Business" || role === "Organization"
-      ? "/credits/business"
+    role === "Business" || role === "organization"
+      ? "/credits/bo"
       : "/credits/individual";
 
   return (

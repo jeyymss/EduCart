@@ -2,10 +2,11 @@
 
 import {
   ChevronRight,
-  Flag,
   LayoutDashboard,
   ShoppingBag,
   Wallet,
+  Star,
+  Settings as SettingsIcon,
 } from "lucide-react";
 import {
   Collapsible,
@@ -24,17 +25,17 @@ export function OrgNavMain() {
   return (
     <SidebarGroup>
       <SidebarMenu>
-        {/* Normal Dashboard link */}
+        {/* Dashboard */}
         <SidebarMenuItem>
-          <Link href={"/organization-account/dashboard"}>
+          <Link href="/organization-account/dashboard">
             <SidebarMenuButton className="hover:cursor-pointer">
-              <LayoutDashboard />
+              <LayoutDashboard className="h-4 w-4" />
               <span>Dashboard</span>
             </SidebarMenuButton>
           </Link>
         </SidebarMenuItem>
 
-        {/* Collapsible Product section */}
+        {/* Product (collapsible) */}
         <SidebarMenuItem>
           <Collapsible>
             <CollapsibleTrigger className="flex w-full items-center justify-between text-sm font-medium px-2 py-2 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground rounded-md group">
@@ -42,40 +43,57 @@ export function OrgNavMain() {
                 <ShoppingBag className="h-4 w-4" />
                 <span>Product</span>
               </div>
-              <ChevronRight className="h-4 w-4 font-normal transition-transform duration-200 group-data-[state=open]:rotate-90" />
+              <ChevronRight className="h-4 w-4 transition-transform duration-200 group-data-[state=open]:rotate-90" />
             </CollapsibleTrigger>
 
-            <CollapsibleContent>
-              <Link href={"/organization-account/my-products"}>
+            <CollapsibleContent className="mt-1">
+              <Link href="/organization-account/transactions">
+                <SidebarMenuButton className="hover:cursor-pointer ml-6">
+                  <span>Transactions</span>
+                </SidebarMenuButton>
+              </Link>
+
+              <Link href="/organization-account/my-products">
                 <SidebarMenuButton className="hover:cursor-pointer ml-6">
                   <span>My Products</span>
                 </SidebarMenuButton>
               </Link>
 
-              <Link href={"/organization-account/add-new-product"}>
+              <Link href="/organization-account/add-new-product">
                 <SidebarMenuButton className="hover:cursor-pointer ml-6">
-                  <span>Add New Product</span>
+                  <span>Add Product</span>
                 </SidebarMenuButton>
               </Link>
             </CollapsibleContent>
           </Collapsible>
         </SidebarMenuItem>
 
-        {/* Other menu items */}
+        {/* Wallet */}
         <SidebarMenuItem>
-          <Link href={"/organization-account/wallet"}>
+          <Link href="/organization-account/wallet">
             <SidebarMenuButton className="hover:cursor-pointer">
-              <Wallet />
+              <Wallet className="h-4 w-4" />
               <span>Wallet</span>
             </SidebarMenuButton>
           </Link>
         </SidebarMenuItem>
 
+        {/* Reviews */}
         <SidebarMenuItem>
-          <Link href={"/organization-account/reports"}>
+          <Link href="/organization-account/reviews">
             <SidebarMenuButton className="hover:cursor-pointer">
-              <Flag />
-              <span>Reports</span>
+              <Star className="h-4 w-4" />
+              <span>Reviews</span>
+            </SidebarMenuButton>
+          </Link>
+        </SidebarMenuItem>
+
+        {/* Settings */}
+        <SidebarMenuItem>
+          <Link href="/organization-account/settings">
+            <SidebarMenuButton className="hover:cursor-pointer">
+              <SettingsIcon className="h-4 w-4" />
+              <span>Settings</span>
             </SidebarMenuButton>
           </Link>
         </SidebarMenuItem>

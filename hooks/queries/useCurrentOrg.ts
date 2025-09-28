@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { createClient } from "@/utils/supabase/client";
 
 export type OrganizationRow = {
+  bio: string | null | undefined;
   user_id: string;
   organization_name: string;
   organization_description: string | null;

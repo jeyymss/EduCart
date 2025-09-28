@@ -3,7 +3,6 @@
 import * as React from "react";
 
 import { OrgNavMain } from "@/components/organization/nav-main";
-
 import { OrgNavUser } from "@/components/organization/nav-user";
 import {
   Sidebar,
@@ -18,7 +17,8 @@ import Image from "next/image";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
-    <Sidebar variant="inset" {...props}>
+    // removed variant="inset" to eliminate the inset content block + padding
+    <Sidebar {...props}>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem className="flex item-center justify-center">
@@ -33,9 +33,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
+
       <SidebarContent>
         <OrgNavMain />
       </SidebarContent>
+
       <SidebarFooter>
         <OrgNavUser />
       </SidebarFooter>
