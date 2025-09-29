@@ -23,6 +23,8 @@ import { PasabuyCard } from "@/components/posts/displayposts/pasabuyCard";
 import { useHomePagePasaBuy } from "@/hooks/queries/displayItems";
 import { EmergencyPost } from "@/hooks/queries/displayItems";
 import { PasaBuyPost } from "@/hooks/queries/displayItems";
+import { useGiveawayPosts } from "@/hooks/queries/displayItems";
+import GiveawayPostCard from "@/components/posts/displayposts/giveawayPostCard";
 
 export default function HomePage() {
   //Fetch posts from sale, rent, trade
@@ -45,6 +47,13 @@ export default function HomePage() {
     isLoading: pasabuyLoading,
     error: pasabuyError,
   } = useHomePagePasaBuy();
+
+  // Fetch posts from giveaway
+  const {
+    data: giveaways = [],
+    isLoading: giveawaysLoading,
+    error: giveawaysError,
+  } = useGiveawayPosts();
 
   const [selectedEmergency, setSelectedEmergency] =
     useState<EmergencyPost | null>(null);
@@ -295,8 +304,19 @@ export default function HomePage() {
             <span className="text-sm text-[#577C8E]">View All</span>
           </Link>
         </div>
-        <div>
-          <h1>hello</h1>
+
+        <div className="space-y-4 mt-3">
+          {giveawaysLoading && <p>Loading…</p>}
+          {giveawaysError && (
+            <p className="text-red-500">Failed to load giveaways</p>
+          )}
+          {giveaways.length === 0 && !giveawaysLoading ? (
+            <p className="text-center text-gray-500">No donations yet.</p>
+          ) : (
+            giveaways.map((post) => (
+              <GiveawayPostCard key={post.id} post={post} />
+            ))
+          )}
         </div>
       </div>
     </div>

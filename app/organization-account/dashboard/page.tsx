@@ -50,7 +50,8 @@ export default function OrganizationDashboard() {
               setIsEditing(false);
               if (updated) {
                 org.avatar_url = updated.avatar_url ?? org.avatar_url;
-                org.background_url = updated.background_url ?? org.background_url;
+                org.background_url =
+                  updated.background_url ?? org.background_url;
                 org.bio = updated.bio ?? org.bio;
               }
             }}
@@ -95,7 +96,9 @@ export default function OrganizationDashboard() {
                 </div>
 
                 <div className="flex-1 mt-2">
-                  <h1 className="text-2xl font-bold">{org.organization_name}</h1>
+                  <h1 className="text-2xl font-bold">
+                    {org.organization_name}
+                  </h1>
                   <p className="text-base text-muted-foreground">
                     {org.bio ?? "This organization has no bio yet."}
                   </p>
@@ -104,7 +107,7 @@ export default function OrganizationDashboard() {
                       {org.role ?? "Organization"}
                     </span>
                     <span className="px-3 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">
-                      {org.verification_status ?? "Pending"}
+                      {org.universities?.abbreviation}
                     </span>
                   </div>
                 </div>
@@ -147,7 +150,9 @@ export default function OrganizationDashboard() {
                     />
                     <KPI
                       title="Total Earnings"
-                      value={`₱${Number(org.total_earnings ?? 0).toLocaleString()}`}
+                      value={`₱${Number(
+                        org.total_earnings ?? 0
+                      ).toLocaleString()}`}
                       icon={<CircleDollarSign className="h-7 w-7" />}
                     />
                   </div>
@@ -172,7 +177,11 @@ export default function OrganizationDashboard() {
 
       {/* --- Content (tabs) --- */}
       <div className="flex-1 px-6">
-        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+        <Tabs
+          value={activeTab}
+          onValueChange={handleTabChange}
+          className="w-full"
+        >
           <TabsContent value="overview">
             <div className="px-6 mt-4 text-xs text-muted-foreground">
               Created: {new Date(org.created_at).toLocaleString()}

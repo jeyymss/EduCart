@@ -1,18 +1,17 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { createClient } from "@/utils/supabase/client";
 
 export type OrganizationRow = {
   bio: string | null | undefined;
   user_id: string;
+  universities: { id: number; abbreviation: string | null } | null;
   organization_name: string;
   organization_description: string | null;
   email: string;
   avatar_url: string | null;
   background_url: string | null;
   role: "Organization";
-  verification_status: "Pending" | "Verified" | "Rejected";
   subscription_quota_used: number;
   post_credits_balance: number;
   is_gcash_linked: boolean;
@@ -22,31 +21,19 @@ export type OrganizationRow = {
   university_id: number | null;
 };
 
-export function useCurrentOrganization() {
-  return useQuery<OrganizationRow | null, Error>({
-    queryKey: ["org", "me"],
+export const useCurrentOrganization = () => {
+  return useQuery<OrganizationRow | null>({
+    queryKey: ["organization", "me"], // still good key name
     queryFn: async () => {
-      const supabase = createClient();
-
-      const {
-        data: { user },
-        error: userErr,
-      } = await supabase.auth.getUser();
-      if (userErr) throw new Error(userErr.message);
-      if (!user) return null;
-
-      const { data, error } = await supabase
-        .from("organizations")
-        .select(
-          "user_id, organization_name, organization_description, email, avatar_url, background_url, role, verification_status, subscription_quota_used, post_credits_balance, is_gcash_linked, total_earnings, created_at, updated_at, university_id"
-        )
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      if (error) throw new Error(error.message);
-      return (data as OrganizationRow) ?? null;
+      const res = await fetch("/api/user-profile-view/organization");
+      const data = await res.json();
+      if (!res.ok)
+        throw new Error(data.error || "Failed to fetch organization");
+      return data;
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: 1000 * 60 * 5, // cache is fresh for 5 minutes
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
     retry: false,
   });
-}
+};

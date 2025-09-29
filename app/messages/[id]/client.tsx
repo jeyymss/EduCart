@@ -6,7 +6,27 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import Link from "next/link";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
+import { Camera, FilePenLine } from "lucide-react";
+import { DialogDescription } from "@radix-ui/react-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type ChatMessage = {
   id: number;
@@ -315,13 +335,61 @@ export default function ChatClient({
 
         {/* Input stays pinned */}
         <div className="border-t p-3 flex gap-2 bg-white rounded-b-2xl shrink-0">
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className="px-3 py-2 rounded hover:bg-gray-100"
-          >
-            📎
-          </button>
+          <div className="flex">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="px-3 py-2 rounded hover:bg-gray-100"
+                >
+                  <Camera />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Add Attachment</p>
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <button
+                      type="button"
+                      className="px-2 py-2 rounded hover:bg-gray-100"
+                    >
+                      <FilePenLine />
+                    </button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Form</DialogTitle>
+                      <DialogDescription>Fill up form</DialogDescription>
+                    </DialogHeader>
+                    <Select>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select Listing Type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Sale">For Sale</SelectItem>
+                        <SelectItem value="Rent">Rent</SelectItem>
+                        <SelectItem value="Trade">Trade</SelectItem>
+                        <SelectItem value="Emergency Lending">
+                          Emergency Lending
+                        </SelectItem>
+                        <SelectItem value="PasaBuy">PasaBuy</SelectItem>
+                        <SelectItem value="Giveaway">Giveaway</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </DialogContent>
+                </Dialog>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Fill Up Form</p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
+
           <input
             type="file"
             accept="image/*"

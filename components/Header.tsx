@@ -61,7 +61,6 @@ export function Header() {
 
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
-  const [isOpen, setIsOpen] = useState(false);
   const [selectedType, setSelectedType] = useState("");
 
   const router = useRouter();
