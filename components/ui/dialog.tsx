@@ -58,20 +58,6 @@ function DialogContent({
     <DialogPortal data-slot="dialog-portal">
       <DialogOverlay />
 
-      {/* Close button placed OUTSIDE content */}
-      {showCloseButton && (
-        <DialogPrimitive.Close
-          data-slot="dialog-close"
-          className="fixed top-4 right-4 z-[60] rounded-xs opacity-70 transition-opacity 
-                     hover:opacity-100 focus:outline-hidden focus:ring-2 focus:ring-ring 
-                     focus:ring-offset-2 ring-offset-background
-                     data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
-        >
-          <XIcon className="text-white" />
-          <span className="sr-only">Close</span>
-        </DialogPrimitive.Close>
-      )}
-
       <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(

@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 type Row = {
   conversation_id: number;
@@ -11,6 +11,7 @@ type Row = {
   other_user_name: string | null;
   other_user_avatar_url: string | null;
   last_message_body: string | null;
+  last_message_created_at?: string | null; // ✅ helpful for sorting
   has_unread?: boolean; // ✅ from view
 };
 
@@ -25,20 +26,86 @@ export default function SidebarList({
   const supabase = createClient();
 
   const [conversations, setConversations] = useState(initialConvos);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
+  // ✅ Get current user once
+  useEffect(() => {
+    async function getUser() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      setCurrentUserId(user?.id ?? null);
+    }
+    getUser();
+  }, [supabase]);
+
+  // ✅ Subscribe to new messages
+  useEffect(() => {
+    const channel = supabase
+      .channel("conversation-messages")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+        },
+        (payload) => {
+          const newMessage = payload.new as {
+            conversation_id: number;
+            body: string | null;
+            sender_user_id: string;
+            created_at: string;
+          };
+
+          setConversations((prev) => {
+            const existing = prev.find(
+              (c) => c.conversation_id === newMessage.conversation_id
+            );
+
+            if (existing) {
+              const updated: Row = {
+                ...existing,
+                last_message_body: newMessage.body,
+                last_message_created_at: newMessage.created_at,
+                // ✅ Only unread if message is from someone else
+                has_unread:
+                  newMessage.sender_user_id !== currentUserId
+                    ? true
+                    : existing.has_unread,
+              };
+
+              // ✅ Move convo to top if new message
+              const others = prev.filter(
+                (c) => c.conversation_id !== newMessage.conversation_id
+              );
+              return [updated, ...others];
+            }
+
+            return prev;
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [supabase, currentUserId]);
 
   if (conversations.length === 0) {
     return <div className="p-6 text-sm text-slate-500">No messages yet.</div>;
   }
 
   async function handleClick(conversationId: number) {
-    // ✅ Optimistically update local state
+    // ✅ Only mark as read, don’t reorder
     setConversations((prev) =>
       prev.map((c) =>
         c.conversation_id === conversationId ? { ...c, has_unread: false } : c
       )
     );
 
-    // ✅ Update last_read_at in DB
+    // ✅ Update DB last_read_at
     const {
       data: { user },
     } = await supabase.auth.getUser();

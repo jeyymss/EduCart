@@ -12,21 +12,16 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogDescription,
+  DialogClose,
 } from "@/components/ui/dialog";
 import {
   Tooltip,
   TooltipTrigger,
   TooltipContent,
 } from "@/components/ui/tooltip";
-import { Camera, FilePenLine } from "lucide-react";
-import { DialogDescription } from "@radix-ui/react-dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Camera, FilePenLine, X } from "lucide-react";
+import PostTypeBadge from "@/components/postTypeBadge";
 
 type ChatMessage = {
   id: number;
@@ -173,7 +168,7 @@ export default function ChatClient({
 
   return (
     <>
-      <div className="flex flex-col h-full border rounded-2xl border-black">
+      <div className="flex flex-col flex-1 min-h-0 border rounded-2xl border-black">
         {/* Header */}
         <div className="flex items-center justify-between gap-3 p-4 border-b rounded-t-2xl bg-white shrink-0">
           <div className="flex items-center gap-3">
@@ -216,9 +211,13 @@ export default function ChatClient({
                 height={56}
                 className="h-20 w-20 rounded-md object-fill"
               />
-              <div className="min-w-0">
+              <div className="space-y-2">
+                <PostTypeBadge
+                  type={postType as any}
+                  className="text-xs text-slate-500"
+                />
                 <p className="text-sm font-medium truncate">{itemTitle}</p>
-                <p className="text-xs text-slate-500">{postType}</p>
+
                 {itemPrice && (
                   <p className="text-xs text-[#E59E2C]">
                     ₱{itemPrice.toLocaleString()}
@@ -341,7 +340,7 @@ export default function ChatClient({
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="px-3 py-2 rounded hover:bg-gray-100"
+                  className="px-3 py-2 rounded hover:bg-gray-100 hover:cursor-pointer"
                 >
                   <Camera />
                 </button>
@@ -356,31 +355,77 @@ export default function ChatClient({
                   <DialogTrigger asChild>
                     <button
                       type="button"
-                      className="px-2 py-2 rounded hover:bg-gray-100"
+                      className="px-2 py-2 rounded hover:bg-gray-100 hover:cursor-pointer"
                     >
                       <FilePenLine />
                     </button>
                   </DialogTrigger>
-                  <DialogContent>
+
+                  <DialogContent
+                    onInteractOutside={(e) => e.preventDefault()}
+                    onEscapeKeyDown={(e) => e.preventDefault()}
+                  >
+                    <DialogClose asChild>
+                      <button
+                        className="absolute right-2 top-2 rounded p-1 text-gray-500 hover:bg-gray-200 hover:cursor-pointer"
+                        aria-label="Close"
+                      >
+                        <X className="h-5 w-5" />
+                      </button>
+                    </DialogClose>
+
                     <DialogHeader>
-                      <DialogTitle>Form</DialogTitle>
+                      <div className="flex items-center">
+                        <DialogTitle>Form</DialogTitle>
+                        <PostTypeBadge type={postType as any} />
+                      </div>
+
                       <DialogDescription>Fill up form</DialogDescription>
                     </DialogHeader>
-                    <Select>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select Listing Type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Sale">For Sale</SelectItem>
-                        <SelectItem value="Rent">Rent</SelectItem>
-                        <SelectItem value="Trade">Trade</SelectItem>
-                        <SelectItem value="Emergency Lending">
-                          Emergency Lending
-                        </SelectItem>
-                        <SelectItem value="PasaBuy">PasaBuy</SelectItem>
-                        <SelectItem value="Giveaway">Giveaway</SelectItem>
-                      </SelectContent>
-                    </Select>
+
+                    {/* ✅ Show post details depending on type */}
+                    {postType === "Sale" && (
+                      <div className="space-y-3">
+                        <Input value={itemTitle ?? ""} disabled />
+                        <Input
+                          value={
+                            itemPrice ? `₱${itemPrice.toLocaleString()}` : ""
+                          }
+                          disabled
+                        />
+                      </div>
+                    )}
+
+                    {postType === "Rent" && (
+                      <div className="space-y-3">
+                        <Input value={itemTitle ?? ""} disabled />
+                        <Input
+                          value={
+                            itemPrice
+                              ? `₱${itemPrice.toLocaleString()} / Day`
+                              : ""
+                          }
+                          disabled
+                        />
+                        {/* You could later add rent duration fields here */}
+                      </div>
+                    )}
+
+                    {postType === "Trade" && (
+                      <div className="space-y-3">
+                        <Input value={itemTitle ?? ""} disabled />
+                        {/* For trade you might add extra field for offered item */}
+                      </div>
+                    )}
+
+                    {/* fallback if other post types */}
+                    {["Emergency Lending", "PasaBuy", "Giveaway"].includes(
+                      postType || ""
+                    ) && (
+                      <div className="space-y-3">
+                        <Input value={itemTitle ?? ""} disabled />
+                      </div>
+                    )}
                   </DialogContent>
                 </Dialog>
               </TooltipTrigger>

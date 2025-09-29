@@ -15,7 +15,7 @@ export function FavoritesList({ userId }: { userId: string }) {
     queryKey: ["favorites", userId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("user_favorites") // ✅ using the view you made
+        .from("user_favorites")
         .select("*")
         .eq("user_id", userId);
 
@@ -74,7 +74,7 @@ export function FavoritesList({ userId }: { userId: string }) {
           key={item.id}
           id={item.id}
           title={item.item_title}
-          price={item.price ?? undefined}
+          price={item.item_price ?? undefined}
           condition={item.condition ?? ""}
           category_name={item.category_name ?? ""}
           post_type={item.post_type_name ?? ""}
@@ -83,8 +83,8 @@ export function FavoritesList({ userId }: { userId: string }) {
           seller={""}
           status={item.status}
           isOwner={false}
-          isFav={true} // ✅ always favorite here
-          onToggleFavorite={() => removeFavorite.mutate(item.id)} // ✅ remove fav
+          isFav={true}
+          onToggleFavorite={() => removeFavorite.mutate(item.id)}
         />
       ))}
     </div>

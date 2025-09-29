@@ -38,7 +38,6 @@ export default async function MessagesLayout({
     );
   }
 
-  // ✅ Fetch only conversations the current user is part of
   const { data, error } = await supabase
     .from("my_convo")
     .select(

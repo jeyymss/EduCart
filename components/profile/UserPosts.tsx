@@ -31,8 +31,6 @@ export type UserPost = {
   image_urls: string[];
   full_name: string;
   status: "Listed" | "Sold" | "Unlisted";
-
-  // optional, used by the modal if present
   item_description?: string | null;
   university_abbreviation?: string | null;
   role?: string | null;

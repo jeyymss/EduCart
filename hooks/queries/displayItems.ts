@@ -50,12 +50,28 @@ export type GiveawayPost = {
   };
 };
 
+export type OrganizationPost = {
+  post_id: string;
+  item_title: string;
+  item_description: string;
+  item_price: number | null;
+  item_condition: string | null;
+  image_urls: string[] | null;
+  created_at: string;
+  status: "Listed" | "Sold" | "Unlisted";
+  category_name: string | null;
+  post_type_name: string | null;
+  organization_name: string;
+  university_name: string | null;
+  university_abbr: string | null;
+};
+
 // DISPLAY ITEMS IN HOME PAGE
 export const useHomepageItems = () => {
   return useQuery<PostWithUser[]>({
     queryKey: ["homepage-items", 5],
     queryFn: async () => {
-      const res = await fetch("/api/posts/productCard?limit=5");
+      const res = await fetch("/api/posts/homeItems?limit=5");
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to fetch items");
       return data;
@@ -101,7 +117,7 @@ export const useBrowsepageItems = () => {
   return useQuery<PostWithUser[]>({
     queryKey: ["browsepage-items"],
     queryFn: async () => {
-      const res = await fetch("/api/posts/productCard");
+      const res = await fetch("/api/posts/browseItems");
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to fetch items");
       return data;
@@ -161,6 +177,22 @@ export const useGiveawayPosts = () => {
       return data;
     },
     staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
+  });
+};
+
+//DISPLAY ORGANIZATION POSTS
+export const useOrganizationItems = () => {
+  return useQuery<OrganizationPost[]>({
+    queryKey: ["organization-items"],
+    queryFn: async () => {
+      const res = await fetch("/api/posts/organizationItems");
+      const data = await res.json();
+      if (!res.ok)
+        throw new Error(data.error || "Failed to fetch organization items");
+      return data;
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutes cache
     refetchOnWindowFocus: false,
   });
 };

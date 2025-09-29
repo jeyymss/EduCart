@@ -19,6 +19,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogClose,
 } from "./ui/dialog";
 import {
   Select,
@@ -48,6 +49,7 @@ import {
   PlusSquare,
   MessageSquare,
   User,
+  X,
 } from "lucide-react";
 
 export function Header() {
@@ -169,7 +171,18 @@ export function Header() {
                       Post
                     </Button>
                   </DialogTrigger>
-                  <DialogContent>
+                  <DialogContent
+                    onInteractOutside={(e) => e.preventDefault()}
+                    onEscapeKeyDown={(e) => e.preventDefault()}
+                  >
+                    <DialogClose asChild>
+                      <button
+                        className="absolute right-2 top-2 rounded p-1 text-gray-500 hover:bg-gray-200 hover:cursor-pointer"
+                        aria-label="Close"
+                      >
+                        <X className="h-5 w-5" />
+                      </button>
+                    </DialogClose>
                     <DialogHeader>
                       <div className="text-center">
                         <DialogTitle>Create Listing</DialogTitle>

@@ -15,6 +15,7 @@ import {
   markAsListed,
   markAsUnlisted,
 } from "@/app/user-posts/editPostStatus/actions";
+import PostTypeBadge from "@/components/postTypeBadge";
 
 type Props = {
   id: string;
@@ -36,15 +37,6 @@ type Props = {
 
   /** When provided, use this to open a modal for PasaBuy / Emergency Lending */
   onOpenSpecialModal?: (id: string, postType: string) => void;
-};
-
-const typeBadgeStyles: Record<string, string> = {
-  Sale: "bg-[#4B657A] text-white",
-  Giveaway: "bg-[#7A2E2E] text-white",
-  Rent: "bg-[#54766B] text-white",
-  PasaBuy: "bg-[#785A28] text-white",
-  "Emergency Lending": "bg-[#A02B2B] text-white",
-  Trade: "bg-red-600 text-white",
 };
 
 export function ItemCard({
@@ -175,13 +167,10 @@ export function ItemCard({
             className="object-cover"
             sizes="(max-width: 768px) 100vw, 33vw"
           />
-          <span
-            className={`absolute top-2 left-2 text-xs px-2 py-0.5 rounded font-medium shadow ${
-              typeBadgeStyles[post_type] || "bg-gray-400 text-white"
-            }`}
-          >
-            {post_type}
-          </span>
+          <PostTypeBadge
+            type={post_type as any}
+            className="absolute top-2 left-2 shadow"
+          />
         </div>
         <div className="p-3 flex flex-col flex-grow justify-between">
           <div className="space-y-1">
