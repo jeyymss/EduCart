@@ -1,24 +1,23 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { Header } from "./Header";
-import { useEffect, useState } from "react";
+import { Header } from "./Header";                 // site header (named export)
+import HeaderLogin from "@/components/auth/header"; // auth header (default export)
 
 export function HeaderWrapper() {
-  const pathname = usePathname();
-  const [showHeader, setShowHeader] = useState(true);
+  const pathname = usePathname() || "";
 
-  useEffect(() => {
-    if (!pathname) return;
+  // pages that should show NO header at all
+  if (pathname.startsWith("/admin") || pathname.startsWith("/organization-account")) {
+    return null;
+  }
 
-    const hiddenPrefixes = ["/admin", "/organization-account"];
+  // pages that should use the AUTH header
+  const onAuth =
+    pathname.startsWith("/login") ||
+    pathname.startsWith("/signup") ||
+    pathname.startsWith("/organization-signup") ||
+    pathname.startsWith("/confirm");
 
-    const shouldHide = hiddenPrefixes.some((prefix) =>
-      pathname.startsWith(prefix)
-    );
-
-    setShowHeader(!shouldHide);
-  }, [pathname]);
-
-  return showHeader ? <Header /> : null;
+  return onAuth ? <HeaderLogin /> : <Header />;
 }
