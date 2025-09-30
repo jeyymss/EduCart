@@ -20,6 +20,7 @@ import { SettingsPanel } from "@/components/profile/SettingsPanel";
 import EditProfile from "@/components/profile/EditProfile";
 import Image from "next/image";
 import { FavoritesList } from "@/components/profile/FavoriteList";
+import Transactions from "@/components/profile/Transactions";
 
 const AVATAR_DIM = 128;
 
@@ -179,43 +180,60 @@ export default function ProfilePage() {
               </div>
             </div>
 
+            {/* Header strip under the cover */}
             <div className="bg-white shadow-sm px-6 pb-4">
-              <div className="flex items-start gap-4 pl-6">
-                <div
-                  className="relative -mt-16 rounded-full ring-4 ring-white shadow-md overflow-hidden"
-                  style={{ width: AVATAR_DIM, height: AVATAR_DIM }}
-                >
-                  <Image
-                    src={displayUser?.avatar_url ?? "/placeholder-avatar.png"}
-                    alt="Avatar"
-                    width={AVATAR_DIM}
-                    height={AVATAR_DIM}
-                    className="h-full w-full object-cover"
-                    unoptimized
-                    priority
-                  />
-                </div>
+              <div className="flex items-start justify-between gap-4 pl-6">
+                {/* Left: avatar + name/bio */}
+                <div className="flex items-start gap-4">
+                  <div
+                    className="relative -mt-16 rounded-full ring-4 ring-white shadow-md overflow-hidden"
+                    style={{ width: AVATAR_DIM, height: AVATAR_DIM }}
+                  >
+                    <Image
+                      src={displayUser?.avatar_url ?? "/placeholder-avatar.png"}
+                      alt="Avatar"
+                      width={AVATAR_DIM}
+                      height={AVATAR_DIM}
+                      className="h-full w-full object-cover"
+                      unoptimized
+                      priority
+                    />
+                  </div>
 
-                <div className="flex-1 mt-2">
-                  <h1 className="text-2xl font-bold">
-                    {displayUser.full_name ?? "Unnamed User"}
-                  </h1>
-                  <p className="text-base text-muted-foreground">
-                    {displayUser.bio ?? "This user has no bio yet."}
-                  </p>
-                  <div className="flex gap-2 mt-2">
-                    {displayUser.role && (
-                      <span className="px-3 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">
-                        {displayUser.role}
-                      </span>
-                    )}
-                    {displayUser.universities?.abbreviation && (
-                      <span className="px-3 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">
-                        {displayUser.universities.abbreviation}
-                      </span>
-                    )}
+                  <div className="flex-1 mt-2">
+                    <h1 className="text-2xl font-bold">
+                      {displayUser.full_name ?? "Unnamed User"}
+                    </h1>
+                    <p className="text-base text-muted-foreground">
+                      {displayUser.bio ?? "This user has no bio yet."}
+                    </p>
+                    <div className="flex gap-2 mt-2">
+                      {displayUser.role && (
+                        <span className="px-3 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">
+                          {displayUser.role}
+                        </span>
+                      )}
+                      {displayUser.universities?.abbreviation && (
+                        <span className="px-3 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">
+                          {displayUser.universities.abbreviation}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
+
+               {/* Add Business Account */}
+              <div className="mt-2">
+                <Button
+                  variant="outline"
+                  className="border-[#F3AD4B] text-[#F3AD4B] hover:bg-[#FFF7E9]"
+                  onClick={() => {
+                    console.log("Add Business Account clicked");
+                  }}
+                 >
+                  Add Business Account
+                </Button>
+              </div>
               </div>
             </div>
           </div>
@@ -231,21 +249,17 @@ export default function ProfilePage() {
         >
           <div className="sticky top-0 z-30 bg-white border-b">
             <TabsList className="flex w-full p-0 bg-transparent h-auto">
-              {[
-                "listings",
-                "favorites",
-                "transactions",
-                "reviews",
-                "settings",
-              ].map((tab) => (
-                <TabsTrigger
-                  key={tab}
-                  value={tab}
-                  className="tab-trigger px-4 py-3 rounded-none hover:cursor-pointer"
-                >
-                  {tab.charAt(0).toUpperCase() + tab.slice(1)}
-                </TabsTrigger>
-              ))}
+              {["listings", "favorites", "transactions", "reviews", "settings"].map(
+                (tab) => (
+                  <TabsTrigger
+                    key={tab}
+                    value={tab}
+                    className="tab-trigger px-4 py-3 rounded-none hover:cursor-pointer"
+                  >
+                    {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                  </TabsTrigger>
+                )
+              )}
             </TabsList>
           </div>
 
@@ -373,15 +387,13 @@ export default function ProfilePage() {
           <TabsContent value="favorites">
             <section className="border rounded-2xl bg-white shadow-sm p-4">
               <h2 className="text-lg font-semibold mb-4">My Favorites</h2>
-
               {displayUser?.id && <FavoritesList userId={displayUser.id} />}
             </section>
           </TabsContent>
 
+          {/* ✅ transactions tab (no backend edits) */}
           <TabsContent value="transactions">
-            <section className="border rounded-2xl bg-white shadow-sm p-4">
-              Transactions go here.
-            </section>
+            <Transactions userId={displayUser.id} />
           </TabsContent>
 
           <TabsContent value="reviews">
