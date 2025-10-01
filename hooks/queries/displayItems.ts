@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 
-type PostWithUser = {
+export type PostWithUser = {
   post_id: string;
   post_user_id: string;
   item_title: string;
@@ -31,23 +31,6 @@ export type EmergencyPost = BasePost;
 
 export type PasaBuyPost = BasePost & {
   item_service_fee: number;
-};
-
-export type GiveawayPost = {
-  id: string;
-  item_title: string;
-  item_description: string | null;
-  image_urls: string[];
-  created_at: string;
-  like_count: number;
-  comment_count: number;
-  is_liked: boolean;
-  category_name?: string;
-  condition?: string;
-  user?: {
-    full_name: string;
-    avatar_url?: string;
-  };
 };
 
 export type OrganizationPost = {
@@ -165,21 +148,6 @@ export function useUserPosts(userId: string | undefined, status?: string) {
     staleTime: 1000 * 60 * 5, // 5 minutes cache
   });
 }
-
-// DISPLAY GIVEAWAY POSTS
-export const useGiveawayPosts = () => {
-  return useQuery<GiveawayPost[]>({
-    queryKey: ["giveaway-posts"],
-    queryFn: async () => {
-      const res = await fetch("/api/posts/giveaways", { cache: "no-store" });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to fetch giveaways");
-      return data;
-    },
-    staleTime: 1000 * 60 * 5,
-    refetchOnWindowFocus: false,
-  });
-};
 
 //DISPLAY ORGANIZATION POSTS
 export const useOrganizationItems = () => {

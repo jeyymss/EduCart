@@ -14,10 +14,11 @@ import { ArrowLeft, Heart, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import MessageSellerButton from "@/components/messages/MessageSellerBtn";
+import {
+  useIsFavorite,
+  useToggleFavorite,
+} from "@/hooks/queries/userFavorites";
 import { createClient } from "@/utils/supabase/client";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-
-const supabase = createClient();
 
 function renderDetails(item: any) {
   switch (item?.post_type_name) {
@@ -32,51 +33,7 @@ function renderDetails(item: any) {
   }
 }
 
-// ✅ hook to check if post is in favorites
-function useIsFavorite(postId?: string, userId?: string) {
-  return useQuery({
-    queryKey: ["favorite", userId, postId],
-    queryFn: async () => {
-      if (!postId || !userId) return false;
-      const { data, error } = await supabase
-        .from("favorites")
-        .select("post_id")
-        .eq("post_id", postId)
-        .eq("user_id", userId)
-        .maybeSingle();
-      if (error) throw error;
-      return !!data;
-    },
-    enabled: !!postId && !!userId,
-  });
-}
-
-// ✅ hook to toggle favorite
-function useToggleFavorite(postId?: string, userId?: string) {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async (isFav: boolean) => {
-      if (!postId || !userId) return;
-      if (isFav) {
-        const { error } = await supabase
-          .from("favorites")
-          .delete()
-          .eq("post_id", postId)
-          .eq("user_id", userId);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from("favorites")
-          .insert({ post_id: postId, user_id: userId });
-        if (error) throw error;
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["favorite", userId, postId] });
-      queryClient.invalidateQueries({ queryKey: ["user_favorites", userId] });
-    },
-  });
-}
+const supabase = createClient();
 
 export default function ItemDetailsPage() {
   const params = useParams();
@@ -246,9 +203,13 @@ export default function ItemDetailsPage() {
                   onClick={() => toggleFavorite.mutate(isFav)}
                   className={`${
                     isFav ? "text-red-500" : "text-gray-400"
-                  } hover:text-red-600 transition-colors`}
+                  } hover:text-red-600 hover:cursor-pointer transition-colors`}
                 >
-                  <Heart className={`h-7 w-7 ${isFav ? "fill-red-500" : ""}`} />
+                  <Heart
+                    className={`h-7 w-7 hover:cursor-pointer ${
+                      isFav ? "fill-red-500" : ""
+                    }`}
+                  />
                 </Button>
               )}
             </div>

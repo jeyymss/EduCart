@@ -23,8 +23,8 @@ import { PasabuyCard } from "@/components/posts/displayposts/pasabuyCard";
 import { useHomePagePasaBuy } from "@/hooks/queries/displayItems";
 import { EmergencyPost } from "@/hooks/queries/displayItems";
 import { PasaBuyPost } from "@/hooks/queries/displayItems";
-import { useGiveawayPosts } from "@/hooks/queries/displayItems";
-import GiveawayPostCard from "@/components/posts/displayposts/giveawayPostCard";
+import { useGiveawayPosts } from "@/hooks/queries/GiveawayPosts";
+import { GiveawayPostCard } from "@/components/posts/displayposts/giveawayPostCard";
 
 export default function HomePage() {
   //Fetch posts from sale, rent, trade

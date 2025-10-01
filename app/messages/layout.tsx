@@ -3,6 +3,8 @@ import { ReactNode } from "react";
 import { createClient } from "@/utils/supabase/server";
 import MessagesRealtimeRefresher from "@/components/messages/MessagesRealtimeRefresher";
 import SidebarList from "@/components/messages/SideBarList";
+import Image from "next/image";
+import Footer from "@/components/Footer";
 
 type Row = {
   conversation_id: number;
@@ -66,20 +68,25 @@ export default async function MessagesLayout({
   const convoIds = conversations.map((c) => c.conversation_id);
 
   return (
-    <div className="grid grid-cols-[320px_1fr] h-[calc(100vh-64px)] p-5 pt-10 gap-3 overflow-hidden">
-      <MessagesRealtimeRefresher
-        currentUserId={user.id}
-        conversationIds={convoIds}
-      />
+    <div className="flex flex-col min-h-screen">
+      <div className="grid grid-cols-[320px_1fr] h-[calc(100vh-64px)] p-5 pt-10 gap-3 overflow-hidden">
+        <MessagesRealtimeRefresher
+          currentUserId={user.id}
+          conversationIds={convoIds}
+        />
 
-      {/* Sidebar */}
-      <aside className="border border-black rounded-xl overflow-y-auto">
-        <div className="p-4 border-b font-semibold">Messages</div>
-        <SidebarList conversations={conversations} />
-      </aside>
+        {/* Sidebar */}
+        <aside className="border border-black rounded-xl overflow-y-auto">
+          <div className="p-4 border-b font-semibold">Messages</div>
+          <SidebarList conversations={conversations} />
+        </aside>
 
-      {/* Chat Window */}
-      <main className="h-full flex flex-col overflow-hidden">{children}</main>
+        {/* Chat Window */}
+        <main className="h-full flex flex-col overflow-hidden border rounded-2xl border-black">
+          {children}
+        </main>
+      </div>
+      <Footer />
     </div>
   );
 }

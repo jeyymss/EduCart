@@ -168,7 +168,7 @@ export default function ChatClient({
 
   return (
     <>
-      <div className="flex flex-col flex-1 min-h-0 border rounded-2xl border-black">
+      <div className="flex flex-col flex-1 min-h-0">
         {/* Header */}
         <div className="flex items-center justify-between gap-3 p-4 border-b rounded-t-2xl bg-white shrink-0">
           <div className="flex items-center gap-3">
@@ -228,7 +228,7 @@ export default function ChatClient({
           </div>
         )}
 
-        {/* Messages - only this scrolls */}
+        {/* Messages */}
         <div
           ref={scrollContainerRef}
           className="flex-1 overflow-y-auto p-4 space-y-2 bg-slate-50"
@@ -322,7 +322,7 @@ export default function ChatClient({
                         prev.filter((_, i) => i !== idx)
                       )
                     }
-                    className="absolute top-0 right-0 bg-black/70 text-white rounded-full h-5 w-5 flex items-center justify-center text-xs"
+                    className="absolute top-0 right-0 bg-black/70 text-white rounded-full h-5 w-5 flex items-center justify-center text-xs hover:cursor-pointer"
                   >
                     ✕
                   </button>
@@ -350,8 +350,8 @@ export default function ChatClient({
               </TooltipContent>
             </Tooltip>
             <Tooltip>
-              <TooltipTrigger asChild>
-                <Dialog>
+              <Dialog>
+                <TooltipTrigger asChild>
                   <DialogTrigger asChild>
                     <button
                       type="button"
@@ -360,75 +360,74 @@ export default function ChatClient({
                       <FilePenLine />
                     </button>
                   </DialogTrigger>
+                </TooltipTrigger>
+                <DialogContent
+                  onInteractOutside={(e) => e.preventDefault()}
+                  onEscapeKeyDown={(e) => e.preventDefault()}
+                >
+                  <DialogClose asChild>
+                    <button
+                      className="absolute right-2 top-2 rounded p-1 text-gray-500 hover:bg-gray-200 hover:cursor-pointer"
+                      aria-label="Close"
+                    >
+                      <X className="h-5 w-5" />
+                    </button>
+                  </DialogClose>
 
-                  <DialogContent
-                    onInteractOutside={(e) => e.preventDefault()}
-                    onEscapeKeyDown={(e) => e.preventDefault()}
-                  >
-                    <DialogClose asChild>
-                      <button
-                        className="absolute right-2 top-2 rounded p-1 text-gray-500 hover:bg-gray-200 hover:cursor-pointer"
-                        aria-label="Close"
-                      >
-                        <X className="h-5 w-5" />
-                      </button>
-                    </DialogClose>
+                  <DialogHeader>
+                    <div className="flex items-center">
+                      <DialogTitle>Form</DialogTitle>
+                      <PostTypeBadge type={postType as any} />
+                    </div>
 
-                    <DialogHeader>
-                      <div className="flex items-center">
-                        <DialogTitle>Form</DialogTitle>
-                        <PostTypeBadge type={postType as any} />
-                      </div>
+                    <DialogDescription>Fill up form</DialogDescription>
+                  </DialogHeader>
 
-                      <DialogDescription>Fill up form</DialogDescription>
-                    </DialogHeader>
+                  {/* ✅ Show post details depending on type */}
+                  {postType === "Sale" && (
+                    <div className="space-y-3">
+                      <Input value={itemTitle ?? ""} disabled />
+                      <Input
+                        value={
+                          itemPrice ? `₱${itemPrice.toLocaleString()}` : ""
+                        }
+                        disabled
+                      />
+                    </div>
+                  )}
 
-                    {/* ✅ Show post details depending on type */}
-                    {postType === "Sale" && (
-                      <div className="space-y-3">
-                        <Input value={itemTitle ?? ""} disabled />
-                        <Input
-                          value={
-                            itemPrice ? `₱${itemPrice.toLocaleString()}` : ""
-                          }
-                          disabled
-                        />
-                      </div>
-                    )}
+                  {postType === "Rent" && (
+                    <div className="space-y-3">
+                      <Input value={itemTitle ?? ""} disabled />
+                      <Input
+                        value={
+                          itemPrice
+                            ? `₱${itemPrice.toLocaleString()} / Day`
+                            : ""
+                        }
+                        disabled
+                      />
+                      {/* You could later add rent duration fields here */}
+                    </div>
+                  )}
 
-                    {postType === "Rent" && (
-                      <div className="space-y-3">
-                        <Input value={itemTitle ?? ""} disabled />
-                        <Input
-                          value={
-                            itemPrice
-                              ? `₱${itemPrice.toLocaleString()} / Day`
-                              : ""
-                          }
-                          disabled
-                        />
-                        {/* You could later add rent duration fields here */}
-                      </div>
-                    )}
+                  {postType === "Trade" && (
+                    <div className="space-y-3">
+                      <Input value={itemTitle ?? ""} disabled />
+                      {/* For trade you might add extra field for offered item */}
+                    </div>
+                  )}
 
-                    {postType === "Trade" && (
-                      <div className="space-y-3">
-                        <Input value={itemTitle ?? ""} disabled />
-                        {/* For trade you might add extra field for offered item */}
-                      </div>
-                    )}
-
-                    {/* fallback if other post types */}
-                    {["Emergency Lending", "PasaBuy", "Giveaway"].includes(
-                      postType || ""
-                    ) && (
-                      <div className="space-y-3">
-                        <Input value={itemTitle ?? ""} disabled />
-                      </div>
-                    )}
-                  </DialogContent>
-                </Dialog>
-              </TooltipTrigger>
+                  {/* fallback if other post types */}
+                  {["Emergency Lending", "PasaBuy", "Giveaway"].includes(
+                    postType || ""
+                  ) && (
+                    <div className="space-y-3">
+                      <Input value={itemTitle ?? ""} disabled />
+                    </div>
+                  )}
+                </DialogContent>
+              </Dialog>
               <TooltipContent>
                 <p>Fill Up Form</p>
               </TooltipContent>
