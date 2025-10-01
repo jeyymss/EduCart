@@ -77,7 +77,7 @@ export function GiveawayPostCard({ post }: { post: GiveawayPost }) {
             </span>
           )}
         </div>
-        <p className="mt-2 text-gray-700">{post.item_description}</p>
+        <p className="mt-2 text-gray-700 mb-2">{post.item_description}</p>
         {post.image_urls?.[0] && (
           <img
             src={post.image_urls[0]}

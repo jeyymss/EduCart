@@ -33,7 +33,7 @@ import { RentForm } from "./forms/RentForm";
 import { TradeForm } from "./forms/TradeForm";
 import { EmergencyForm } from "./forms/EmergencyForm";
 import { PasaBuyForm } from "./forms/PasaBuyForm";
-import GiveawayForm from "./forms/GiveawayForm";
+import { GiveawayForm } from "./forms/GiveawayForm";
 import {
   NavigationMenu,
   NavigationMenuItem,
