@@ -13,11 +13,11 @@ export default function BusinessCreditsPage() {
     <div className="min-h-screen bg-[#F9FAFB]">
       {/* Back Button */}
       <div className="bg-white px-6 py-4 border-b">
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-7xl mx-auto">
           <Button
             variant="ghost"
             size="sm"
-            className="flex items-center gap-2 text-[#577C8E] hover:text-[#577C8E] hover:bg-[#577C8E]/10"
+            className="flex items-center gap-2 text-[#577C8E] hover:text-[#577C8E] hover:bg-[#577C8E]/10 mt-5"
             onClick={() => router.push("/profile?tab=settings")}
           >
             <ArrowLeft className="h-4 w-4" />
