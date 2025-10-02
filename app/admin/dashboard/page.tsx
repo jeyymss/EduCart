@@ -1,13 +1,8 @@
 "use client";
 
 import * as React from "react";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Calendar } from "@/components/ui/calendar"; 
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Calendar } from "@/components/ui/calendar";
 import {
   Users,
   Building2,
@@ -46,7 +41,6 @@ export default function AdminDashboard() {
   return (
     <div className="p-6">
       <div className="mx-auto w-full max-w-[1600px] space-y-6">
-        
         <h2 className="text-xl font-semibold text-slate-800">
           Hello, EduCart Admin!
         </h2>
@@ -68,12 +62,30 @@ export default function AdminDashboard() {
 
         {/* ===== Secondary Stats ===== */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-          <StatCard icon={<Users className="h-5 w-5 text-slate-500" />} label="Individual Users" />
-          <StatCard icon={<Building2 className="h-5 w-5 text-slate-500" />} label="Business Accounts" />
-          <StatCard icon={<Users2 className="h-5 w-5 text-slate-500" />} label="Organizations" />
-          <StatCard icon={<Receipt className="h-5 w-5 text-slate-500" />} label="Total Transactions" />
-          <StatCard icon={<CheckCircle2 className="h-5 w-5 text-slate-500" />} label="Invoice Paid" />
-          <StatCard icon={<Sun className="h-5 w-5 text-slate-500" />} label="Invoice Unpaid" />
+          <StatCard
+            icon={<Users className="h-5 w-5 text-slate-500" />}
+            label="Individual Users"
+          />
+          <StatCard
+            icon={<Building2 className="h-5 w-5 text-slate-500" />}
+            label="Business Accounts"
+          />
+          <StatCard
+            icon={<Users2 className="h-5 w-5 text-slate-500" />}
+            label="Organizations"
+          />
+          <StatCard
+            icon={<Receipt className="h-5 w-5 text-slate-500" />}
+            label="Total Transactions"
+          />
+          <StatCard
+            icon={<CheckCircle2 className="h-5 w-5 text-slate-500" />}
+            label="Invoice Paid"
+          />
+          <StatCard
+            icon={<Sun className="h-5 w-5 text-slate-500" />}
+            label="Invoice Unpaid"
+          />
         </div>
 
         {/* ===== Bottom Panels ===== */}
@@ -116,13 +128,7 @@ function KpiCard({ title }: { title: string }) {
   );
 }
 
-function StatCard({
-  icon,
-  label,
-}: {
-  icon: React.ReactNode;
-  label: string;
-}) {
+function StatCard({ icon, label }: { icon: React.ReactNode; label: string }) {
   return (
     <Card className="rounded-xl shadow-sm h-full">
       <CardContent className="flex flex-col items-center justify-center p-5">

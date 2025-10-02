@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 export type GiveawayPost = {
   id: string;
   item_title: string;
+  post_user_id: string;
   item_description: string | null;
   image_urls: string[];
   created_at: string;

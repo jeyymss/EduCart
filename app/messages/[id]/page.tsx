@@ -28,14 +28,38 @@ export default async function ConversationPage({
     .eq("participant_user_id", currentUserId);
 
   // ✅ Messages
-  const { data: initialMessages } = await supabase
+  const { data: initialMessages, error: msgError } = await supabase
     .from("messages")
     .select(
-      "id, conversation_id, attachments, sender_user_id, body, created_at"
+      `
+    id,
+    conversation_id,
+    attachments,
+    sender_user_id,
+    body,
+    created_at,
+    type,
+    transaction_id,
+    transactions (
+      id,
+      item_title,
+      price,
+      fulfillment_method,
+      payment_method,
+      meetup_location,
+      meetup_date,
+      meetup_time,
+      status
+    )
+    `
     )
     .eq("conversation_id", conversationIdNumber)
     .order("created_at", { ascending: true })
     .limit(200);
+
+  if (msgError) {
+    console.error("❌ Failed to fetch messages:", msgError.message);
+  }
 
   const { data: convoMeta, error: metaError } = await supabase
     .from("my_convo")
@@ -63,7 +87,7 @@ export default async function ConversationPage({
     <ChatClient
       conversationId={conversationIdNumber}
       currentUserId={currentUserId}
-      initialMessages={initialMessages ?? []}
+      initialMessages={initialMessages ?? ([] as any)}
       otherUserId={convoMeta?.other_user_id ?? null}
       otherUserName={convoMeta?.other_user_name ?? "User"}
       otherUserAvatarUrl={convoMeta?.other_user_avatar_url ?? null}

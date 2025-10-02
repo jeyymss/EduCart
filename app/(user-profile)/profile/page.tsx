@@ -222,18 +222,18 @@ export default function ProfilePage() {
                   </div>
                 </div>
 
-               {/* Add Business Account */}
-              <div className="mt-2">
-                <Button
-                  variant="outline"
-                  className="border-[#F3AD4B] text-[#F3AD4B] hover:bg-[#FFF7E9]"
-                  onClick={() => {
-                    console.log("Add Business Account clicked");
-                  }}
-                 >
-                  Add Business Account
-                </Button>
-              </div>
+                {/* Add Business Account */}
+                <div className="mt-2">
+                  <Button
+                    variant="outline"
+                    className="border-[#F3AD4B] text-[#F3AD4B] hover:bg-[#FFF7E9]"
+                    onClick={() => {
+                      console.log("Add Business Account clicked");
+                    }}
+                  >
+                    Add Business Account
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
@@ -249,17 +249,21 @@ export default function ProfilePage() {
         >
           <div className="sticky top-0 z-30 bg-white border-b">
             <TabsList className="flex w-full p-0 bg-transparent h-auto">
-              {["listings", "favorites", "transactions", "reviews", "settings"].map(
-                (tab) => (
-                  <TabsTrigger
-                    key={tab}
-                    value={tab}
-                    className="tab-trigger px-4 py-3 rounded-none hover:cursor-pointer"
-                  >
-                    {tab.charAt(0).toUpperCase() + tab.slice(1)}
-                  </TabsTrigger>
-                )
-              )}
+              {[
+                "listings",
+                "favorites",
+                "transactions",
+                "reviews",
+                "settings",
+              ].map((tab) => (
+                <TabsTrigger
+                  key={tab}
+                  value={tab}
+                  className="tab-trigger px-4 py-3 rounded-none hover:cursor-pointer"
+                >
+                  {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                </TabsTrigger>
+              ))}
             </TabsList>
           </div>
 
@@ -273,7 +277,10 @@ export default function ProfilePage() {
               >
                 <div className="sticky top-0 z-20 bg-white border-b flex justify-between items-center gap-4 px-2 py-2">
                   <TabsList className="flex bg-transparent h-auto">
-                    <TabsTrigger value="all" className="tab-trigger">
+                    <TabsTrigger
+                      value="all"
+                      className="tab-trigger hover:cursor-pointer"
+                    >
                       All (
                       <UserPosts.Count
                         userId={displayUser.id}
@@ -283,7 +290,10 @@ export default function ProfilePage() {
                       />
                       )
                     </TabsTrigger>
-                    <TabsTrigger value="listed" className="tab-trigger">
+                    <TabsTrigger
+                      value="listed"
+                      className="tab-trigger hover:cursor-pointer"
+                    >
                       Listed (
                       <UserPosts.Count
                         userId={displayUser.id}
@@ -294,7 +304,10 @@ export default function ProfilePage() {
                       />
                       )
                     </TabsTrigger>
-                    <TabsTrigger value="sold" className="tab-trigger">
+                    <TabsTrigger
+                      value="sold"
+                      className="tab-trigger hover:cursor-pointer"
+                    >
                       Sold (
                       <UserPosts.Count
                         userId={displayUser.id}
@@ -305,7 +318,10 @@ export default function ProfilePage() {
                       />
                       )
                     </TabsTrigger>
-                    <TabsTrigger value="unlisted" className="tab-trigger">
+                    <TabsTrigger
+                      value="unlisted"
+                      className="tab-trigger hover:cursor-pointer"
+                    >
                       Unlisted (
                       <UserPosts.Count
                         userId={displayUser.id}

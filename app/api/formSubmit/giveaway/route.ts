@@ -28,13 +28,14 @@ export async function Giveaway(
     }
 
     // Upload images only if provided
-    let imageUrls: string[] = [];
-    if (images.length > 0) {
-      imageUrls = await uploadImage(images, "post-images", "post", user.email);
-      if (imageUrls.length === 0) {
-        return { error: "Failed to upload item images." };
-      }
-    }
+    const imageUrls = await uploadImage(
+      images,
+      "post-images",
+      "post",
+      user.email
+    );
+    if (imageUrls.length === 0)
+      return { error: "Failed to upload item images." };
 
     // Get Post Type (Giveaway)
     const { data: postType } = await supabase
@@ -63,7 +64,7 @@ export async function Giveaway(
         item_condition: selectedCondition,
         item_title: itemTitle,
         item_description: itemDescription,
-        image_urls: imageUrls.length > 0 ? imageUrls : null, // optional
+        image_urls: imageUrls.length > 0 ? imageUrls : null,
       },
     ]);
 

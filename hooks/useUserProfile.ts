@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 
 export type UserProfile = {
-  university_abbreviation: any;
+  university_abbreviation?: string | null;
   name: string | null;
-  bio: string;
+  bio: string | null;
   id: string;
   full_name: string | null;
   email: string;
@@ -23,11 +23,17 @@ export function useUserProfile() {
       const res = await fetch("/api/user-profile-view/individual", {
         credentials: "include",
       });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Failed to fetch profile");
+      }
+
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to fetch profile");
-      return data;
+
+      return data as UserProfile;
     },
     staleTime: 1000 * 60 * 5,
-    refetchOnWindowFocus: true,
+    refetchOnWindowFocus: false,
   });
 }

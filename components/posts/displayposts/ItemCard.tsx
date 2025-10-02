@@ -107,7 +107,11 @@ export function ItemCard({
         <div className="absolute top-2 right-2 z-10 hover:cursor-pointer">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button size="icon" variant="ghost">
+              <Button
+                size="icon"
+                variant="ghost"
+                className="hover:cursor-pointer"
+              >
                 <MoreHorizontal className="h-5 w-5" />
               </Button>
             </DropdownMenuTrigger>

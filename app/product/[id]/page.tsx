@@ -133,7 +133,7 @@ export default function ItemDetailsPage() {
           <Button
             variant="ghost"
             size="sm"
-            className="flex items-center gap-2 text-[#577C8E] hover:text-[#577C8E] hover:bg-[#577C8E]/10"
+            className="flex items-center gap-2 text-[#577C8E] hover:text-[#577C8E] hover:bg-[#577C8E]/10 hover:cursor-pointer"
             onClick={() => router.back()}
           >
             <ArrowLeft className="h-4 w-4" />

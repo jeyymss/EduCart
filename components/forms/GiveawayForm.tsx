@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
-import { Giveaway } from "@/app/api/formSubmit/giveaway/route";
+import { Giveaway } from "@/app/api/formSubmit/giveaway/route"; // your server action
 import { useCategories, Category } from "@/hooks/queries/useCategories";
 import {
   Select,
@@ -35,7 +35,11 @@ export function GiveawayForm({ selectedType }: FormProps) {
 
     const handleValidation = () => {
       const formValid = form?.checkValidity() ?? false;
-      const isValid = formValid && condition !== "" && selectedCategory !== "";
+      const isValid =
+        formValid &&
+        selectedFiles.length > 0 &&
+        condition !== "" &&
+        selectedCategory !== "";
 
       setIsFormValid(isValid);
     };
@@ -51,7 +55,7 @@ export function GiveawayForm({ selectedType }: FormProps) {
         form.removeEventListener("input", handleValidation);
       }
     };
-  }, [condition, selectedCategory]);
+  }, [selectedFiles, condition, selectedCategory]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -66,7 +70,6 @@ export function GiveawayForm({ selectedType }: FormProps) {
       setLoading(true);
       const formData = new FormData(e.currentTarget);
 
-      // add uploaded images (optional)
       formData.delete("itemImage");
       selectedFiles.forEach((file) => {
         formData.append("itemImage", file);
@@ -96,7 +99,7 @@ export function GiveawayForm({ selectedType }: FormProps) {
     <form ref={formRef} onSubmit={handleSubmit} className="space-y-2">
       {/* Item Name */}
       <Label className="text-sm">
-        Item Name<span className="text-red-600">*</span>
+        Item name<span className="text-red-600">*</span>
       </Label>
       <Input
         type="text"
@@ -151,8 +154,10 @@ export function GiveawayForm({ selectedType }: FormProps) {
         className="w-full border border-gray-300 p-2 rounded-md"
       />
 
-      {/* Upload Images (Optional) */}
-      <Label className="text-sm">Upload Images</Label>
+      {/* Upload Images */}
+      <Label className="text-sm">
+        Upload Images<span className="text-red-600">*</span>
+      </Label>
       <ImageUploader
         selectedFiles={selectedFiles}
         setSelectedFiles={setSelectedFiles}
@@ -168,7 +173,7 @@ export function GiveawayForm({ selectedType }: FormProps) {
         className={`w-full p-2 rounded-md font-semibold transition 
           ${
             isFormValid
-              ? "bg-[#C7D9E5] text-[#333333] hover:text-white hover:bg-[#122C4F] hover:cursor-pointer"
+              ? "bg-[#C7D9E5] text-[#333333]  hover:text-white hover:bg-[#122C4F] hover:cursor-pointer"
               : "bg-[#DEDEDE] text-[#333333]"
           }
         `}

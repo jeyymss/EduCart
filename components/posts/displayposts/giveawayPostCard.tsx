@@ -13,6 +13,13 @@ import {
 } from "@/hooks/queries/GiveawayPosts";
 import { Heart } from "lucide-react";
 import { getRelativeTime } from "@/utils/getRelativeTime";
+import Link from "next/link";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { useUserProfile } from "@/hooks/useUserProfile";
 
 export default function GiveawayFeed() {
   const { data: posts, isLoading } = useGiveawayPosts();
@@ -37,6 +44,10 @@ export function GiveawayPostCard({ post }: { post: GiveawayPost }) {
 
   const [newComment, setNewComment] = useState("");
   const [showAllComments, setShowAllComments] = useState(false);
+  const { data: profile } = useUserProfile();
+
+  const profileLink =
+    profile?.id === post.post_user_id ? `/profile` : `/${post.post_user_id}`;
 
   // ✅ show only 3 unless expanded
   const visibleComments = showAllComments
@@ -52,10 +63,20 @@ export function GiveawayPostCard({ post }: { post: GiveawayPost }) {
           <AvatarFallback>{post.user_name?.[0]}</AvatarFallback>
         </Avatar>
         <div>
-          <p className="font-medium">{post.user_name}</p>
-          <p className="text-xs text-gray-500">
-            {post.user_role} • {post.university_abbr}
-          </p>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Link href={profileLink}>
+                <p className="font-medium">{post.user_name}</p>
+                <p className="text-xs text-gray-500">
+                  {post.user_role} • {post.university_abbr}
+                </p>
+              </Link>
+            </TooltipTrigger>
+            <TooltipContent>
+              <h1>Visit Profile</h1>
+            </TooltipContent>
+          </Tooltip>
+
           <p className="text-xs text-gray-500">
             {getRelativeTime(post.created_at)}
           </p>
@@ -100,7 +121,7 @@ export function GiveawayPostCard({ post }: { post: GiveawayPost }) {
           size="sm"
           disabled={toggleLike.isPending}
           onClick={() => toggleLike.mutate()}
-          className={`flex items-center gap-1 ${
+          className={`flex items-center gap-1 hover:cursor-pointer ${
             post.is_liked ? "text-red-500" : "text-gray-400"
           } hover:text-red-600 transition-colors`}
         >

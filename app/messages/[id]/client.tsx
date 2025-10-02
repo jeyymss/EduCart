@@ -22,14 +22,28 @@ import {
 } from "@/components/ui/tooltip";
 import { Camera, FilePenLine, X } from "lucide-react";
 import PostTypeBadge from "@/components/postTypeBadge";
+import SaleTransacForm from "@/components/transaction/forms/SaleTransac";
 
 type ChatMessage = {
   id: number;
   conversation_id: number;
-  sender_user_id: string;
+  sender_user_id: string | null;
   body: string | null;
   attachments: string[] | null;
   created_at: string;
+  type?: "user" | "system";
+  transaction_id?: string | null;
+  transactions?: {
+    id: string;
+    item_title: string | null;
+    price: number | null;
+    fulfillment_method: string | null;
+    payment_method: string | null;
+    meetup_location: string | null;
+    meetup_date: string | null;
+    meetup_time: string | null;
+    status: string | null;
+  } | null;
 };
 
 export default function ChatClient({
@@ -50,7 +64,7 @@ export default function ChatClient({
   initialMessages: ChatMessage[];
   otherUserName: string;
   otherUserAvatarUrl: string | null;
-  otherUserId: string | null;
+  otherUserId: string;
   postId: string;
   itemImage: string | null;
   itemTitle: string | null;
@@ -71,6 +85,7 @@ export default function ChatClient({
     });
   }, [messages.length]);
 
+  // Realtime subscription
   useEffect(() => {
     const subscriptionChannel = supabase
       .channel(`conversation_${conversationId}`)
@@ -82,8 +97,32 @@ export default function ChatClient({
           table: "messages",
           filter: `conversation_id=eq.${conversationId}`,
         },
-        (payload) => {
-          setMessages((prev) => [...prev, payload.new as ChatMessage]);
+        async (payload) => {
+          // fetch with transaction join
+          const { data } = await supabase
+            .from("messages")
+            .select(
+              `
+              *,
+              transactions (
+                id,
+                item_title,
+                price,
+                fulfillment_method,
+                payment_method,
+                meetup_location,
+                meetup_date,
+                meetup_time,
+                status
+              )
+            `
+            )
+            .eq("id", (payload.new as any).id)
+            .single();
+
+          if (data) {
+            setMessages((prev) => [...prev, data as ChatMessage]);
+          }
         }
       )
       .subscribe();
@@ -93,13 +132,13 @@ export default function ChatClient({
     };
   }, [conversationId, supabase]);
 
+  // Send normal user message
   async function sendMessage() {
     const trimmedBody = pendingText.trim();
     if (!trimmedBody && selectedFiles.length === 0) return;
 
     const uploadedUrls: string[] = [];
 
-    // 1. Upload all selected files
     for (const file of selectedFiles) {
       const ext = file.name.split(".").pop();
       const filePath = `${conversationId}/${Date.now()}-${Math.random()
@@ -124,35 +163,26 @@ export default function ChatClient({
       }
     }
 
-    // 2. Insert text as its own message
     if (trimmedBody) {
-      const { error } = await supabase.from("messages").insert({
+      await supabase.from("messages").insert({
         conversation_id: conversationId,
         sender_user_id: currentUserId,
         body: trimmedBody,
         attachments: null,
+        type: "user",
       });
-
-      if (error) {
-        alert(error.message);
-      }
     }
 
-    // 3. Insert each uploaded image as its own message
     for (const url of uploadedUrls) {
-      const { error } = await supabase.from("messages").insert({
+      await supabase.from("messages").insert({
         conversation_id: conversationId,
         sender_user_id: currentUserId,
         body: null,
-        attachments: [url], // one image per message
+        attachments: [url],
+        type: "user",
       });
-
-      if (error) {
-        alert(error.message);
-      }
     }
 
-    // 4. Reset input + file selection
     setPendingText("");
     setSelectedFiles([]);
   }
@@ -163,7 +193,7 @@ export default function ChatClient({
     if (!e.target.files) return;
     const files = Array.from(e.target.files);
     setSelectedFiles((prev) => [...prev, ...files]);
-    e.target.value = ""; // reset so same file can be picked again
+    e.target.value = "";
   }
 
   return (
@@ -185,8 +215,6 @@ export default function ChatClient({
             )}
             <div className="font-medium">{otherUserName}</div>
           </div>
-
-          {/* Visit button */}
           <Link href={`/${otherUserId}`}>
             <button className="px-3 py-1 border rounded-full text-sm hover:bg-gray-100 hover:cursor-pointer">
               Visit
@@ -194,38 +222,32 @@ export default function ChatClient({
           </Link>
         </div>
 
-        {/* Divider */}
-        <div className="border-t" />
-
         {/* Item Preview */}
         {itemImage && (
-          <div>
-            <Link
-              href={`/product/${postId}`}
-              className="flex items-center gap-3 p-4 border-b bg-white shrink-0"
-            >
-              <Image
-                src={itemImage}
-                alt={itemTitle ?? "Item"}
-                width={56}
-                height={56}
-                className="h-20 w-20 rounded-md object-fill"
+          <Link
+            href={`/product/${postId}`}
+            className="flex items-center gap-3 p-4 border-b bg-white shrink-0"
+          >
+            <Image
+              src={itemImage}
+              alt={itemTitle ?? "Item"}
+              width={56}
+              height={56}
+              className="h-20 w-20 rounded-md object-fill"
+            />
+            <div className="space-y-2">
+              <PostTypeBadge
+                type={postType as any}
+                className="text-xs text-slate-500"
               />
-              <div className="space-y-2">
-                <PostTypeBadge
-                  type={postType as any}
-                  className="text-xs text-slate-500"
-                />
-                <p className="text-sm font-medium truncate">{itemTitle}</p>
-
-                {itemPrice && (
-                  <p className="text-xs text-[#E59E2C]">
-                    ₱{itemPrice.toLocaleString()}
-                  </p>
-                )}
-              </div>
-            </Link>
-          </div>
+              <p className="text-sm font-medium truncate">{itemTitle}</p>
+              {itemPrice && (
+                <p className="text-xs text-[#E59E2C]">
+                  ₱{itemPrice.toLocaleString()}
+                </p>
+              )}
+            </div>
+          </Link>
         )}
 
         {/* Messages */}
@@ -234,46 +256,87 @@ export default function ChatClient({
           className="flex-1 overflow-y-auto p-4 space-y-2 bg-slate-50"
         >
           {messages.map((messageRow) => {
+            // ✅ 1. Check if system message first
+            if (messageRow.type === "system" && messageRow.transactions) {
+              const txn = messageRow.transactions;
+              return (
+                <div key={messageRow.id} className="flex justify-center w-full">
+                  <div className="bg-slate-100 border rounded-lg p-4 text-sm max-w-md">
+                    <p className="font-semibold mb-2">
+                      Transaction Form Completed
+                    </p>
+                    <p>
+                      <strong>Transaction type:</strong> Buy
+                    </p>
+                    <p>
+                      <strong>Price (₱):</strong> {txn.price?.toLocaleString()}
+                    </p>
+                    <p>
+                      <strong>Preferred method:</strong>{" "}
+                      {txn.fulfillment_method}
+                    </p>
+                    {txn.meetup_location && (
+                      <p>
+                        <strong>Location:</strong> {txn.meetup_location}
+                      </p>
+                    )}
+                    {txn.meetup_date && (
+                      <p>
+                        <strong>Date:</strong> {txn.meetup_date}
+                      </p>
+                    )}
+                    {txn.meetup_time && (
+                      <p>
+                        <strong>Time:</strong> {txn.meetup_time}
+                      </p>
+                    )}
+                    <p>
+                      <strong>Payment method:</strong> {txn.payment_method}
+                    </p>
+                    <p>
+                      <strong>Status:</strong> {txn.status}
+                    </p>
+                  </div>
+                </div>
+              );
+            }
+
+            // ✅ 2. Normal attachment or user message
             const isFromCurrentUser =
               messageRow.sender_user_id === currentUserId;
 
-            // if multiple images
             if (messageRow.attachments && messageRow.attachments.length > 0) {
-              return messageRow.attachments.map((url, idx) => (
-                <div
-                  key={`${messageRow.id}-${idx}`}
-                  className={`flex ${
-                    isFromCurrentUser ? "justify-end" : "justify-start"
-                  }`}
-                >
+              // Attachments
+              if (messageRow.attachments && messageRow.attachments.length > 0) {
+                return messageRow.attachments.map((url, idx) => (
                   <div
-                    className={`max-w-[75%] rounded-2xl p-2 ${
-                      isFromCurrentUser
-                        ? "bg-blue-600 text-white"
-                        : "bg-white border"
+                    key={`${messageRow.id}-${idx}`}
+                    className={`flex ${
+                      isFromCurrentUser ? "justify-end" : "justify-start"
                     }`}
                   >
-                    <Image
-                      src={url}
-                      alt="uploaded"
-                      width={250}
-                      height={250}
-                      className="rounded-lg object-cover w-full h-auto cursor-pointer"
-                      onClick={() => setPreviewUrl(url)}
-                    />
                     <div
-                      className={`text-[10px] opacity-60 mt-1 ${
-                        isFromCurrentUser ? "text-white" : "text-gray-600"
+                      className={`max-w-[75%] rounded-2xl p-2 ${
+                        isFromCurrentUser
+                          ? "bg-blue-600 text-white"
+                          : "bg-white border"
                       }`}
                     >
-                      {new Date(messageRow.created_at).toLocaleString()}
+                      <Image
+                        src={url}
+                        alt="uploaded"
+                        width={250}
+                        height={250}
+                        className="rounded-lg object-cover w-full h-auto cursor-pointer"
+                        onClick={() => setPreviewUrl(url)}
+                      />
                     </div>
                   </div>
-                </div>
-              ));
+                ));
+              }
             }
 
-            // normal text message
+            // Normal user text message
             return (
               <div
                 key={messageRow.id}
@@ -289,13 +352,6 @@ export default function ChatClient({
                   }`}
                 >
                   {messageRow.body}
-                  <div
-                    className={`text-[10px] opacity-60 mt-1 ${
-                      isFromCurrentUser ? "text-white" : "text-gray-600"
-                    }`}
-                  >
-                    {new Date(messageRow.created_at).toLocaleString()}
-                  </div>
                 </div>
               </div>
             );
@@ -332,7 +388,7 @@ export default function ChatClient({
           </div>
         )}
 
-        {/* Input stays pinned */}
+        {/* Input */}
         <div className="border-t p-3 flex gap-2 bg-white rounded-b-2xl shrink-0">
           <div className="flex">
             <Tooltip>
@@ -379,52 +435,18 @@ export default function ChatClient({
                       <DialogTitle>Form</DialogTitle>
                       <PostTypeBadge type={postType as any} />
                     </div>
-
                     <DialogDescription>Fill up form</DialogDescription>
                   </DialogHeader>
 
-                  {/* ✅ Show post details depending on type */}
                   {postType === "Sale" && (
-                    <div className="space-y-3">
-                      <Input value={itemTitle ?? ""} disabled />
-                      <Input
-                        value={
-                          itemPrice ? `₱${itemPrice.toLocaleString()}` : ""
-                        }
-                        disabled
-                      />
-                    </div>
-                  )}
-
-                  {postType === "Rent" && (
-                    <div className="space-y-3">
-                      <Input value={itemTitle ?? ""} disabled />
-                      <Input
-                        value={
-                          itemPrice
-                            ? `₱${itemPrice.toLocaleString()} / Day`
-                            : ""
-                        }
-                        disabled
-                      />
-                      {/* You could later add rent duration fields here */}
-                    </div>
-                  )}
-
-                  {postType === "Trade" && (
-                    <div className="space-y-3">
-                      <Input value={itemTitle ?? ""} disabled />
-                      {/* For trade you might add extra field for offered item */}
-                    </div>
-                  )}
-
-                  {/* fallback if other post types */}
-                  {["Emergency Lending", "PasaBuy", "Giveaway"].includes(
-                    postType || ""
-                  ) && (
-                    <div className="space-y-3">
-                      <Input value={itemTitle ?? ""} disabled />
-                    </div>
+                    <SaleTransacForm
+                      conversationId={conversationId}
+                      itemPrice={itemPrice}
+                      itemTitle={itemTitle}
+                      sellerId={otherUserId}
+                      post_id={postId}
+                      postType={postType || ""}
+                    />
                   )}
                 </DialogContent>
               </Dialog>
@@ -455,7 +477,6 @@ export default function ChatClient({
 
       <Dialog open={!!previewUrl} onOpenChange={() => setPreviewUrl(null)}>
         <DialogTitle className="text-white text-sm px-4 py-2" />
-
         <DialogContent className="border-none bg-transparent p-0 flex items-center justify-center">
           {previewUrl && (
             <Image
