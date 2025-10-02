@@ -21,39 +21,40 @@ export default function ManageUsers() {
   if (!users || users.length === 0) return <p>No users found.</p>;
 
   return (
-    <div className="overflow-x-auto">
-      <table className="min-w-full border border-gray-300">
-        <thead className="bg-gray-100">
+    <div className="overflow-x-auto rounded-xl shadow-md border border-gray-200 mt-8">
+      <table className="min-w-full text-sm text-left">
+        <thead className="bg-[#FEF7E5] text-gray-800">
           <tr>
-            <th className="px-4 py-2 border text-left">User</th>
-            <th className="px-4 py-2 border text-left">Role</th>
-            <th className="px-4 py-2 border text-left">University</th>
-            {/* <th className="px-4 py-2 border text-left">Verification Status</th> */}
-            <th className="px-4 py-2 border text-left">Joined</th>
+            <th className="px-6 py-3 font-semibold">User</th>
+            <th className="px-6 py-3 font-semibold">Role</th>
+            <th className="px-6 py-3 font-semibold">University</th>
+            <th className="px-6 py-3 font-semibold">Joined</th>
           </tr>
         </thead>
         <tbody>
           {users.map((u) => (
-            <tr key={u.user_id} className="hover:bg-gray-50">
-              <td className="px-4 py-2 border">
+            <tr
+              key={u.user_id}
+              className="bg-white hover:bg-[#f5eeda] transition-colors"
+            >
+              <td className="px-6 py-4">
                 <div className="flex items-center gap-3">
-                  <Avatar className="h-9 w-9">
+                  <Avatar className="h-9 w-9 ring-2 ring-gray-200">
                     <AvatarImage src={u.avatar_url ?? undefined} alt={u.name} />
                     <AvatarFallback>{initialsFrom(u.name)}</AvatarFallback>
                   </Avatar>
                   <div className="flex flex-col">
-                    <span className="font-medium leading-5">{u.name}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {u.email}
-                    </span>
+                    <span className="font-medium text-gray-900">{u.name}</span>
+                    <span className="text-xs text-gray-500">{u.email}</span>
                   </div>
                 </div>
               </td>
 
-              <td className="px-4 py-2 border">{u.role}</td>
-              <td className="px-4 py-2 border">{u.university ?? "N/A"}</td>
-
-              <td className="px-4 py-2 border">
+              <td className="px-6 py-4 text-gray-700">{u.role}</td>
+              <td className="px-6 py-4 text-gray-700">
+                {u.university ?? "N/A"}
+              </td>
+              <td className="px-6 py-4 text-gray-700">
                 {new Date(u.created_at).toLocaleDateString()}
               </td>
             </tr>
