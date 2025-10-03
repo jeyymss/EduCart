@@ -20,6 +20,7 @@ interface FormProps {
   sellerId: string;
   post_id: string;
   postType: string;
+  onClose?: () => void;
 }
 
 export default function SaleTransacForm({
@@ -29,6 +30,7 @@ export default function SaleTransacForm({
   sellerId,
   post_id,
   postType,
+  onClose,
 }: FormProps) {
   const formRef = useRef<HTMLFormElement | null>(null);
   const [isFormValid, setIsFormValid] = useState(false);
@@ -36,7 +38,6 @@ export default function SaleTransacForm({
   const [selectPayment, setSelectPayment] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
     const form = formRef.current;
@@ -84,23 +85,13 @@ export default function SaleTransacForm({
       if (result?.error) {
         setError(result.error);
       } else {
-        setSubmitted(true);
+        onClose?.(); // ✅ closes the parent dialog
       }
     } catch (err) {
       console.error(err);
       setError("Submit Failed");
     }
   };
-
-  if (submitted) {
-    return (
-      <div className="text-center p-4">
-        <p className="text-sm text-gray-600">
-          Transaction submitted. Please wait for the seller to confirm.
-        </p>
-      </div>
-    );
-  }
 
   return (
     <form className="space-y-3" ref={formRef} onSubmit={handleSubmit}>

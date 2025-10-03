@@ -77,6 +77,8 @@ export default function ChatClient({
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [open, setOpen] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false); // ✅ success modal control
 
   useEffect(() => {
     scrollContainerRef.current?.scrollTo({
@@ -98,7 +100,6 @@ export default function ChatClient({
           filter: `conversation_id=eq.${conversationId}`,
         },
         async (payload) => {
-          // fetch with transaction join
           const { data } = await supabase
             .from("messages")
             .select(
@@ -256,7 +257,6 @@ export default function ChatClient({
           className="flex-1 overflow-y-auto p-4 space-y-2 bg-slate-50"
         >
           {messages.map((messageRow) => {
-            // ✅ 1. Check if system message first
             if (messageRow.type === "system" && messageRow.transactions) {
               const txn = messageRow.transactions;
               return (
@@ -301,42 +301,37 @@ export default function ChatClient({
               );
             }
 
-            // ✅ 2. Normal attachment or user message
             const isFromCurrentUser =
               messageRow.sender_user_id === currentUserId;
 
             if (messageRow.attachments && messageRow.attachments.length > 0) {
-              // Attachments
-              if (messageRow.attachments && messageRow.attachments.length > 0) {
-                return messageRow.attachments.map((url, idx) => (
+              return messageRow.attachments.map((url, idx) => (
+                <div
+                  key={`${messageRow.id}-${idx}`}
+                  className={`flex ${
+                    isFromCurrentUser ? "justify-end" : "justify-start"
+                  }`}
+                >
                   <div
-                    key={`${messageRow.id}-${idx}`}
-                    className={`flex ${
-                      isFromCurrentUser ? "justify-end" : "justify-start"
+                    className={`max-w-[75%] rounded-2xl p-2 ${
+                      isFromCurrentUser
+                        ? "bg-blue-600 text-white"
+                        : "bg-white border"
                     }`}
                   >
-                    <div
-                      className={`max-w-[75%] rounded-2xl p-2 ${
-                        isFromCurrentUser
-                          ? "bg-blue-600 text-white"
-                          : "bg-white border"
-                      }`}
-                    >
-                      <Image
-                        src={url}
-                        alt="uploaded"
-                        width={250}
-                        height={250}
-                        className="rounded-lg object-cover w-full h-auto cursor-pointer"
-                        onClick={() => setPreviewUrl(url)}
-                      />
-                    </div>
+                    <Image
+                      src={url}
+                      alt="uploaded"
+                      width={250}
+                      height={250}
+                      className="rounded-lg object-cover w-full h-auto cursor-pointer"
+                      onClick={() => setPreviewUrl(url)}
+                    />
                   </div>
-                ));
-              }
+                </div>
+              ));
             }
 
-            // Normal user text message
             return (
               <div
                 key={messageRow.id}
@@ -406,12 +401,13 @@ export default function ChatClient({
               </TooltipContent>
             </Tooltip>
             <Tooltip>
-              <Dialog>
+              <Dialog open={open} onOpenChange={setOpen}>
                 <TooltipTrigger asChild>
                   <DialogTrigger asChild>
                     <button
                       type="button"
                       className="px-2 py-2 rounded hover:bg-gray-100 hover:cursor-pointer"
+                      onClick={() => setOpen(true)}
                     >
                       <FilePenLine />
                     </button>
@@ -446,6 +442,10 @@ export default function ChatClient({
                       sellerId={otherUserId}
                       post_id={postId}
                       postType={postType || ""}
+                      onClose={() => {
+                        setOpen(false);
+                        setShowSuccess(true);
+                      }}
                     />
                   )}
                 </DialogContent>
@@ -474,6 +474,28 @@ export default function ChatClient({
           <Button onClick={sendMessage}>Send</Button>
         </div>
       </div>
+
+      {/* ✅ Success Modal now lives at top level */}
+      <Dialog open={showSuccess} onOpenChange={setShowSuccess}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Transaction Submitted</DialogTitle>
+            <DialogDescription>
+              Your transaction form has been sent successfully. Please wait for
+              the seller to confirm.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-4 flex justify-end">
+            <Button
+              onClick={() => {
+                setShowSuccess(false);
+              }}
+            >
+              Close
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={!!previewUrl} onOpenChange={() => setPreviewUrl(null)}>
         <DialogTitle className="text-white text-sm px-4 py-2" />

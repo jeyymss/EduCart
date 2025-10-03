@@ -88,8 +88,7 @@ export async function SaleTransaction(
     if (insertError) {
       console.error("Insert Failed:", insertError);
       return {
-        error:
-          "Transaction pending. Wait for confirmation before submitting a new one. ",
+        error: "Database error:" + insertError.message,
       };
     }
 
