@@ -27,6 +27,14 @@ export default async function ConversationPage({
     .eq("conversation_id", conversationIdNumber)
     .eq("participant_user_id", currentUserId);
 
+  // ✅ Fetch participant role
+  const { data: participantRole } = await supabase
+    .from("conversation_participants")
+    .select("participant_role")
+    .eq("conversation_id", conversationIdNumber)
+    .eq("participant_user_id", currentUserId)
+    .single();
+
   // ✅ Messages
   const { data: initialMessages, error: msgError } = await supabase
     .from("messages")
@@ -87,6 +95,7 @@ export default async function ConversationPage({
     <ChatClient
       conversationId={conversationIdNumber}
       currentUserId={currentUserId}
+      currentUserRole={participantRole?.participant_role}
       initialMessages={initialMessages ?? ([] as any)}
       otherUserId={convoMeta?.other_user_id ?? null}
       otherUserName={convoMeta?.other_user_name ?? "User"}

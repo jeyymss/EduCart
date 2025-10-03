@@ -23,6 +23,7 @@ import {
 import { Camera, FilePenLine, X } from "lucide-react";
 import PostTypeBadge from "@/components/postTypeBadge";
 import SaleTransacForm from "@/components/transaction/forms/SaleTransac";
+import { UpdateTransactionStatus } from "@/app/api/transacForm/updateTransac/route";
 
 type ChatMessage = {
   id: number;
@@ -49,6 +50,7 @@ type ChatMessage = {
 export default function ChatClient({
   conversationId,
   currentUserId,
+  currentUserRole,
   initialMessages,
   otherUserName,
   otherUserAvatarUrl,
@@ -61,6 +63,7 @@ export default function ChatClient({
 }: {
   conversationId: number;
   currentUserId: string;
+  currentUserRole: "buyer" | "seller";
   initialMessages: ChatMessage[];
   otherUserName: string;
   otherUserAvatarUrl: string | null;
@@ -197,6 +200,49 @@ export default function ChatClient({
     e.target.value = "";
   }
 
+  async function handleUpdateTransaction(
+    transactionId: string,
+    newStatus: string
+  ) {
+    // ✅ Update transaction status
+    const { error: updateError } = await supabase
+      .from("transactions")
+      .update({ status: newStatus })
+      .eq("id", transactionId);
+
+    if (updateError) {
+      console.error("Failed to update transaction:", updateError.message);
+      return;
+    }
+
+    // ✅ Check if a system message already exists for this transaction
+    const { data: existingMessage } = await supabase
+      .from("messages")
+      .select("id")
+      .eq("transaction_id", transactionId)
+      .eq("type", "system")
+      .single();
+
+    if (existingMessage) {
+      // ✅ Update the existing system message
+      await supabase
+        .from("messages")
+        .update({
+          body: `Transaction ${newStatus}`, // optional: keep status text here
+        })
+        .eq("id", existingMessage.id);
+    } else {
+      // ✅ If no system message yet, insert a new one
+      await supabase.from("messages").insert({
+        conversation_id: conversationId,
+        sender_user_id: currentUserId,
+        transaction_id: transactionId,
+        type: "system",
+        body: `Transaction ${newStatus}`,
+      });
+    }
+  }
+
   return (
     <>
       <div className="flex flex-col flex-1 min-h-0">
@@ -259,6 +305,11 @@ export default function ChatClient({
           {messages.map((messageRow) => {
             if (messageRow.type === "system" && messageRow.transactions) {
               const txn = messageRow.transactions;
+
+              const isFromCurrentUser =
+                messageRow.sender_user_id === currentUserId;
+              const isSeller = otherUserId === currentUserId; // ✅ check if current user is seller
+
               return (
                 <div key={messageRow.id} className="flex justify-center w-full">
                   <div className="bg-slate-100 border rounded-lg p-4 text-sm max-w-md">
@@ -296,6 +347,42 @@ export default function ChatClient({
                     <p>
                       <strong>Status:</strong> {txn.status}
                     </p>
+
+                    {/* ✅ Action buttons */}
+
+                    {txn.status === "Pending" && (
+                      <div className="mt-3 flex gap-2">
+                        {currentUserRole === "seller" ? (
+                          <>
+                            <Button
+                              onClick={() =>
+                                handleUpdateTransaction(txn.id, "Accepted")
+                              }
+                              className="bg-green-600 text-white"
+                            >
+                              Accept
+                            </Button>
+                            <Button
+                              onClick={() =>
+                                handleUpdateTransaction(txn.id, "Cancelled")
+                              }
+                              className="bg-red-600 text-white"
+                            >
+                              Cancel
+                            </Button>
+                          </>
+                        ) : (
+                          <Button
+                            onClick={() =>
+                              handleUpdateTransaction(txn.id, "Cancelled")
+                            }
+                            className="bg-red-600 text-white"
+                          >
+                            Cancel
+                          </Button>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               );
