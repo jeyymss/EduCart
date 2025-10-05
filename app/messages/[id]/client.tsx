@@ -23,7 +23,8 @@ import {
 import { Camera, FilePenLine, X } from "lucide-react";
 import PostTypeBadge from "@/components/postTypeBadge";
 import SaleTransacForm from "@/components/transaction/forms/SaleTransac";
-import { UpdateTransactionStatus } from "@/app/api/transacForm/updateTransac/route";
+import TradeTransacForm from "@/components/transaction/forms/TradeTransac";
+import RentTransacForm from "@/components/transaction/forms/RentTransac";
 
 type ChatMessage = {
   id: number;
@@ -37,6 +38,12 @@ type ChatMessage = {
   transactions?: {
     id: string;
     item_title: string | null;
+    post_type_id?: {
+      name: string;
+    };
+    rent_duration: string;
+    cash_added: number | null;
+    offered_item: string;
     price: number | null;
     fulfillment_method: string | null;
     payment_method: string | null;
@@ -44,6 +51,9 @@ type ChatMessage = {
     meetup_date: string | null;
     meetup_time: string | null;
     status: string | null;
+    post_id?: {
+      item_trade: string;
+    } | null;
   } | null;
 };
 
@@ -60,6 +70,11 @@ export default function ChatClient({
   itemTitle,
   postType,
   itemPrice,
+  itemTrade,
+  itemServiceFee,
+  itemPasabuyLocation,
+  itemPasabuyCutoff,
+  transactionHistory,
 }: {
   conversationId: number;
   currentUserId: string;
@@ -73,6 +88,11 @@ export default function ChatClient({
   itemTitle: string | null;
   postType: string | null;
   itemPrice: number | null;
+  itemTrade: string;
+  itemServiceFee: number;
+  itemPasabuyLocation: string;
+  itemPasabuyCutoff: string;
+  transactionHistory?: any[];
 }) {
   const supabase = createClient();
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
@@ -81,7 +101,7 @@ export default function ChatClient({
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false); // ✅ success modal control
+  const [showSuccess, setShowSuccess] = useState(false);
 
   useEffect(() => {
     scrollContainerRef.current?.scrollTo({
@@ -112,12 +132,21 @@ export default function ChatClient({
                 id,
                 item_title,
                 price,
+                post_type_id (
+                  name
+                ),
+                rent_duration,
+                offered_item,
+                cash_added,
                 fulfillment_method,
                 payment_method,
                 meetup_location,
                 meetup_date,
                 meetup_time,
-                status
+                status,
+                post_id (
+                  item_trade
+                )
               )
             `
             )
@@ -270,11 +299,11 @@ export default function ChatClient({
         </div>
 
         {/* Item Preview */}
-        {itemImage && (
-          <Link
-            href={`/product/${postId}`}
-            className="flex items-center gap-3 p-4 border-b bg-white shrink-0"
-          >
+        <Link
+          href={`/product/${postId}`}
+          className="flex items-center gap-3 p-4 border-b bg-white shrink-0"
+        >
+          {itemImage && (
             <Image
               src={itemImage}
               alt={itemTitle ?? "Item"}
@@ -282,20 +311,57 @@ export default function ChatClient({
               height={56}
               className="h-20 w-20 rounded-md object-fill"
             />
-            <div className="space-y-2">
-              <PostTypeBadge
-                type={postType as any}
-                className="text-xs text-slate-500"
-              />
-              <p className="text-sm font-medium truncate">{itemTitle}</p>
-              {itemPrice && (
-                <p className="text-xs text-[#E59E2C]">
-                  ₱{itemPrice.toLocaleString()}
-                </p>
-              )}
-            </div>
-          </Link>
-        )}
+          )}
+
+          <div className="space-y-2">
+            <PostTypeBadge
+              type={postType as any}
+              className="text-xs text-slate-500"
+            />
+            {/* DISPLAY PRICE FOR SALE */}
+            {postType === "Sale" && (
+              <>
+                <p className="text-sm font-medium truncate">{itemTitle}</p>
+                {itemPrice && (
+                  <p className="text-xs text-[#E59E2C]">
+                    ₱{itemPrice.toLocaleString()}
+                  </p>
+                )}
+              </>
+            )}
+
+            {/* DISPLAY PRICE PER DAY FOR RENT */}
+            {postType === "Rent" && (
+              <>
+                <p className="text-sm font-medium truncate">{itemTitle}</p>
+                {itemPrice && (
+                  <p className="text-xs text-[#E59E2C]">
+                    ₱{itemPrice.toLocaleString()} / Day
+                  </p>
+                )}
+              </>
+            )}
+
+            {/* DISPLAY OFFERED ITEM + PRICE FOR RENT */}
+            {postType === "Trade" && (
+              <>
+                <p className="text-sm font-medium truncate">{itemTitle}</p>
+
+                {itemPrice && (
+                  <p className="text-xs text-[#E59E2C]">
+                    ₱{itemPrice.toLocaleString()} + Trade for <b>{itemTrade}</b>
+                  </p>
+                )}
+              </>
+            )}
+
+            {postType === "Emergency Lending" && (
+              <>
+                <p className="text-sm font-medium truncate">{itemTitle}</p>
+              </>
+            )}
+          </div>
+        </Link>
 
         {/* Messages */}
         <div
@@ -303,12 +369,21 @@ export default function ChatClient({
           className="flex-1 overflow-y-auto p-4 space-y-2 bg-slate-50"
         >
           {messages.map((messageRow) => {
+            const formattedTime = new Date(
+              messageRow.created_at
+            ).toLocaleString("en-US", {
+              month: "short",
+              day: "numeric",
+              hour: "numeric",
+              minute: "2-digit",
+              hour12: true,
+            });
+
+            //SYSTEM MESSAGES (transaction forms)
             if (messageRow.type === "system" && messageRow.transactions) {
               const txn = messageRow.transactions;
-
               const isFromCurrentUser =
                 messageRow.sender_user_id === currentUserId;
-              const isSeller = otherUserId === currentUserId; // ✅ check if current user is seller
 
               return (
                 <div key={messageRow.id} className="flex justify-center w-full">
@@ -317,7 +392,8 @@ export default function ChatClient({
                       Transaction Form Completed
                     </p>
                     <p>
-                      <strong>Transaction type:</strong> Buy
+                      <strong>Transaction type:</strong>{" "}
+                      {txn.post_type_id?.name || "--"}
                     </p>
                     <p>
                       <strong>Price (₱):</strong> {txn.price?.toLocaleString()}
@@ -349,7 +425,6 @@ export default function ChatClient({
                     </p>
 
                     {/* ✅ Action buttons */}
-
                     {txn.status === "Pending" && (
                       <div className="mt-3 flex gap-2">
                         {currentUserRole === "seller" ? (
@@ -383,11 +458,17 @@ export default function ChatClient({
                         )}
                       </div>
                     )}
+
+                    {/* 🕒 Timestamp for system messages */}
+                    <p className="text-xs text-gray-500 text-right mt-2">
+                      {formattedTime}
+                    </p>
                   </div>
                 </div>
               );
             }
 
+            //REGULAR TEXT MESSAGES
             const isFromCurrentUser =
               messageRow.sender_user_id === currentUserId;
 
@@ -414,11 +495,20 @@ export default function ChatClient({
                       className="rounded-lg object-cover w-full h-auto cursor-pointer"
                       onClick={() => setPreviewUrl(url)}
                     />
+                    {/* 🕒 Timestamp for image messages */}
+                    <p
+                      className={`text-xs mt-1 ${
+                        isFromCurrentUser ? "text-blue-100" : "text-gray-500"
+                      } text-right`}
+                    >
+                      {formattedTime}
+                    </p>
                   </div>
                 </div>
               ));
             }
 
+            //TEXT MESSAGES
             return (
               <div
                 key={messageRow.id}
@@ -433,7 +523,15 @@ export default function ChatClient({
                       : "bg-white border"
                   }`}
                 >
-                  {messageRow.body}
+                  <p>{messageRow.body}</p>
+                  {/* 🕒 Timestamp below each message */}
+                  <p
+                    className={`text-xs mt-1 ${
+                      isFromCurrentUser ? "text-blue-100" : "text-gray-500"
+                    } text-right`}
+                  >
+                    {formattedTime}
+                  </p>
                 </div>
               </div>
             );
@@ -525,6 +623,37 @@ export default function ChatClient({
                     <SaleTransacForm
                       conversationId={conversationId}
                       itemPrice={itemPrice}
+                      itemTitle={itemTitle}
+                      sellerId={otherUserId}
+                      post_id={postId}
+                      postType={postType || ""}
+                      onClose={() => {
+                        setOpen(false);
+                        setShowSuccess(true);
+                      }}
+                    />
+                  )}
+
+                  {postType === "Rent" && (
+                    <RentTransacForm
+                      conversationId={conversationId}
+                      itemPrice={itemPrice}
+                      itemTitle={itemTitle}
+                      sellerId={otherUserId}
+                      post_id={postId}
+                      postType={postType || ""}
+                      onClose={() => {
+                        setOpen(false);
+                        setShowSuccess(true);
+                      }}
+                    />
+                  )}
+
+                  {postType === "Trade" && (
+                    <TradeTransacForm
+                      conversationId={conversationId}
+                      itemPrice={itemPrice}
+                      itemTrade={itemTrade}
                       itemTitle={itemTitle}
                       sellerId={otherUserId}
                       post_id={postId}

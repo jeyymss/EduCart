@@ -51,7 +51,10 @@ export default async function ConversationPage({
     transactions (
       id,
       item_title,
+      rent_duration,
       price,
+      offered_item,
+      cash_added,
       fulfillment_method,
       payment_method,
       meetup_location,
@@ -80,7 +83,11 @@ export default async function ConversationPage({
     item_title,
     image_urls,
     post_type,
-    item_price
+    item_price,
+    item_trade,
+    item_service_fee,
+    item_pasabuy_location,
+    item_pasabuy_cutoff
   `
     )
     .eq("conversation_id", conversationIdNumber)
@@ -89,6 +96,28 @@ export default async function ConversationPage({
 
   if (metaError) {
     console.error("❌ Failed to fetch convoMeta:", metaError.message);
+  }
+
+  // ✅ Fetch all past transactions between the two users
+  let transactionHistory: any[] = [];
+
+  if (convoMeta?.other_user_id) {
+    const { data: history, error: historyError } = await supabase
+      .from("transaction_records")
+      .select("*")
+      .or(
+        `and(buyer_id.eq.${currentUserId},seller_id.eq.${convoMeta.other_user_id}),and(buyer_id.eq.${convoMeta.other_user_id},seller_id.eq.${currentUserId})`
+      )
+      .order("created_at", { ascending: false });
+
+    if (historyError) {
+      console.error(
+        "❌ Failed to fetch transaction history:",
+        historyError.message
+      );
+    } else {
+      transactionHistory = history ?? [];
+    }
   }
 
   return (
@@ -105,6 +134,11 @@ export default async function ConversationPage({
       itemTitle={convoMeta?.item_title ?? null}
       postType={convoMeta?.post_type ?? null}
       itemPrice={convoMeta?.item_price ?? null}
+      itemTrade={convoMeta?.item_trade ?? null}
+      itemServiceFee={convoMeta?.item_service_fee ?? null}
+      itemPasabuyLocation={convoMeta?.item_pasabuy_location ?? null}
+      itemPasabuyCutoff={convoMeta?.item_pasabuy_cutoff ?? null}
+      transactionHistory={transactionHistory}
     />
   );
 }
