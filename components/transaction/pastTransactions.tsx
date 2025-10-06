@@ -150,7 +150,7 @@ export default function PastTransactionDetails({
           <strong>Status:</strong>{" "}
           <span
             className={
-              txn.status === "Completed"
+              txn.status === "Accepted"
                 ? "text-green-600 font-medium"
                 : txn.status === "Cancelled"
                 ? "text-red-500 font-medium"

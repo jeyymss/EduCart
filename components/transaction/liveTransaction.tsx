@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 
 type LiveTransactionCard = {
   txn: any; // You can replace 'any' with your transaction type later
+  post_type: string;
   formattedTime: string;
   currentUserRole: "buyer" | "seller";
   handleUpdateTransaction: (id: string, status: string) => void;
@@ -11,6 +12,7 @@ type LiveTransactionCard = {
 
 export default function LiveTransactionCard({
   txn,
+  post_type,
   formattedTime,
   currentUserRole,
   handleUpdateTransaction,
@@ -20,7 +22,7 @@ export default function LiveTransactionCard({
       <p className="font-semibold mb-2">Transaction Form Completed</p>
 
       <p>
-        <strong>Transaction type:</strong> {txn.post_types?.name || "--"}
+        <strong>Transaction type:</strong> {post_type}
       </p>
 
       <p>

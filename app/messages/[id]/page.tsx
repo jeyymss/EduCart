@@ -108,7 +108,7 @@ export default async function ConversationPage({
       .or(
         `and(buyer_id.eq.${currentUserId},seller_id.eq.${convoMeta.other_user_id}),and(buyer_id.eq.${convoMeta.other_user_id},seller_id.eq.${currentUserId})`
       )
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: true });
 
     if (historyError) {
       console.error(

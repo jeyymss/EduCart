@@ -40,7 +40,7 @@ type ChatMessage = {
   transactions?: {
     id: string;
     item_title: string;
-    post_types: { id: number; name: string } | null;
+    post_types: { id: number; name: string };
     rent_duration: string;
     cash_added: number | null;
     offered_item: string;
@@ -392,6 +392,7 @@ export default function ChatClient({
                       //Current Transaction
                       <LiveTransactionCard
                         key={messageRow.id}
+                        post_type={postType ?? "Unknown"}
                         txn={txn}
                         formattedTime={formattedTime}
                         currentUserRole={currentUserRole}
@@ -399,40 +400,45 @@ export default function ChatClient({
                       />
                     ) : (
                       <>
-                        {/* 🧾 Past Transactions */}
+                        {/* 🧾 Show only the transaction record for this transaction_id */}
                         {transactionHistory &&
-                          transactionHistory.length > 0 && (
-                            <div className="border-t bg-white p-4">
-                              <div className="space-y-3">
-                                {transactionHistory.map((record) => {
-                                  const txn = record.snapshot;
-
+                          transactionHistory.some(
+                            (record) => record.transaction_id === txn.id // match this message's transaction
+                          ) && (
+                            <div className="border-t bg-white p-4 mt-3">
+                              {transactionHistory
+                                .filter(
+                                  (record) => record.transaction_id === txn.id
+                                )
+                                .map((record) => {
+                                  const snapshot = record.snapshot;
                                   return (
                                     <PastTransactionDetails
                                       key={record.id}
                                       postType={record.post_type || "Unknown"}
-                                      itemTitle={txn.item_title}
+                                      itemTitle={snapshot.item_title}
                                       createdAt={record.created_at}
                                       txn={{
-                                        price: txn.price,
-                                        rent_duration: txn.rent_duration,
+                                        price: snapshot.price,
+                                        rent_duration: snapshot.rent_duration,
                                         fulfillment_method:
-                                          txn.fulfillment_method,
-                                        meetup_location: txn.meetup_location,
-                                        meetup_date: txn.meetup_date,
-                                        meetup_time: txn.meetup_time,
-                                        payment_method: txn.payment_method,
-                                        status: txn.status,
-                                        cash_added: txn.cash_added,
-                                        offered_item: txn.offered_item,
-                                        pasabuy_location: txn.pasabuy_location,
-                                        pasabuy_cutoff: txn.pasabuy_cutoff,
-                                        service_fee: txn.service_fee,
+                                          snapshot.fulfillment_method,
+                                        meetup_location:
+                                          snapshot.meetup_location,
+                                        meetup_date: snapshot.meetup_date,
+                                        meetup_time: snapshot.meetup_time,
+                                        payment_method: snapshot.payment_method,
+                                        status: snapshot.status,
+                                        cash_added: snapshot.cash_added,
+                                        offered_item: snapshot.offered_item,
+                                        pasabuy_location:
+                                          snapshot.pasabuy_location,
+                                        pasabuy_cutoff: snapshot.pasabuy_cutoff,
+                                        service_fee: snapshot.service_fee,
                                       }}
                                     />
                                   );
                                 })}
-                              </div>
                             </div>
                           )}
                       </>
@@ -559,91 +565,93 @@ export default function ChatClient({
                 <p>Add Attachment</p>
               </TooltipContent>
             </Tooltip>
-            <Tooltip>
-              <Dialog open={open} onOpenChange={setOpen}>
-                <TooltipTrigger asChild>
-                  <DialogTrigger asChild>
-                    <button
-                      type="button"
-                      className="px-2 py-2 rounded hover:bg-gray-100 hover:cursor-pointer"
-                      onClick={() => setOpen(true)}
-                    >
-                      <FilePenLine />
-                    </button>
-                  </DialogTrigger>
-                </TooltipTrigger>
-                <DialogContent
-                  onInteractOutside={(e) => e.preventDefault()}
-                  onEscapeKeyDown={(e) => e.preventDefault()}
-                >
-                  <DialogClose asChild>
-                    <button
-                      className="absolute right-2 top-2 rounded p-1 text-gray-500 hover:bg-gray-200 hover:cursor-pointer"
-                      aria-label="Close"
-                    >
-                      <X className="h-5 w-5" />
-                    </button>
-                  </DialogClose>
+            {currentUserRole === "buyer" && (
+              <Tooltip>
+                <Dialog open={open} onOpenChange={setOpen}>
+                  <TooltipTrigger asChild>
+                    <DialogTrigger asChild>
+                      <button
+                        type="button"
+                        className="px-2 py-2 rounded hover:bg-gray-100 hover:cursor-pointer"
+                        onClick={() => setOpen(true)}
+                      >
+                        <FilePenLine />
+                      </button>
+                    </DialogTrigger>
+                  </TooltipTrigger>
+                  <DialogContent
+                    onInteractOutside={(e) => e.preventDefault()}
+                    onEscapeKeyDown={(e) => e.preventDefault()}
+                  >
+                    <DialogClose asChild>
+                      <button
+                        className="absolute right-2 top-2 rounded p-1 text-gray-500 hover:bg-gray-200 hover:cursor-pointer"
+                        aria-label="Close"
+                      >
+                        <X className="h-5 w-5" />
+                      </button>
+                    </DialogClose>
 
-                  <DialogHeader>
-                    <div className="flex items-center">
-                      <DialogTitle>Form</DialogTitle>
-                      <PostTypeBadge type={postType as any} />
-                    </div>
-                    <DialogDescription>Fill up form</DialogDescription>
-                  </DialogHeader>
+                    <DialogHeader>
+                      <div className="flex items-center">
+                        <DialogTitle>Form</DialogTitle>
+                        <PostTypeBadge type={postType as any} />
+                      </div>
+                      <DialogDescription>Fill up form</DialogDescription>
+                    </DialogHeader>
 
-                  {postType === "Sale" && (
-                    <SaleTransacForm
-                      conversationId={conversationId}
-                      itemPrice={itemPrice}
-                      itemTitle={itemTitle}
-                      sellerId={otherUserId}
-                      post_id={postId}
-                      postType={postType || ""}
-                      onClose={() => {
-                        setOpen(false);
-                        setShowSuccess(true);
-                      }}
-                    />
-                  )}
+                    {postType === "Sale" && (
+                      <SaleTransacForm
+                        conversationId={conversationId}
+                        itemPrice={itemPrice}
+                        itemTitle={itemTitle}
+                        sellerId={otherUserId}
+                        post_id={postId}
+                        postType={postType || ""}
+                        onClose={() => {
+                          setOpen(false);
+                          setShowSuccess(true);
+                        }}
+                      />
+                    )}
 
-                  {postType === "Rent" && (
-                    <RentTransacForm
-                      conversationId={conversationId}
-                      itemPrice={itemPrice}
-                      itemTitle={itemTitle}
-                      sellerId={otherUserId}
-                      post_id={postId}
-                      postType={postType || ""}
-                      onClose={() => {
-                        setOpen(false);
-                        setShowSuccess(true);
-                      }}
-                    />
-                  )}
+                    {postType === "Rent" && (
+                      <RentTransacForm
+                        conversationId={conversationId}
+                        itemPrice={itemPrice}
+                        itemTitle={itemTitle}
+                        sellerId={otherUserId}
+                        post_id={postId}
+                        postType={postType || ""}
+                        onClose={() => {
+                          setOpen(false);
+                          setShowSuccess(true);
+                        }}
+                      />
+                    )}
 
-                  {postType === "Trade" && (
-                    <TradeTransacForm
-                      conversationId={conversationId}
-                      itemPrice={itemPrice}
-                      itemTrade={itemTrade}
-                      itemTitle={itemTitle}
-                      sellerId={otherUserId}
-                      post_id={postId}
-                      postType={postType || ""}
-                      onClose={() => {
-                        setOpen(false);
-                        setShowSuccess(true);
-                      }}
-                    />
-                  )}
-                </DialogContent>
-              </Dialog>
-              <TooltipContent>
-                <p>Fill Up Form</p>
-              </TooltipContent>
-            </Tooltip>
+                    {postType === "Trade" && (
+                      <TradeTransacForm
+                        conversationId={conversationId}
+                        itemPrice={itemPrice}
+                        itemTrade={itemTrade}
+                        itemTitle={itemTitle}
+                        sellerId={otherUserId}
+                        post_id={postId}
+                        postType={postType || ""}
+                        onClose={() => {
+                          setOpen(false);
+                          setShowSuccess(true);
+                        }}
+                      />
+                    )}
+                  </DialogContent>
+                </Dialog>
+                <TooltipContent>
+                  <p>Fill Up Form</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
           </div>
 
           <input
