@@ -12,8 +12,11 @@ import { ChevronDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { AdvancedFilters } from "@/components/profile/AdvancedFilters";
 import type { AdvancedFilterValue } from "@/components/profile/AdvancedFilters";
-import TransactionCard from "@/components/transaction/Transaction Card/TransactionCard";
-import type { TxMethod, TxSide } from "@/components/transaction/Transaction Card/TransactionCard";
+import TransactionCard from "@/components/transaction/TransactionCard/TransactionCard";
+import type {
+  TxMethod,
+  TxSide,
+} from "@/components/transaction/TransactionCard/TransactionCard";
 
 type TxStatus = "active" | "completed" | "cancelled";
 type TxType = "All" | "Purchases" | "Sales";
@@ -21,8 +24,8 @@ type TxType = "All" | "Purchases" | "Sales";
 type Tx = {
   id: string;
   status: TxStatus;
-  type: TxSide;             // "Purchases" | "Sales"
-  method: TxMethod;         // "Meetup" | "Delivery"
+  type: TxSide; // "Purchases" | "Sales"
+  method: TxMethod; // "Meetup" | "Delivery"
   title: string;
   price: number;
   total?: number;
@@ -128,17 +131,35 @@ export default function Transactions({ userId }: { userId: string }) {
       <TabsList className="flex bg-transparent h-auto">
         <TabsTrigger value="active" className="tab-trigger">
           Active (
-          <Count userId={userId} status="active" type={typeFilter} search={search} adv={adv} />
+          <Count
+            userId={userId}
+            status="active"
+            type={typeFilter}
+            search={search}
+            adv={adv}
+          />
           )
         </TabsTrigger>
         <TabsTrigger value="completed" className="tab-trigger">
           Completed (
-          <Count userId={userId} status="completed" type={typeFilter} search={search} adv={adv} />
+          <Count
+            userId={userId}
+            status="completed"
+            type={typeFilter}
+            search={search}
+            adv={adv}
+          />
           )
         </TabsTrigger>
         <TabsTrigger value="cancelled" className="tab-trigger">
           Cancelled (
-          <Count userId={userId} status="cancelled" type={typeFilter} search={search} adv={adv} />
+          <Count
+            userId={userId}
+            status="cancelled"
+            type={typeFilter}
+            search={search}
+            adv={adv}
+          />
           )
         </TabsTrigger>
       </TabsList>
@@ -151,7 +172,10 @@ export default function Transactions({ userId }: { userId: string }) {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             {(["All", "Purchases", "Sales"] as TxType[]).map((label) => (
-              <DropdownMenuItem key={label} onClick={() => setTypeFilter(label)}>
+              <DropdownMenuItem
+                key={label}
+                onClick={() => setTypeFilter(label)}
+              >
                 {label}
               </DropdownMenuItem>
             ))}
@@ -168,7 +192,9 @@ export default function Transactions({ userId }: { userId: string }) {
 
         <AdvancedFilters
           value={adv}
-          onApply={(next) => setAdv({ ...next, posts: [...(next.posts ?? [])] })}
+          onApply={(next) =>
+            setAdv({ ...next, posts: [...(next.posts ?? [])] })
+          }
         />
       </div>
     </div>

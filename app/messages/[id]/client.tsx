@@ -25,6 +25,8 @@ import PostTypeBadge from "@/components/postTypeBadge";
 import SaleTransacForm from "@/components/transaction/forms/SaleTransac";
 import TradeTransacForm from "@/components/transaction/forms/TradeTransac";
 import RentTransacForm from "@/components/transaction/forms/RentTransac";
+import LiveTransactionCard from "@/components/transaction/liveTransaction";
+import PastTransactionDetails from "@/components/transaction/pastTransactions";
 
 type ChatMessage = {
   id: number;
@@ -37,10 +39,8 @@ type ChatMessage = {
   transaction_id?: string | null;
   transactions?: {
     id: string;
-    item_title: string | null;
-    post_type_id?: {
-      name: string;
-    };
+    item_title: string;
+    post_types: { id: number; name: string } | null;
     rent_duration: string;
     cash_added: number | null;
     offered_item: string;
@@ -51,6 +51,7 @@ type ChatMessage = {
     meetup_date: string | null;
     meetup_time: string | null;
     status: string | null;
+    created_at: string;
     post_id?: {
       item_trade: string;
     } | null;
@@ -132,18 +133,17 @@ export default function ChatClient({
                 id,
                 item_title,
                 price,
-                post_type_id (
-                  name
-                ),
                 rent_duration,
                 offered_item,
                 cash_added,
+                created_at,
                 fulfillment_method,
                 payment_method,
                 meetup_location,
                 meetup_date,
                 meetup_time,
                 status,
+                post_types (id, name),
                 post_id (
                   item_trade
                 )
@@ -388,81 +388,55 @@ export default function ChatClient({
               return (
                 <div key={messageRow.id} className="flex justify-center w-full">
                   <div className="bg-slate-100 border rounded-lg p-4 text-sm max-w-md">
-                    <p className="font-semibold mb-2">
-                      Transaction Form Completed
-                    </p>
-                    <p>
-                      <strong>Transaction type:</strong>{" "}
-                      {txn.post_type_id?.name || "--"}
-                    </p>
-                    <p>
-                      <strong>Price (₱):</strong> {txn.price?.toLocaleString()}
-                    </p>
-                    <p>
-                      <strong>Preferred method:</strong>{" "}
-                      {txn.fulfillment_method}
-                    </p>
-                    {txn.meetup_location && (
-                      <p>
-                        <strong>Location:</strong> {txn.meetup_location}
-                      </p>
-                    )}
-                    {txn.meetup_date && (
-                      <p>
-                        <strong>Date:</strong> {txn.meetup_date}
-                      </p>
-                    )}
-                    {txn.meetup_time && (
-                      <p>
-                        <strong>Time:</strong> {txn.meetup_time}
-                      </p>
-                    )}
-                    <p>
-                      <strong>Payment method:</strong> {txn.payment_method}
-                    </p>
-                    <p>
-                      <strong>Status:</strong> {txn.status}
-                    </p>
+                    {messageRow.transactions.status === "Pending" ? (
+                      //Current Transaction
+                      <LiveTransactionCard
+                        key={messageRow.id}
+                        txn={txn}
+                        formattedTime={formattedTime}
+                        currentUserRole={currentUserRole}
+                        handleUpdateTransaction={handleUpdateTransaction}
+                      />
+                    ) : (
+                      <>
+                        {/* 🧾 Past Transactions */}
+                        {transactionHistory &&
+                          transactionHistory.length > 0 && (
+                            <div className="border-t bg-white p-4">
+                              <div className="space-y-3">
+                                {transactionHistory.map((record) => {
+                                  const txn = record.snapshot;
 
-                    {/* ✅ Action buttons */}
-                    {txn.status === "Pending" && (
-                      <div className="mt-3 flex gap-2">
-                        {currentUserRole === "seller" ? (
-                          <>
-                            <Button
-                              onClick={() =>
-                                handleUpdateTransaction(txn.id, "Accepted")
-                              }
-                              className="bg-green-600 text-white"
-                            >
-                              Accept
-                            </Button>
-                            <Button
-                              onClick={() =>
-                                handleUpdateTransaction(txn.id, "Cancelled")
-                              }
-                              className="bg-red-600 text-white"
-                            >
-                              Cancel
-                            </Button>
-                          </>
-                        ) : (
-                          <Button
-                            onClick={() =>
-                              handleUpdateTransaction(txn.id, "Cancelled")
-                            }
-                            className="bg-red-600 text-white"
-                          >
-                            Cancel
-                          </Button>
-                        )}
-                      </div>
+                                  return (
+                                    <PastTransactionDetails
+                                      key={record.id}
+                                      postType={record.post_type || "Unknown"}
+                                      itemTitle={txn.item_title}
+                                      createdAt={record.created_at}
+                                      txn={{
+                                        price: txn.price,
+                                        rent_duration: txn.rent_duration,
+                                        fulfillment_method:
+                                          txn.fulfillment_method,
+                                        meetup_location: txn.meetup_location,
+                                        meetup_date: txn.meetup_date,
+                                        meetup_time: txn.meetup_time,
+                                        payment_method: txn.payment_method,
+                                        status: txn.status,
+                                        cash_added: txn.cash_added,
+                                        offered_item: txn.offered_item,
+                                        pasabuy_location: txn.pasabuy_location,
+                                        pasabuy_cutoff: txn.pasabuy_cutoff,
+                                        service_fee: txn.service_fee,
+                                      }}
+                                    />
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+                      </>
                     )}
-
-                    {/* 🕒 Timestamp for system messages */}
-                    <p className="text-xs text-gray-500 text-right mt-2">
-                      {formattedTime}
-                    </p>
                   </div>
                 </div>
               );
