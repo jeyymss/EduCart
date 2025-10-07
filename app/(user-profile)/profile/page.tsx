@@ -60,7 +60,10 @@ export default function ProfilePage() {
   }, [isEditing]);
 
   const [localUser, setLocalUser] = useState<typeof user | null>(null);
-  const displayUser = (localUser ?? user) as typeof user & { coverX?: number; coverY?: number };
+  const displayUser = (localUser ?? user) as typeof user & {
+    coverX?: number;
+    coverY?: number;
+  };
 
   const [activeTab, setActiveTab] = useState("listings");
   useEffect(() => {
@@ -72,9 +75,15 @@ export default function ProfilePage() {
     window.history.replaceState(null, "", `#${value}`);
   };
 
-  const [activeSubTab, setActiveSubTab] = useState<"all" | "listed" | "sold" | "unlisted">("all");
+  const [activeSubTab, setActiveSubTab] = useState<
+    "all" | "listed" | "sold" | "unlisted"
+  >("all");
 
-  type PerTab = { postType: string | null; search: string; adv: AdvancedFilterValue };
+  type PerTab = {
+    postType: string | null;
+    search: string;
+    adv: AdvancedFilterValue;
+  };
 
   const EMPTY_ADV: AdvancedFilterValue = {
     time: null,
@@ -94,12 +103,22 @@ export default function ProfilePage() {
     unlisted: { postType: null, search: "", adv: { ...EMPTY_ADV } },
   });
 
-  const updateFilters = (tab: keyof typeof filtersByTab, updates: Partial<PerTab>) => {
-    setFiltersByTab((prev) => ({ ...prev, [tab]: { ...prev[tab], ...updates } }));
+  const updateFilters = (
+    tab: keyof typeof filtersByTab,
+    updates: Partial<PerTab>
+  ) => {
+    setFiltersByTab((prev) => ({
+      ...prev,
+      [tab]: { ...prev[tab], ...updates },
+    }));
   };
 
   if (isLoading)
-    return <div className="min-h-screen flex justify-center items-center">Loading…</div>;
+    return (
+      <div className="min-h-screen flex justify-center items-center">
+        Loading…
+      </div>
+    );
   if (error)
     return (
       <div className="min-h-screen flex justify-center items-center">
@@ -114,7 +133,12 @@ export default function ProfilePage() {
   ) => {
     const { postType, search, adv } = filtersByTab[key];
     return (
-      <motion.div variants={fadeUp} initial="initial" animate="animate" exit="exit">
+      <motion.div
+        variants={fadeUp}
+        initial="initial"
+        animate="animate"
+        exit="exit"
+      >
         <div className="p-4">
           <UserPosts
             userId={displayUser.id}
@@ -136,7 +160,9 @@ export default function ProfilePage() {
     updateFilters(tab, { postType: value, adv: { ...currentAdv, posts: [] } });
   };
 
-  const coverObjectPosition = `${displayUser.coverX ?? 50}% ${displayUser.coverY ?? 50}%`;
+  const coverObjectPosition = `${displayUser.coverX ?? 50}% ${
+    displayUser.coverY ?? 50
+  }%`;
 
   return (
     <div className="min-h-screen flex flex-col relative">
@@ -144,7 +170,11 @@ export default function ProfilePage() {
         {isEditing ? (
           <EditProfile
             userId={displayUser.id}
-            role={displayUser.role === "Organization" ? "organization" : "individual"}
+            role={
+              displayUser.role === "Organization"
+                ? "organization"
+                : "individual"
+            }
             currentAvatar={displayUser.avatar_url}
             currentBackground={displayUser.background_url}
             currentBio={displayUser.bio}
@@ -171,7 +201,10 @@ export default function ProfilePage() {
             <div className="relative w-full h-60 md:h-80 lg:h-96 overflow-hidden">
               <motion.div
                 initial={{ scale: 1.04 }}
-                animate={{ scale: 1, transition: { duration: 0.6, ease: EASE } }}
+                animate={{
+                  scale: 1,
+                  transition: { duration: 0.6, ease: EASE },
+                }}
                 className="absolute inset-0"
               >
                 <Image
@@ -188,9 +221,17 @@ export default function ProfilePage() {
               <motion.div
                 className="absolute top-10 right-4"
                 initial={{ opacity: 0, y: -8 }}
-                animate={{ opacity: 1, y: 0, transition: { duration: 0.25, ease: EASE } }}
+                animate={{
+                  opacity: 1,
+                  y: 0,
+                  transition: { duration: 0.25, ease: EASE },
+                }}
               >
-                <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsEditing(true)}
+                >
                   Edit Profile
                 </Button>
               </motion.div>
@@ -213,7 +254,11 @@ export default function ProfilePage() {
                     animate={{
                       scale: 1,
                       opacity: 1,
-                      transition: { type: "spring", stiffness: 260, damping: 22 },
+                      transition: {
+                        type: "spring",
+                        stiffness: 260,
+                        damping: 22,
+                      },
                     }}
                   >
                     <Image
@@ -250,7 +295,12 @@ export default function ProfilePage() {
                 </div>
 
                 {/* Add Business Account */}
-                <motion.div className="mt-2" variants={fadeIn} initial="initial" animate="animate">
+                <motion.div
+                  className="mt-2"
+                  variants={fadeIn}
+                  initial="initial"
+                  animate="animate"
+                >
                   <Button
                     variant="outline"
                     className="border-[#F3AD4B] text-[#F3AD4B] hover:bg-[#FFF7E9]"
@@ -269,16 +319,28 @@ export default function ProfilePage() {
 
       {/* Main Content */}
       <div className="flex-1 px-6">
-        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+        <Tabs
+          value={activeTab}
+          onValueChange={handleTabChange}
+          className="w-full"
+        >
           {/* Sticky tabs bar */}
           <div
             className={[
               "sticky top-0 z-30 bg-white border-b transition-opacity",
-              isEditing ? "opacity-60 pointer-events-none select-none" : "opacity-100",
+              isEditing
+                ? "opacity-60 pointer-events-none select-none"
+                : "opacity-100",
             ].join(" ")}
           >
             <TabsList className="relative flex w-full p-0 bg-transparent h-auto">
-              {["listings", "favorites", "transactions", "reviews", "settings"].map((tab) => (
+              {[
+                "listings",
+                "favorites",
+                "transactions",
+                "reviews",
+                "settings",
+              ].map((tab) => (
                 <TabsTrigger
                   key={tab}
                   value={tab}
@@ -300,7 +362,9 @@ export default function ProfilePage() {
           <div
             className={[
               "transition-opacity",
-              isEditing ? "opacity-50 pointer-events-none select-none" : "opacity-100",
+              isEditing
+                ? "opacity-50 pointer-events-none select-none"
+                : "opacity-100",
             ].join(" ")}
             aria-hidden={isEditing}
           >
@@ -309,7 +373,9 @@ export default function ProfilePage() {
               <section className="border border-gray-300 rounded-2xl bg-white shadow-sm w-full overflow-hidden">
                 <Tabs
                   value={activeSubTab}
-                  onValueChange={(v) => setActiveSubTab(v as typeof activeSubTab)}
+                  onValueChange={(v) =>
+                    setActiveSubTab(v as typeof activeSubTab)
+                  }
                   defaultValue="all"
                   className="w-full"
                 >
@@ -321,7 +387,10 @@ export default function ProfilePage() {
                     animate="animate"
                   >
                     <TabsList className="flex bg-transparent h-auto">
-                      <TabsTrigger value="all" className="tab-trigger hover:cursor-pointer">
+                      <TabsTrigger
+                        value="all"
+                        className="tab-trigger hover:cursor-pointer"
+                      >
                         All (
                         <UserPosts.Count
                           userId={displayUser.id}
@@ -331,7 +400,10 @@ export default function ProfilePage() {
                         />
                         )
                       </TabsTrigger>
-                      <TabsTrigger value="listed" className="tab-trigger hover:cursor-pointer">
+                      <TabsTrigger
+                        value="listed"
+                        className="tab-trigger hover:cursor-pointer"
+                      >
                         Listed (
                         <UserPosts.Count
                           userId={displayUser.id}
@@ -342,7 +414,10 @@ export default function ProfilePage() {
                         />
                         )
                       </TabsTrigger>
-                      <TabsTrigger value="sold" className="tab-trigger hover:cursor-pointer">
+                      <TabsTrigger
+                        value="sold"
+                        className="tab-trigger hover:cursor-pointer"
+                      >
                         Sold (
                         <UserPosts.Count
                           userId={displayUser.id}
@@ -353,7 +428,10 @@ export default function ProfilePage() {
                         />
                         )
                       </TabsTrigger>
-                      <TabsTrigger value="unlisted" className="tab-trigger hover:cursor-pointer">
+                      <TabsTrigger
+                        value="unlisted"
+                        className="tab-trigger hover:cursor-pointer"
+                      >
                         Unlisted (
                         <UserPosts.Count
                           userId={displayUser.id}
@@ -373,21 +451,27 @@ export default function ProfilePage() {
                           <ChevronDown className="w-4 h-4" />
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          {["All", "Sale", "Rent", "Trade", "Emergency Lending", "PasaBuy", "Giveaway"].map(
-                            (label) => (
-                              <DropdownMenuItem
-                                key={label}
-                                onClick={() =>
-                                  setPostTypeAndClearAdvPosts(
-                                    activeSubTab,
-                                    label === "All" ? null : label
-                                  )
-                                }
-                              >
-                                {label}
-                              </DropdownMenuItem>
-                            )
-                          )}
+                          {[
+                            "All",
+                            "Sale",
+                            "Rent",
+                            "Trade",
+                            "Emergency Lending",
+                            "PasaBuy",
+                            "Giveaway",
+                          ].map((label) => (
+                            <DropdownMenuItem
+                              key={label}
+                              onClick={() =>
+                                setPostTypeAndClearAdvPosts(
+                                  activeSubTab,
+                                  label === "All" ? null : label
+                                )
+                              }
+                            >
+                              {label}
+                            </DropdownMenuItem>
+                          ))}
                         </DropdownMenuContent>
                       </DropdownMenu>
 
@@ -396,7 +480,11 @@ export default function ProfilePage() {
                         placeholder="Search items"
                         className="h-9 w-[200px] text-sm"
                         value={filtersByTab[activeSubTab]?.search ?? ""}
-                        onChange={(e) => updateFilters(activeSubTab, { search: e.target.value })}
+                        onChange={(e) =>
+                          updateFilters(activeSubTab, {
+                            search: e.target.value,
+                          })
+                        }
                       />
 
                       <AdvancedFilters
@@ -479,7 +567,12 @@ export default function ProfilePage() {
 
             {/* TRANSACTIONS */}
             <TabsContent value="transactions">
-              <motion.div variants={fadeUp} initial="initial" animate="animate" exit="exit">
+              <motion.div
+                variants={fadeUp}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+              >
                 <Transactions userId={displayUser.id} />
               </motion.div>
             </TabsContent>

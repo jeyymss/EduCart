@@ -76,13 +76,32 @@ function SectionHeader({
 }
 
 export default function HomePage() {
-  const { data: items = [], isLoading: itemLoading, error: itemError } = useHomepageItems();
-  const { data: emergency = [], isLoading: emergencyLoading, error: emergencyError } = useHomePageEmergency();
-  const { data: pasabuy = [], isLoading: pasabuyLoading, error: pasabuyError } = useHomePagePasaBuy();
-  const { data: giveaways = [], isLoading: giveawaysLoading, error: giveawaysError } = useGiveawayPosts();
+  const {
+    data: items = [],
+    isLoading: itemLoading,
+    error: itemError,
+  } = useHomepageItems();
+  const {
+    data: emergency = [],
+    isLoading: emergencyLoading,
+    error: emergencyError,
+  } = useHomePageEmergency();
+  const {
+    data: pasabuy = [],
+    isLoading: pasabuyLoading,
+    error: pasabuyError,
+  } = useHomePagePasaBuy();
+  const {
+    data: giveaways = [],
+    isLoading: giveawaysLoading,
+    error: giveawaysError,
+  } = useGiveawayPosts();
 
-  const [selectedEmergency, setSelectedEmergency] = useState<EmergencyPost | null>(null);
-  const [selectedPasaBuy, setSelectedPasaBuy] = useState<PasaBuyPost | null>(null);
+  const [selectedEmergency, setSelectedEmergency] =
+    useState<EmergencyPost | null>(null);
+  const [selectedPasaBuy, setSelectedPasaBuy] = useState<PasaBuyPost | null>(
+    null
+  );
 
   const goto = (id: string) => {
     const el = document.getElementById(id);
@@ -133,7 +152,9 @@ export default function HomePage() {
 
             {/* ✅ Fixed Quick Links (no double-back) */}
             <div className="flex flex-col items-center md:items-end">
-              <span className="text-sm text-[#102E4A]/70 mb-2">Quick links:</span>
+              <span className="text-sm text-[#102E4A]/70 mb-2">
+                Quick links:
+              </span>
               <div className="flex flex-wrap justify-center md:justify-end gap-2">
                 {[
                   { label: "🚨 Emergency", id: "emergency" },
@@ -159,7 +180,9 @@ export default function HomePage() {
       {/* ===== Categories ===== */}
       <section className="rounded-2xl border bg-white p-5 shadow-sm hover:shadow-md transition-all">
         <div className="flex items-center justify-between">
-          <h2 className="font-semibold text-[#102E4A] text-lg">Browse by Category</h2>
+          <h2 className="font-semibold text-[#102E4A] text-lg">
+            Browse by Category
+          </h2>
         </div>
 
         <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-9 gap-4">
@@ -195,8 +218,15 @@ export default function HomePage() {
       <div className="-mx-4 md:-mx-8 px-4 md:px-8 py-8 bg-white">
         <div className="mx-auto max-w-[1600px] space-y-10">
           {/* --- Emergency Lending --- */}
-          <section id="emergency" className="scroll-mt-32 md:scroll-mt-36 lg:scroll-mt-40">
-            <SectionHeader title="Emergency Lending" count={emergency?.length ?? 0} href="#" />
+          <section
+            id="emergency"
+            className="scroll-mt-32 md:scroll-mt-36 lg:scroll-mt-40"
+          >
+            <SectionHeader
+              title="Emergency Lending"
+              count={emergency?.length ?? 0}
+              href="#"
+            />
             {emergencyLoading ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {Array.from({ length: 3 }).map((_, i) => (
@@ -222,7 +252,7 @@ export default function HomePage() {
                       id={emg.post_id}
                       title={emg.item_title}
                       description={emg.item_description}
-                      isUrgent={emg.post_type_name === 'Emergency Lending'}
+                      isUrgent={emg.post_type_name === "Emergency Lending"}
                       created_at={emg.created_at}
                     />
                   </button>
@@ -231,17 +261,33 @@ export default function HomePage() {
             )}
 
             {selectedEmergency && (
-              <Dialog open onOpenChange={(open) => !open && setSelectedEmergency(null)}>
+              <Dialog
+                open
+                onOpenChange={(open) => !open && setSelectedEmergency(null)}
+              >
                 <DialogContent className="sm:max-w-lg">
                   <DialogHeader>
                     <DialogTitle>{selectedEmergency.item_title}</DialogTitle>
                   </DialogHeader>
                   <div className="mt-2 space-y-2 text-sm text-gray-600">
-                    <p><strong>Description:</strong> {selectedEmergency.item_description ?? ''}</p>
-                    <p><strong>Name:</strong> {selectedEmergency.full_name ?? ''}</p>
-                    <p><strong>University:</strong> {selectedEmergency.university_abbreviation ?? ''}</p>
-                    <p><strong>Role:</strong> {selectedEmergency.role ?? ''}</p>
-                    <p><strong>Posted:</strong> {getRelativeTime(selectedEmergency.created_at)}</p>
+                    <p>
+                      <strong>Description:</strong>{" "}
+                      {selectedEmergency.item_description ?? ""}
+                    </p>
+                    <p>
+                      <strong>Name:</strong> {selectedEmergency.full_name ?? ""}
+                    </p>
+                    <p>
+                      <strong>University:</strong>{" "}
+                      {selectedEmergency.university_abbreviation ?? ""}
+                    </p>
+                    <p>
+                      <strong>Role:</strong> {selectedEmergency.role ?? ""}
+                    </p>
+                    <p>
+                      <strong>Posted:</strong>{" "}
+                      {getRelativeTime(selectedEmergency.created_at)}
+                    </p>
                   </div>
                   <DialogFooter>
                     <Button>Message</Button>
@@ -252,12 +298,22 @@ export default function HomePage() {
           </section>
 
           {/* --- Featured Listing --- */}
-          <section id="featured" className="scroll-mt-32 md:scroll-mt-36 lg:scroll-mt-40">
-            <SectionHeader title="Featured Listing" count={items?.length ?? 0} href="#" />
+          <section
+            id="featured"
+            className="scroll-mt-32 md:scroll-mt-36 lg:scroll-mt-40"
+          >
+            <SectionHeader
+              title="Featured Listing"
+              count={items?.length ?? 0}
+              href="#"
+            />
             {itemLoading ? (
               <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-thin scrollbar-thumb-gray-300">
                 {Array.from({ length: 5 }).map((_, a) => (
-                  <div key={a} className="min-w-[340px] md:min-w-[360px] snap-start">
+                  <div
+                    key={a}
+                    className="min-w-[340px] md:min-w-[360px] snap-start"
+                  >
                     <ItemCardSkeleton />
                   </div>
                 ))}
@@ -281,7 +337,7 @@ export default function HomePage() {
                       image_urls={item.image_urls}
                       price={item.item_price}
                       post_type={item.post_type_name}
-                      seller={item.full_name || 'Unknown'}
+                      seller={item.full_name || "Unknown"}
                       created_at={item.created_at}
                       status={item.status}
                     />
@@ -292,8 +348,15 @@ export default function HomePage() {
           </section>
 
           {/* --- PasaBuy Posts --- */}
-          <section id="pasabuy" className="scroll-mt-32 md:scroll-mt-36 lg:scroll-mt-40">
-            <SectionHeader title="PasaBuy Posts" count={pasabuy?.length ?? 0} href="#" />
+          <section
+            id="pasabuy"
+            className="scroll-mt-32 md:scroll-mt-36 lg:scroll-mt-40"
+          >
+            <SectionHeader
+              title="PasaBuy Posts"
+              count={pasabuy?.length ?? 0}
+              href="#"
+            />
             {pasabuyLoading ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {Array.from({ length: 3 }).map((_, i) => (
@@ -328,17 +391,33 @@ export default function HomePage() {
             )}
 
             {selectedPasaBuy && (
-              <Dialog open onOpenChange={(open) => !open && setSelectedPasaBuy(null)}>
+              <Dialog
+                open
+                onOpenChange={(open) => !open && setSelectedPasaBuy(null)}
+              >
                 <DialogContent className="sm:max-w-lg">
                   <DialogHeader>
                     <DialogTitle>{selectedPasaBuy.item_title}</DialogTitle>
                   </DialogHeader>
                   <div className="mt-2 space-y-2 text-sm text-gray-600">
-                    <p><strong>Description:</strong> {selectedPasaBuy.item_description ?? ''}</p>
-                    <p><strong>Name:</strong> {selectedPasaBuy.full_name ?? ''}</p>
-                    <p><strong>University:</strong> {selectedPasaBuy.university_abbreviation ?? ''}</p>
-                    <p><strong>Role:</strong> {selectedPasaBuy.role ?? ''}</p>
-                    <p><strong>Posted:</strong> {getRelativeTime(selectedPasaBuy.created_at)}</p>
+                    <p>
+                      <strong>Description:</strong>{" "}
+                      {selectedPasaBuy.item_description ?? ""}
+                    </p>
+                    <p>
+                      <strong>Name:</strong> {selectedPasaBuy.full_name ?? ""}
+                    </p>
+                    <p>
+                      <strong>University:</strong>{" "}
+                      {selectedPasaBuy.university_abbreviation ?? ""}
+                    </p>
+                    <p>
+                      <strong>Role:</strong> {selectedPasaBuy.role ?? ""}
+                    </p>
+                    <p>
+                      <strong>Posted:</strong>{" "}
+                      {getRelativeTime(selectedPasaBuy.created_at)}
+                    </p>
                   </div>
                   <DialogFooter>
                     <Button>Message</Button>
@@ -349,11 +428,20 @@ export default function HomePage() {
           </section>
 
           {/* --- Giveaways --- */}
-          <section id="giveaways" className="scroll-mt-32 md:scroll-mt-36 lg:scroll-mt-40">
-            <SectionHeader title="Donation & Giveaways" count={giveaways?.length ?? 0} href="#" />
+          <section
+            id="giveaways"
+            className="scroll-mt-32 md:scroll-mt-36 lg:scroll-mt-40"
+          >
+            <SectionHeader
+              title="Donation & Giveaways"
+              count={giveaways?.length ?? 0}
+              href="#"
+            />
             <div className="space-y-4">
               {giveawaysLoading && <p>Loading…</p>}
-              {giveawaysError && <p className="text-red-500">Failed to load giveaways</p>}
+              {giveawaysError && (
+                <p className="text-red-500">Failed to load giveaways</p>
+              )}
               {giveaways.length === 0 && !giveawaysLoading ? (
                 <div className="flex h-28 items-center justify-center rounded-xl border bg-gray-50 text-gray-500">
                   No donations yet.
