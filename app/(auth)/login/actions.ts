@@ -35,7 +35,7 @@ export async function login(formData: FormData): Promise<LoginResult> {
 
   const userId = auth.user.id;
 
-  // ✅ Check admin
+  // Check admin
   let isAdmin = false;
   {
     const { data: adminRow } = await supabase
@@ -46,7 +46,7 @@ export async function login(formData: FormData): Promise<LoginResult> {
     isAdmin = !!adminRow?.is_enabled;
   }
 
-  // ✅ Get role
+  // Get role
   let role: LoginSuccess["role"] = null;
   {
     const { data: userRow } = await supabase
@@ -59,7 +59,7 @@ export async function login(formData: FormData): Promise<LoginResult> {
 
   revalidatePath("/", "layout");
 
-  // ✅ Redirect logic
+  // Redirect logic
   let redirect: LoginSuccess["redirect"] = "/home";
   if (isAdmin) {
     redirect = "/admin/dashboard";

@@ -383,6 +383,17 @@ export function Header() {
           </Link>
         </nav>
       )}
+
+      {showLogoutModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-md bg-opacity-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full text-center space-y-4">
+            <h2 className="text-lg font-medium text-gray-700 animate-pulse">
+              Logging out...
+            </h2>
+            <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

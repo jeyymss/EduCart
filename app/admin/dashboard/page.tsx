@@ -11,6 +11,9 @@ import {
   CheckCircle2,
   Sun,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { useDashboardStats } from "@/hooks/queries/admin/getDashboardStats";
 
 /* ========= Calendar ========= */
 function CalendarDemo() {
@@ -38,6 +41,16 @@ function CalendarDemo() {
 
 /* ========= Main Dashboard ========= */
 export default function AdminDashboard() {
+  const router = useRouter();
+  const { data, isLoading, isError, error } = useDashboardStats();
+
+  // 🚫 Redirect if not admin
+  useEffect(() => {
+    if (error instanceof Error && error.message === "unauthorized") {
+      router.push("/unauthorized");
+    }
+  }, [error, router]);
+
   return (
     <div className="p-6">
       <div className="mx-auto w-full max-w-[1600px] space-y-6">
@@ -62,29 +75,44 @@ export default function AdminDashboard() {
 
         {/* ===== Secondary Stats ===== */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+          {/* DISPLAY TOTAL INDIVIDUALS */}
           <StatCard
             icon={<Users className="h-5 w-5 text-slate-500" />}
             label="Individual Users"
+            value={isError ? "Error" : data?.individuals?.toLocaleString()}
+            isLoading={isLoading}
           />
           <StatCard
             icon={<Building2 className="h-5 w-5 text-slate-500" />}
             label="Business Accounts"
+            value="—"
+            isLoading={isLoading}
           />
+          {/* DISPLAY TOTAL ORGANIZATIONS */}
           <StatCard
-            icon={<Users2 className="h-5 w-5 text-slate-500" />}
-            label="Organizations"
+            icon={<Users className="h-5 w-5 text-slate-500" />}
+            label="Individual Users"
+            value={isError ? "Error" : data?.organizations?.toLocaleString()}
+            isLoading={isLoading}
           />
+          {/* DISPLAY TOTAL TRANSACTIONS */}
           <StatCard
-            icon={<Receipt className="h-5 w-5 text-slate-500" />}
-            label="Total Transactions"
+            icon={<Users className="h-5 w-5 text-slate-500" />}
+            label="Individual Users"
+            value={isError ? "Error" : data?.transactions?.toLocaleString()}
+            isLoading={isLoading}
           />
           <StatCard
             icon={<CheckCircle2 className="h-5 w-5 text-slate-500" />}
             label="Invoice Paid"
+            value="—"
+            isLoading={isLoading}
           />
           <StatCard
             icon={<Sun className="h-5 w-5 text-slate-500" />}
             label="Invoice Unpaid"
+            value="—"
+            isLoading={isLoading}
           />
         </div>
 
@@ -128,13 +156,32 @@ function KpiCard({ title }: { title: string }) {
   );
 }
 
-function StatCard({ icon, label }: { icon: React.ReactNode; label: string }) {
+function StatCard({
+  icon,
+  label,
+  value,
+  isLoading,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value?: number | string | null;
+  isLoading?: boolean;
+}) {
   return (
     <Card className="rounded-xl shadow-sm h-full">
       <CardContent className="flex flex-col items-center justify-center p-5">
         {icon}
         <p className="mt-2 text-xs text-slate-500">{label}</p>
-        <div className="mt-1 h-5 w-10 rounded bg-slate-100" />
+
+        {isLoading ? (
+          // ✅ skeleton placeholder
+          <div className="mt-1 h-5 w-10 rounded bg-slate-100 animate-pulse" />
+        ) : (
+          // ✅ actual value when loaded
+          <p className="mt-1 text-xl font-semibold text-slate-800">
+            {value ?? "—"}
+          </p>
+        )}
       </CardContent>
     </Card>
   );
