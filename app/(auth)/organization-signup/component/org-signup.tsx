@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -20,26 +19,19 @@ import {
 } from "@/components/ui/select";
 import { Eye, EyeOff } from "lucide-react";
 
-/* ===========================================
-   Visual palette (same vibe as personal)
-=========================================== */
 const COLOR_DONE = "#577C8E";
 const COLOR_CURRENT = "#102E4A";
 const COLOR_UPCOMING = "#DEDEDE";
 const COLOR_NEXT_OK = "#C7D9E5";
 
-const steps = ["Organization", "University", "Description", "Security", "Review"] as const;
+const steps = ["Organization", "Description", "Security", "Review"] as const;
 
 type Uni = { id: number; abbreviation: string; domain: string };
 
-/* ===========================================
-   Helpers (same email rules as personal)
-=========================================== */
 function emailLooksValid(val: string) {
   const v = val.trim();
   if (!v || v.endsWith(".") || v.endsWith("@")) return false;
 
-  // RFC-ish with TLD >= 2
   const basic = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
   if (!basic.test(v)) return false;
 
@@ -55,7 +47,7 @@ function emailLooksValid(val: string) {
     return false;
   }
 
-  // block incomplete gmail endings while typing
+  // block incomplete email
   if (/@gmail\.(c|co)$/i.test(v)) return false;
 
   return true;
@@ -70,9 +62,6 @@ function cleanDomainForExample(d?: string) {
   return v.startsWith("@") ? v.slice(1) : v;
 }
 
-/* ===========================================
-   Component
-=========================================== */
 export default function OrgSignUpForm() {
   // data
   const [universities, setUniversities] = useState<Uni[]>([]);
@@ -123,7 +112,7 @@ export default function OrgSignUpForm() {
     return "";
   }
 
-  // keep domain error in sync
+  // keep domain error 
   useEffect(() => {
     const uniDomain = normalizeDomain(selectedUniversity?.domain);
     const uniExample = cleanDomainForExample(selectedUniversity?.domain);
@@ -143,37 +132,39 @@ export default function OrgSignUpForm() {
     }
   }, [orgEmail, selectedUniversity]);
 
-  // strict gating per step
+  // steps
   const stepIsValid = useMemo(() => {
     if (activeStep === 0) {
-      return (
-        !!orgName &&
-        !!orgEmail &&
-        emailLooksValid(orgEmail) &&
-        emailError === "" // domain check happens once a uni is chosen
-      );
-    }
-    if (activeStep === 1) {
       const uniDomain = normalizeDomain(selectedUniversity?.domain);
       const domainOK =
         !selectedUniversity ||
-        (emailLooksValid(orgEmail) && uniDomain && orgEmail.toLowerCase().endsWith(uniDomain));
-      return !!selectedUniversityId && domainOK;
+        (!!orgEmail && emailLooksValid(orgEmail) && !!uniDomain && orgEmail.toLowerCase().endsWith(uniDomain));
+
+      return (
+        !!orgName &&
+        !!selectedUniversityId &&
+        !!orgEmail &&
+        emailLooksValid(orgEmail) &&
+        emailError === "" &&
+        domainOK &&
+        (emailDomainError === "" || domainOK)
+      );
     }
-    if (activeStep === 2) {
+    if (activeStep === 1) {
       return orgDescription.trim().length > 0;
     }
-    if (activeStep === 3) {
+    if (activeStep === 2) {
       const strong = password.length >= 8;
       return strong && confirmPassword === password && agree;
     }
-    if (activeStep === 4) return true;
+    if (activeStep === 3) return true;
     return false;
   }, [
     activeStep,
     orgName,
     orgEmail,
     emailError,
+    emailDomainError,
     selectedUniversity,
     selectedUniversityId,
     orgDescription,
@@ -192,7 +183,7 @@ export default function OrgSignUpForm() {
     if (activeStep > 0) setActiveStep((s) => s - 1);
   }
 
-  // final submit (keeps backend payload names)
+  // submit 
   async function onSubmitFinal(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!stepIsValid) return;
@@ -220,7 +211,7 @@ export default function OrgSignUpForm() {
     alert("Organization registered (status: Pending). You can log in now.");
   }
 
-  /* ---------- Stepper UI (same style as personal) ---------- */
+  /* ---------- Stepper UI ---------- */
   const Stepper = () => (
     <div className="flex items-center gap-3">
       {steps.map((_, i) => {
@@ -267,9 +258,10 @@ export default function OrgSignUpForm() {
             {/* Form body */}
             <form onSubmit={onSubmitFinal} className="mt-6 flex-1 flex flex-col">
               <div className="space-y-6 flex-1 min-h-[360px]">
-                {/* STEP 0: Organization */}
+                {/* STEP 0: Organization → University → Email */}
                 {activeStep === 0 && (
                   <div className="space-y-5">
+                    {/* Org name */}
                     <div className="grid gap-2">
                       <Label htmlFor="OrgName">Organization name</Label>
                       <Input
@@ -282,6 +274,34 @@ export default function OrgSignUpForm() {
                       />
                     </div>
 
+                    {/* University FIRST */}
+                    <div className="grid gap-2">
+                      <Label>University</Label>
+                      <Select
+                        onValueChange={setSelectedUniversityId}
+                        value={selectedUniversityId ?? undefined}
+                        name="university"
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select University" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {universities.map((u) => (
+                            <SelectItem key={u.id} value={String(u.id)}>
+                              {u.abbreviation}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <input
+                        type="hidden"
+                        name="university"
+                        value={selectedUniversityId ?? ""}
+                        readOnly
+                      />
+                    </div>
+
+                    {/* Email AFTER university (single place for errors/hints) */}
                     <div className="grid gap-2">
                       <Label htmlFor="OrgEmail">Email Address</Label>
                       <Input
@@ -316,43 +336,8 @@ export default function OrgSignUpForm() {
                   </div>
                 )}
 
-                {/* STEP 1: University */}
+                {/* STEP 1: Description */}
                 {activeStep === 1 && (
-                  <div className="space-y-5">
-                    <div className="grid gap-2">
-                      <Label>University</Label>
-                      <Select
-                        onValueChange={setSelectedUniversityId}
-                        value={selectedUniversityId ?? undefined}
-                        name="university"
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select University" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {universities.map((u) => (
-                            <SelectItem key={u.id} value={String(u.id)}>
-                              {u.abbreviation}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      {emailDomainError && (
-                        <p className="text-xs text-red-600">{emailDomainError}</p>
-                      )}
-                      {/* hidden mirror for non-serializing Radix Select */}
-                      <input
-                        type="hidden"
-                        name="university"
-                        value={selectedUniversityId ?? ""}
-                        readOnly
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {/* STEP 2: Description */}
-                {activeStep === 2 && (
                   <div className="space-y-3">
                     <Label htmlFor="OrgDescription">Organization Description</Label>
                     <Textarea
@@ -371,8 +356,8 @@ export default function OrgSignUpForm() {
                   </div>
                 )}
 
-                {/* STEP 3: Security */}
-                {activeStep === 3 && (
+                {/* STEP 2: Security */}
+                {activeStep === 2 && (
                   <div className="space-y-5">
                     <div className="grid gap-4 md:grid-cols-2">
                       <div className="grid gap-2">
@@ -425,7 +410,7 @@ export default function OrgSignUpForm() {
                           </button>
                         </div>
                         {/* spacer to keep equal height columns */}
-                        <p className="text-xs invisible select-none">spacer</p>
+                        <p className="text-xs invisible select-one">spacer</p>
                       </div>
                     </div>
 
@@ -444,8 +429,8 @@ export default function OrgSignUpForm() {
                   </div>
                 )}
 
-                {/* STEP 4: Review */}
-                {activeStep === 4 && (
+                {/* STEP 3: Review */}
+                {activeStep === 3 && (
                   <div className="space-y-4 text-sm">
                     <div className="rounded-lg border p-4">
                       <div className="grid grid-cols-2 gap-2">
@@ -475,7 +460,6 @@ export default function OrgSignUpForm() {
                 {/* global error */}
                 {error && <p className="text-sm text-red-600">{error}</p>}
 
-                {/* hidden mirrors for final submit (names match backend) */}
                 <input type="hidden" name="OrgName" value={orgName} />
                 <input type="hidden" name="OrgEmail" value={orgEmail} />
                 {selectedUniversity && (
@@ -486,9 +470,8 @@ export default function OrgSignUpForm() {
                 <input type="hidden" name="OrgConfirmPassword" value={confirmPassword} />
               </div>
 
-              {/* Footer (fixed spot) */}
+              {/* Footer */}
               <div className="mt-4 flex items-center justify-between">
-                {/* Hide "Previous" on the first page; keep layout with a spacer */}
                 {activeStep > 0 ? (
                   <button
                     type="button"
@@ -506,7 +489,7 @@ export default function OrgSignUpForm() {
                     type="button"
                     onClick={next}
                     disabled={!stepIsValid}
-                    className="rounded-md px-6 py-2 text-slate-9 00 disabled:text-slate-600"
+                    className="rounded-md px-6 py-2 text-slate-900 disabled:text-slate-600"
                     style={{
                       backgroundColor: stepIsValid ? COLOR_NEXT_OK : COLOR_UPCOMING,
                       cursor: stepIsValid ? "pointer" : "not-allowed",

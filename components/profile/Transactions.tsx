@@ -19,7 +19,7 @@ import type {
 } from "@/components/transaction/TransactionCard/TransactionCard";
 
 type TxStatus = "active" | "completed" | "cancelled";
-type TxType = "Sales" | "Purchases";
+type TxType = "All" | "Sales" | "Purchases";
 
 type Tx = {
   id: string;
@@ -56,20 +56,19 @@ function Count({
 }) {
   const [count, setCount] = React.useState<number | null>(null);
   React.useEffect(() => {
-    setCount(0); // placeholder
+    setCount(0); // placeholder only
   }, [userId, status, type, search, adv]);
   return <>{count ?? 0}</>;
 }
 
 export default function Transactions({ userId }: { userId: string }) {
   const [statusTab, setStatusTab] = React.useState<TxStatus>("active");
-  const [typeFilter, setTypeFilter] = React.useState<TxType>("Sales"); // 👉 default to Sales
+  const [typeFilter, setTypeFilter] = React.useState<TxType>("All"); 
   const [search, setSearch] = React.useState<string>("");
   const [adv, setAdv] = React.useState<AdvancedFilterValue>({ ...EMPTY_ADV });
 
-  // 🔹 Four placeholders to demo every case
+  // Sample data 
   const txs: Tx[] = [
-    // Sales + Delivery → Add Delivery
     {
       id: "tx_sales_delivery",
       status: "active",
@@ -80,7 +79,6 @@ export default function Transactions({ userId }: { userId: string }) {
       total: 5080,
       created_at: new Date().toISOString(),
     },
-    // Sales + Meetup → Delivered
     {
       id: "tx_sales_meetup",
       status: "active",
@@ -91,7 +89,6 @@ export default function Transactions({ userId }: { userId: string }) {
       total: 18000,
       created_at: new Date().toISOString(),
     },
-    // Purchases + Delivery → Received
     {
       id: "tx_purchases_delivery",
       status: "active",
@@ -102,7 +99,6 @@ export default function Transactions({ userId }: { userId: string }) {
       total: 3400,
       created_at: new Date().toISOString(),
     },
-    // Purchases + Meetup → Received
     {
       id: "tx_purchases_meetup",
       status: "active",
@@ -118,7 +114,7 @@ export default function Transactions({ userId }: { userId: string }) {
   const filtered = React.useMemo(() => {
     return txs
       .filter((t) => t.status === statusTab)
-      .filter((t) => t.type === typeFilter) // 👉 no more "All"
+      .filter((t) => (typeFilter === "All" ? true : t.type === typeFilter)) // ✅ “All” shows everything
       .filter((t) =>
         search.trim()
           ? t.title.toLowerCase().includes(search.toLowerCase())
@@ -165,14 +161,14 @@ export default function Transactions({ userId }: { userId: string }) {
       </TabsList>
 
       <div className="flex items-center gap-3">
-        {/* 👉 Dropdown defaults to 'Sales' and only shows 'Sales' and 'Purchases' */}
+        {/* ✅ Dropdown: All, Sales, Purchases */}
         <DropdownMenu>
           <DropdownMenuTrigger className="flex items-center gap-1 px-3 py-2 border rounded-lg bg-white shadow-sm text-sm font-medium hover:bg-gray-50">
             {typeFilter}
             <ChevronDown className="w-4 h-4" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            {(["Sales", "Purchases"] as TxType[]).map((label) => (
+            {(["All", "Sales", "Purchases"] as TxType[]).map((label) => (
               <DropdownMenuItem key={label} onClick={() => setTypeFilter(label)}>
                 {label}
               </DropdownMenuItem>

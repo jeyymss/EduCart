@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -23,7 +22,7 @@ import { Eye, EyeOff } from "lucide-react";
 type Role = "Student" | "Faculty" | "Alumni";
 type Uni = { id: number; abbreviation: string; domain: string };
 
-const steps = ["Account Type", "University", "Valid ID", "Password", "Review"] as const;
+const steps = ["Account Type", "Valid ID", "Password", "Review"] as const;
 
 // Palette
 const COLOR_DONE = "#577C8E";
@@ -31,14 +30,12 @@ const COLOR_CURRENT = "#102E4A";
 const COLOR_UPCOMING = "#DEDEDE";
 const COLOR_NEXT_OK = "#C7D9E5";
 
-/* ===================== Helpers ===================== */
 
-// Strong email check + special guard for incomplete Gmail like ".c" or ".co"
+//  email check + special guard for incomplete email
 function emailLooksValid(val: string) {
   const v = val.trim();
   if (!v || v.endsWith(".") || v.endsWith("@")) return false;
 
-  // basic RFC-ish pattern with TLD >= 2
   const basic = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
   if (!basic.test(v)) return false;
 
@@ -54,32 +51,25 @@ function emailLooksValid(val: string) {
     return false;
   }
 
-  // block incomplete Gmail ".c" or ".co" while typing
   if (/@gmail\.(c|co)$/i.test(v)) return false;
 
   return true;
 }
 
-// ensure it always returns "@host.tld" (lower-cased)
 function normalizeDomain(d?: string) {
   const v = (d || "").trim().toLowerCase();
   if (!v) return "";
   return v.startsWith("@") ? v : `@${v}`;
 }
 
-// returns "host.tld" (no leading "@") for display
 function cleanDomainForExample(d?: string) {
   const v = normalizeDomain(d);
   return v.startsWith("@") ? v.slice(1) : v;
 }
 
-/* ===================== Component ===================== */
-
 export default function SignUpForm() {
-  // data
   const [universities, setUniversities] = useState<Uni[]>([]);
 
-  // form state
   const [selectedRole, setSelectedRole] = useState<Role | "">("");
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -94,24 +84,20 @@ export default function SignUpForm() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [agree, setAgree] = useState(false);
 
-  // password visibility
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
-  // UI state
   const [activeStep, setActiveStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [showLoadingModal, setShowLoadingModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // inline errors
   const [emailError, setEmailError] = useState("");
   const [emailDomainError, setEmailDomainError] = useState("");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // fetch universities
   useEffect(() => {
     (async () => {
       const supabase = createClient();
@@ -134,7 +120,7 @@ export default function SignUpForm() {
     return "";
   }
 
-  // domain error sync
+  // domain error sync 
   useEffect(() => {
     const needsDomain = selectedRole === "Student" || selectedRole === "Faculty";
     const uniDomain = normalizeDomain(selectedUniversity?.domain);
@@ -187,41 +173,30 @@ export default function SignUpForm() {
     }
   }
 
-  // strict gating per step
   const stepIsValid = useMemo(() => {
     if (activeStep === 0) {
-      // If a uni is already chosen (user navigated back), enforce domain here too.
-      const uniDomain = normalizeDomain(selectedUniversity?.domain);
-      const domainOK =
-        !selectedUniversity ||
-        selectedRole === "Alumni" ||
-        (emailLooksValid(email) && uniDomain && email.toLowerCase().endsWith(uniDomain));
-
-      return (
-        !!selectedRole &&
-        !!fullName &&
-        emailLooksValid(email) &&
-        emailError === "" &&
-        (emailDomainError === "" || domainOK)
-      );
-    }
-    if (activeStep === 1) {
-      // Require university AND domain match (for Student/Faculty).
       const needsDomain = selectedRole === "Student" || selectedRole === "Faculty";
       const uniDomain = normalizeDomain(selectedUniversity?.domain);
       const domainOK =
         !needsDomain ||
-        !selectedUniversity ||
-        (emailLooksValid(email) && uniDomain && email.toLowerCase().endsWith(uniDomain));
+        (!!email && emailLooksValid(email) && !!uniDomain && email.toLowerCase().endsWith(uniDomain));
 
-      return !!selectedUniversityId && domainOK;
+      return (
+        !!selectedRole &&
+        !!selectedUniversityId &&
+        !!fullName &&
+        emailLooksValid(email) &&
+        emailError === "" &&
+        domainOK &&
+        (emailDomainError === "" || domainOK)
+      );
     }
-    if (activeStep === 2) return !!idImage && verificationStatus === "Verified";
-    if (activeStep === 3) {
+    if (activeStep === 1) return !!idImage && verificationStatus === "Verified";
+    if (activeStep === 2) {
       const strongEnough = password.length >= 8;
       return strongEnough && confirmPassword === password && agree;
     }
-    if (activeStep === 4) return true;
+    if (activeStep === 3) return true;
     return false;
   }, [
     activeStep,
@@ -249,7 +224,6 @@ export default function SignUpForm() {
     if (activeStep > 0) setActiveStep((s) => s - 1);
   }
 
-  // submit (no backend changes)
   async function onSubmitFinal(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!stepIsValid) return;
@@ -288,7 +262,6 @@ export default function SignUpForm() {
     setShowSuccessModal(true);
   }
 
-  // stepper visual
   const Stepper = () => (
     <div className="flex items-center gap-3">
       {steps.map((_, i) => {
@@ -309,7 +282,6 @@ export default function SignUpForm() {
     </div>
   );
 
-  // aria helper to avoid empty ids
   const emailDescribedBy =
     [emailError ? "email-error" : "", !emailError && emailDomainError ? "email-domain-error" : ""]
       .filter(Boolean)
@@ -319,25 +291,19 @@ export default function SignUpForm() {
     <>
       <div className="w-full min-h-screen flex items-start justify-center px-6 py-8 md:py-14">
         <div className="w-full max-w-2xl">
-          {/* Make the card a column so the footer stays fixed and height is uniform */}
           <Card className="rounded-2xl border shadow-sm">
             <CardContent className="p-6 md:p-8 flex flex-col min-h-[640px]">
-              {/* stepper */}
               <div className="mt-2 mb-6">
                 <Stepper />
               </div>
 
-              {/* title */}
               <h1 className="text-3xl md:text-[32px] font-semibold tracking-tight">
                 <span className="font-bold" style={{ color: COLOR_DONE }}>Create</span> an Account
               </h1>
               <p className="mt-1 text-slate-500">Get started in less than 5 minutes</p>
 
-              {/* STEP CONTENT */}
               <form onSubmit={onSubmitFinal} className="mt-6 flex-1 flex flex-col">
-                {/* Give the content area a consistent min height so the card doesn't jump */}
                 <div className="space-y-6 flex-1 min-h-[360px]">
-                  {/* STEP 0 */}
                   {activeStep === 0 && (
                     <div className="space-y-5">
                       <div>
@@ -363,6 +329,26 @@ export default function SignUpForm() {
                             );
                           })}
                         </div>
+                      </div>
+
+                      <div className="grid gap-2">
+                        <Label>University</Label>
+                        <Select
+                          onValueChange={setSelectedUniversityId}
+                          value={selectedUniversityId ?? undefined}
+                          name="university"
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select University" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {universities.map((u) => (
+                              <SelectItem key={u.id} value={String(u.id)}>
+                                {u.abbreviation}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
 
                       <div className="grid gap-2">
@@ -407,36 +393,7 @@ export default function SignUpForm() {
                     </div>
                   )}
 
-                  {/* STEP 1 */}
                   {activeStep === 1 && (
-                    <div className="space-y-5">
-                      <div className="grid gap-2">
-                        <Label>University</Label>
-                        <Select
-                          onValueChange={setSelectedUniversityId}
-                          value={selectedUniversityId ?? undefined}
-                          name="university"
-                        >
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select University" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {universities.map((u) => (
-                              <SelectItem key={u.id} value={String(u.id)}>
-                                {u.abbreviation}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        {emailDomainError && (
-                          <p className="text-xs text-red-600">{emailDomainError}</p>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* STEP 2 - ID Upload (only ONE Verify ID button — the overlay) */}
-                  {activeStep === 2 && (
                     <div className="space-y-4">
                       <Label>Upload Valid ID</Label>
                       <div
@@ -497,8 +454,7 @@ export default function SignUpForm() {
                     </div>
                   )}
 
-                  {/* STEP 3 - Passwords (aligned) */}
-                  {activeStep === 3 && (
+                  {activeStep === 2 && (
                     <div className="space-y-5">
                       <div className="grid gap-4 md:grid-cols-2">
                         <div className="grid gap-2">
@@ -548,7 +504,6 @@ export default function SignUpForm() {
                               {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
                             </button>
                           </div>
-                          {/* keep an empty spacer line to keep heights equal */}
                           <p className="text-xs invisible select-none">spacer</p>
                         </div>
                       </div>
@@ -568,8 +523,7 @@ export default function SignUpForm() {
                     </div>
                   )}
 
-                  {/* STEP 4 */}
-                  {activeStep === 4 && (
+                  {activeStep === 3 && (
                     <div className="space-y-4 text-sm">
                       <div className="rounded-lg border p-4">
                         <div className="grid grid-cols-2 gap-2">
@@ -595,10 +549,8 @@ export default function SignUpForm() {
                     </div>
                   )}
 
-                  {/* global error */}
                   {error && <p className="text-sm text-red-600">{error}</p>}
 
-                  {/* hidden mirrors for final submit */}
                   <input type="hidden" name="role" value={selectedRole} />
                   <input type="hidden" name="name" value={fullName} />
                   <input type="hidden" name="email" value={email} />
@@ -657,7 +609,6 @@ export default function SignUpForm() {
         </div>
       </div>
 
-      {/* Loading Modal */}
       {showLoadingModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full text-center space-y-4">
@@ -667,7 +618,6 @@ export default function SignUpForm() {
         </div>
       )}
 
-      {/* Success Modal */}
       {showSuccessModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full text-center space-y-4">
