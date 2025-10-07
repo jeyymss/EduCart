@@ -19,7 +19,7 @@ import type {
 } from "@/components/transaction/TransactionCard/TransactionCard";
 
 type TxStatus = "active" | "completed" | "cancelled";
-type TxType = "All" | "Purchases" | "Sales";
+type TxType = "Sales" | "Purchases";
 
 type Tx = {
   id: string;
@@ -63,7 +63,7 @@ function Count({
 
 export default function Transactions({ userId }: { userId: string }) {
   const [statusTab, setStatusTab] = React.useState<TxStatus>("active");
-  const [typeFilter, setTypeFilter] = React.useState<TxType>("All");
+  const [typeFilter, setTypeFilter] = React.useState<TxType>("Sales"); // 👉 default to Sales
   const [search, setSearch] = React.useState<string>("");
   const [adv, setAdv] = React.useState<AdvancedFilterValue>({ ...EMPTY_ADV });
 
@@ -118,7 +118,7 @@ export default function Transactions({ userId }: { userId: string }) {
   const filtered = React.useMemo(() => {
     return txs
       .filter((t) => t.status === statusTab)
-      .filter((t) => (typeFilter === "All" ? true : t.type === typeFilter))
+      .filter((t) => t.type === typeFilter) // 👉 no more "All"
       .filter((t) =>
         search.trim()
           ? t.title.toLowerCase().includes(search.toLowerCase())
@@ -165,17 +165,15 @@ export default function Transactions({ userId }: { userId: string }) {
       </TabsList>
 
       <div className="flex items-center gap-3">
+        {/* 👉 Dropdown defaults to 'Sales' and only shows 'Sales' and 'Purchases' */}
         <DropdownMenu>
           <DropdownMenuTrigger className="flex items-center gap-1 px-3 py-2 border rounded-lg bg-white shadow-sm text-sm font-medium hover:bg-gray-50">
-            {typeFilter === "All" ? "Type" : typeFilter}
+            {typeFilter}
             <ChevronDown className="w-4 h-4" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            {(["All", "Purchases", "Sales"] as TxType[]).map((label) => (
-              <DropdownMenuItem
-                key={label}
-                onClick={() => setTypeFilter(label)}
-              >
+            {(["Sales", "Purchases"] as TxType[]).map((label) => (
+              <DropdownMenuItem key={label} onClick={() => setTypeFilter(label)}>
                 {label}
               </DropdownMenuItem>
             ))}

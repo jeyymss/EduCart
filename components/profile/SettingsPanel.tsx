@@ -14,7 +14,7 @@ export function SettingsPanel() {
 
   const { data: user } = useUserProfile();
 
-  // ✅ Decide credits link based on role
+  // credits link based on role
   const role = user?.role;
   const creditsLink =
     role === "Business" || role === "organization"
@@ -45,12 +45,6 @@ export function SettingsPanel() {
             <p className="text-xs">
               Purchase credits to create posts and boost your content visibility.
             </p>
-          </li>
-          <li>
-            <a href="#" className="font-medium hover:text-primary">
-              Update Account →
-            </a>
-            <p className="text-xs">Edit your email address and status.</p>
           </li>
         </ul>
       </section>

@@ -94,7 +94,10 @@ export function UserPosts({
     return (
       <div className="grid gap-3 md:gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 mt-3">
         {Array.from({ length: 10 }).map((_, i) => (
-          <div key={i} className="h-full">
+          <div
+            key={i}
+            className="h-full rounded-2xl bg-gray-100 animate-pulse shadow-sm"
+          >
             <ItemCardSkeleton />
           </div>
         ))}
@@ -158,7 +161,7 @@ export function UserPosts({
     );
   }
 
-  // ——— Sorting (no hooks here to avoid rules-of-hooks issues) ———
+  // ——— Sorting ———
   const sorted = [...filtered].sort((a, b) => {
     if (filters.price) return byPrice(a, b, filters.price);
     if (filters.time) return byTime(a, b, filters.time);
@@ -169,7 +172,10 @@ export function UserPosts({
     <>
       <div className="grid gap-3 md:gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 mt-3">
         {sorted.map((item: UserPost) => (
-          <div key={item.post_id} className="h-full">
+          <div
+            key={item.post_id}
+            className="transition-all duration-300 transform rounded-2xl hover:-translate-y-1 hover:shadow-lg bg-white animate-fadeIn h-full"
+          >
             <ItemCard
               id={item.post_id}
               title={item.item_title}

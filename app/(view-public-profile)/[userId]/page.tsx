@@ -107,7 +107,7 @@ export default function PublicProfilePage() {
     null
   );
 
-  // --- MEMOS (called unconditionally before any return) ---
+  // --- MEMOS ---
   const allowedPostTypes = useMemo<string[] | null>(() => {
     if (adv.posts && adv.posts.length > 0) {
       return (adv.posts as PostOpt[]).flatMap(expandToAllSpellings);
@@ -307,7 +307,12 @@ export default function PublicProfilePage() {
               {listingsLoading ? (
                 <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                   {Array.from({ length: 8 }).map((_, i) => (
-                    <ItemCardSkeleton key={i} />
+                    <div
+                      key={i}
+                      className="transition-all duration-300 transform rounded-2xl bg-white animate-fadeIn h-full"
+                    >
+                      <ItemCardSkeleton />
+                    </div>
                   ))}
                 </div>
               ) : filteredListings.length === 0 ? (
@@ -315,20 +320,25 @@ export default function PublicProfilePage() {
               ) : (
                 <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                   {filteredListings.map((item) => (
-                    <ItemCard
+                    <div
                       key={item.id}
-                      id={item.id}
-                      condition={item.item_condition ?? ""}
-                      title={item.item_title ?? ""}
-                      category_name={item.category_name ?? ""}
-                      image_urls={item.image_urls ?? []}
-                      price={item.item_price ?? undefined}
-                      post_type={item.post_type_name ?? ""}
-                      seller={profile.full_name ?? "Unknown"}
-                      status={item.status}
-                      created_at={item.created_at}
-                      onOpenSpecialModal={() => setSelectedSpecial(item)}
-                    />
+                      /* ▼ EXACT hover wrapper copied from Browse */
+                      className="transition-all duration-300 transform rounded-2xl hover:-translate-y-1 hover:shadow-lg bg-white animate-fadeIn h-full"
+                    >
+                      <ItemCard
+                        id={item.id}
+                        condition={item.item_condition ?? ""}
+                        title={item.item_title ?? ""}
+                        category_name={item.category_name ?? ""}
+                        image_urls={item.image_urls ?? []}
+                        price={item.item_price ?? undefined}
+                        post_type={item.post_type_name ?? ""}
+                        seller={profile.full_name ?? "Unknown"}
+                        status={item.status}
+                        created_at={item.created_at}
+                        onOpenSpecialModal={() => setSelectedSpecial(item)}
+                      />
+                    </div>
                   ))}
                 </div>
               )}
