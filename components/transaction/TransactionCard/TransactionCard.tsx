@@ -6,23 +6,30 @@ import PostTypeBadge from "@/components/postTypeBadge";
 
 export type TxMethod = "Meetup" | "Delivery";
 export type TxSide = "Purchases" | "Sales";
+export type TxStatus = "active" | "completed" | "cancelled";
 
 export type TransactionCardProps = {
   id: string;
-  type: TxSide;              // "Purchases" | "Sales"
-  method: TxMethod;          // "Meetup" | "Delivery"
+  type: TxSide; // "Purchases" | "Sales"
+  method: TxMethod; // "Meetup" | "Delivery"
   title: string;
   price: number;
   total?: number;
-  image?: string;            // default /bluecart.png
+  image?: string; // default /bluecart.png
   onView: (id: string) => void;
   onPrimary?: (id: string) => void;
-  primaryLabel?: string;     
+  primaryLabel?: string;
+  status?: TxStatus; // 👈 added
+  postType?: string; // 👈 added, e.g. "Sale", "Rent", "Trade"
 };
 
-function computeLabel(type: TxSide, method: TxMethod): string {
+function computeLabel(
+  type: TxSide,
+  method: TxMethod,
+  status?: TxStatus
+): string {
+  if (status === "cancelled") return "Cancelled";
   if (type === "Purchases") return "Received";
-  // Sales
   return method === "Delivery" ? "Add Delivery" : "Delivered";
 }
 
@@ -37,18 +44,34 @@ export default function TransactionCard({
   onView,
   onPrimary,
   primaryLabel,
+  status = "active",
+  postType,
 }: TransactionCardProps) {
   const img = image ?? "/bluecart.png";
-  const badgeText = type === "Sales" ? "Sale" : "Buy";
-  const action = primaryLabel ?? computeLabel(type, method);
+  const badgeText = postType ?? (type === "Sales" ? "Sale" : "Buy"); // ✅ dynamic post type
+  const action = primaryLabel ?? computeLabel(type, method, status);
+
+  // ✅ Conditional button color
+  const buttonColor =
+    status === "cancelled"
+      ? "bg-red-600 hover:bg-red-700"
+      : "bg-slate-900 hover:bg-slate-800";
+
+  // ✅ Optional dimming for cancelled cards
+  const cardOpacity = status === "cancelled" ? "opacity-80" : "opacity-100";
 
   return (
-    <div className="relative rounded-md overflow-hidden border border-gray-200 shadow hover:shadow-md transition bg-white flex flex-col h-full">
+    <div
+      className={`relative rounded-md overflow-hidden border border-gray-200 shadow hover:shadow-md transition bg-white flex flex-col h-full ${cardOpacity}`}
+    >
       {/* Image (same as ItemCard) */}
       <div className="relative w-full h-60">
         <Image src={img} alt={title} fill className="object-cover" />
-        <PostTypeBadge type={badgeText as any} className="absolute top-2 left-2 shadow" />
-        {/* Optional tiny chip for method */}
+        <PostTypeBadge
+          type={badgeText as any}
+          className="absolute top-2 left-2 shadow"
+        />
+        {/* Tiny chip for method */}
         <span className="absolute top-2 right-2 text-[10px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 border border-gray-300">
           {method}
         </span>
@@ -56,7 +79,9 @@ export default function TransactionCard({
 
       <div className="p-3 flex flex-col gap-2 flex-1">
         <div className="flex items-start justify-between gap-2">
-          <h2 className="text-lg font-semibold text-[#333333] line-clamp-2">{title}</h2>
+          <h2 className="text-lg font-semibold text-[#333333] line-clamp-2">
+            {title}
+          </h2>
           <Button
             variant="outline"
             size="sm"
@@ -75,14 +100,17 @@ export default function TransactionCard({
         <div className="mt-auto flex items-center justify-between">
           <div className="text-sm text-gray-600">
             <span className="font-medium">Total:</span>{" "}
-            <span className="text-[#E59E2C]">₱{(total ?? price).toLocaleString()}</span>
+            <span className="text-[#E59E2C]">
+              ₱{(total ?? price).toLocaleString()}
+            </span>
           </div>
 
           {onPrimary && (
             <Button
               size="sm"
-              className="rounded-full text-xs px-4 h-8"
+              className={`rounded-full text-xs px-4 h-8 text-white ${buttonColor}`}
               onClick={() => onPrimary(id)}
+              disabled={status === "cancelled"}
             >
               {action}
             </Button>

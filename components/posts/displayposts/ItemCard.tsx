@@ -35,7 +35,6 @@ type Props = {
 
   onToggleFavorite?: (id: string, isFav: boolean) => void;
 
-  /** When provided, use this to open a modal for PasaBuy / Emergency Lending */
   onOpenSpecialModal?: (id: string, postType: string) => void;
 };
 

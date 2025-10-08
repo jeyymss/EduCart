@@ -91,14 +91,14 @@ export default function AdminDashboard() {
           {/* DISPLAY TOTAL ORGANIZATIONS */}
           <StatCard
             icon={<Users className="h-5 w-5 text-slate-500" />}
-            label="Individual Users"
+            label="Organization Users"
             value={isError ? "Error" : data?.organizations?.toLocaleString()}
             isLoading={isLoading}
           />
           {/* DISPLAY TOTAL TRANSACTIONS */}
           <StatCard
             icon={<Users className="h-5 w-5 text-slate-500" />}
-            label="Individual Users"
+            label="Total Transactions"
             value={isError ? "Error" : data?.transactions?.toLocaleString()}
             isLoading={isLoading}
           />

@@ -205,7 +205,7 @@ function Comment({
   return (
     <div className="flex items-start gap-2 py-2">
       <Avatar>
-        <AvatarImage src={comment.avatar_url || ""} />
+        <AvatarImage src={comment.avatar_url || ""} className="object-cover" />
         <AvatarFallback>{comment.full_name?.[0]}</AvatarFallback>
       </Avatar>
       <div className="flex-1">
