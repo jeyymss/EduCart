@@ -16,7 +16,6 @@ import {
   type PostOpt,
 } from "@/components/profile/AdvancedFilters";
 
-/* ---------------------- Post Type Options ---------------------- */
 type ToolbarPost = "All" | PostOpt;
 
 const POST_TYPE_OPTIONS: ToolbarPost[] = [
@@ -29,7 +28,6 @@ const POST_TYPE_OPTIONS: ToolbarPost[] = [
   "Donation and Giveaway",
 ];
 
-/* -------------------------- Category rules -------------------------- */
 const CATEGORY_RULES = [
   { label: "All Categories" },
   { label: "Home & Furniture" },
@@ -43,7 +41,6 @@ const CATEGORY_RULES = [
   { label: "Hobbies & Toys" },
 ];
 
-/* ----------------------------- Page ----------------------------- */
 export default function BusinessPage() {
   const [postType, setPostType] = useState<ToolbarPost | null>(null);
   const [search, setSearch] = useState("");
@@ -59,7 +56,6 @@ export default function BusinessPage() {
 
   return (
     <div className="flex min-h-screen bg-white">
-      {/* LEFT: Sidebar */}
       <aside className="hidden md:block w-64 bg-white border-r shadow-sm p-6 sticky top-[calc(var(--app-header-h)+8px)] h-[calc(100vh-88px)] overflow-y-auto">
         <h2 className="font-semibold text-[#102E4A] mb-4">Filter Categories</h2>
         <nav className="space-y-1 text-sm" aria-label="Categories">
@@ -91,7 +87,6 @@ export default function BusinessPage() {
         >
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
             <div className="flex items-center flex-wrap gap-3">
-              {/* Post Type Dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger className="flex items-center gap-1 px-4 py-2 border rounded-lg bg-white shadow-sm text-sm font-medium hover:bg-gray-50 transition">
                   {postType ?? "All Types"}
@@ -109,7 +104,6 @@ export default function BusinessPage() {
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              {/* Search Bar */}
               <Input
                 type="text"
                 placeholder="Search business items..."
@@ -118,7 +112,6 @@ export default function BusinessPage() {
                 onChange={(e) => setSearch(e.target.value)}
               />
 
-              {/* Advanced Filters */}
               <AdvancedFilters value={adv} onApply={(next) => setAdv({ ...next })} />
             </div>
           </div>

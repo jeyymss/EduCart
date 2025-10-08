@@ -23,7 +23,6 @@ export default function OrganizationLayout({
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset className="!p-0">
-        {/* Breadcrumbs row — raised slightly */}
         <div className="flex items-center gap-2 px-6 py-1 -mt-9">
           <SidebarTrigger className="-ml-1" />
           <Separator

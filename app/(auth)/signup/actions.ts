@@ -6,9 +6,8 @@ import { uploadImage } from "@/app/api/uploadImage/route";
 export async function register(formData: FormData) {
   const supabase = await createClient();
 
-  // ---- extract & normalize inputs ----
   const roleRaw = (formData.get("role") as string) ?? "";
-  const role = roleRaw.trim(); // "Student" | "Faculty" | "Alumni"
+  const role = roleRaw.trim();
 
   const name = (formData.get("name") as string)?.trim() ?? "";
   const email = (formData.get("email") as string)?.trim() ?? "";
@@ -18,9 +17,8 @@ export async function register(formData: FormData) {
   ).trim();
 
   const universityIdStr = (formData.get("university") as string) ?? "";
-  const universityId = Number(universityIdStr || 0); // FK -> universities.id
+  const universityId = Number(universityIdStr || 0);
 
-  // ---- role-specific domain check for Student/Faculty ----
   const roleLower = role.toLowerCase();
   if (roleLower === "student" || roleLower === "faculty") {
     const { data: uni, error } = await supabase
@@ -45,7 +43,6 @@ export async function register(formData: FormData) {
     idImageUrl = urls?.[0] ?? null;
   }
 
-  // ---- sign up + tell Supabase where to redirect after email click ----
   const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
     email,
     password,
@@ -53,7 +50,7 @@ export async function register(formData: FormData) {
       data: {
         name,
         full_name: name,
-        role, // "Student" | "Faculty" | "Alumni"
+        role,
         university_id: universityId,
         verification_status: verificationStatus,
         id_verification_url: idImageUrl,

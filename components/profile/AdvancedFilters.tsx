@@ -67,7 +67,6 @@ export function AdvancedFilters({ value, onApply }: Props) {
     });
   }, [value]);
 
-  // Decide left vs right WHEN opening (never top/bottom)
   const handleOpenChange = (next: boolean) => {
     if (next && triggerRef.current) {
       const rect = triggerRef.current.getBoundingClientRect();
@@ -80,8 +79,6 @@ export function AdvancedFilters({ value, onApply }: Props) {
       if (canRight) setSide("right");
       else if (canLeft) setSide("left");
       else {
-        // pick the larger side and let collision handling nudge it,
-        // but never flip to top/bottom.
         setSide(spaceRight >= spaceLeft ? "right" : "left");
       }
     }
@@ -97,7 +94,6 @@ export function AdvancedFilters({ value, onApply }: Props) {
     const cleared = { ...DEFAULT_VALUE, posts: [] };
     onApply(cleared);
     setDraft(cleared);
-    // keep it OPEN after reset
     setOpen(true);
   };
 
@@ -115,14 +111,12 @@ export function AdvancedFilters({ value, onApply }: Props) {
         </Button>
       </DropdownMenuTrigger>
 
-      {/* Force horizontal placement only */}
       <DropdownMenuContent
-        // only left/right
         side={side}
         align="start"
         sideOffset={SIDE_OFFSET}
         collisionPadding={12}
-        avoidCollisions={true} // nudge along the chosen side, never flip vertical
+        avoidCollisions={true} 
         className="
           w-72 p-0 flex flex-col overflow-hidden
           max-h-[calc(100dvh-96px)]
@@ -134,7 +128,6 @@ export function AdvancedFilters({ value, onApply }: Props) {
           <div className="text-sm font-semibold">Sort by</div>
         </div>
 
-        {/* Scrollable body */}
         <div className="px-3 pb-2 space-y-3 overflow-y-auto">
           {/* Time */}
           <div>
@@ -168,7 +161,6 @@ export function AdvancedFilters({ value, onApply }: Props) {
             </DropdownMenuRadioGroup>
           </div>
 
-          {/* Price */}
           <div>
             <div className="text-xs font-medium text-muted-foreground mb-1">
               Price
@@ -200,7 +192,6 @@ export function AdvancedFilters({ value, onApply }: Props) {
             </DropdownMenuRadioGroup>
           </div>
 
-          {/* Post (multi-select) */}
           <div>
             <div className="text-xs font-medium text-muted-foreground mb-1">
               Post
@@ -238,7 +229,6 @@ export function AdvancedFilters({ value, onApply }: Props) {
           <DropdownMenuSeparator />
         </div>
 
-        {/* Sticky footer */}
         <div className="mt-auto sticky bottom-0 z-10 border-t px-3 py-3 bg-popover">
           <div className="flex gap-2">
             <Button
