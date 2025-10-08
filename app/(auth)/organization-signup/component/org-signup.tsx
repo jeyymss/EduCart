@@ -75,16 +75,13 @@ export default function OrgSignUpForm() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [agree, setAgree] = useState(false);
 
-  // ui state
   const [activeStep, setActiveStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // inline errors
   const [emailError, setEmailError] = useState("");
   const [emailDomainError, setEmailDomainError] = useState("");
 
-  // password visibility
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
@@ -112,7 +109,6 @@ export default function OrgSignUpForm() {
     return "";
   }
 
-  // keep domain error 
   useEffect(() => {
     const uniDomain = normalizeDomain(selectedUniversity?.domain);
     const uniExample = cleanDomainForExample(selectedUniversity?.domain);
@@ -211,7 +207,6 @@ export default function OrgSignUpForm() {
     alert("Organization registered (status: Pending). You can log in now.");
   }
 
-  /* ---------- Stepper UI ---------- */
   const Stepper = () => (
     <div className="flex items-center gap-3">
       {steps.map((_, i) => {
@@ -255,7 +250,7 @@ export default function OrgSignUpForm() {
             </h1>
             <p className="mt-1 text-slate-500">Get started in less than 5 minutes</p>
 
-            {/* Form body */}
+            {/* Form */}
             <form onSubmit={onSubmitFinal} className="mt-6 flex-1 flex flex-col">
               <div className="space-y-6 flex-1 min-h-[360px]">
                 {/* STEP 0: Organization → University → Email */}
@@ -274,7 +269,7 @@ export default function OrgSignUpForm() {
                       />
                     </div>
 
-                    {/* University FIRST */}
+                    {/* University */}
                     <div className="grid gap-2">
                       <Label>University</Label>
                       <Select
@@ -301,7 +296,7 @@ export default function OrgSignUpForm() {
                       />
                     </div>
 
-                    {/* Email AFTER university (single place for errors/hints) */}
+                    {/* Email */}
                     <div className="grid gap-2">
                       <Label htmlFor="OrgEmail">Email Address</Label>
                       <Input
@@ -336,7 +331,7 @@ export default function OrgSignUpForm() {
                   </div>
                 )}
 
-                {/* STEP 1: Description */}
+                {/* Description */}
                 {activeStep === 1 && (
                   <div className="space-y-3">
                     <Label htmlFor="OrgDescription">Organization Description</Label>
@@ -356,7 +351,7 @@ export default function OrgSignUpForm() {
                   </div>
                 )}
 
-                {/* STEP 2: Security */}
+                {/* Security */}
                 {activeStep === 2 && (
                   <div className="space-y-5">
                     <div className="grid gap-4 md:grid-cols-2">
@@ -409,7 +404,6 @@ export default function OrgSignUpForm() {
                             {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
                           </button>
                         </div>
-                        {/* spacer to keep equal height columns */}
                         <p className="text-xs invisible select-one">spacer</p>
                       </div>
                     </div>
@@ -457,7 +451,6 @@ export default function OrgSignUpForm() {
                   </div>
                 )}
 
-                {/* global error */}
                 {error && <p className="text-sm text-red-600">{error}</p>}
 
                 <input type="hidden" name="OrgName" value={orgName} />

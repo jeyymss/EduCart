@@ -41,7 +41,6 @@ import {
   Gamepad2,
 } from "lucide-react";
 
-/* ----------------------------- Section Header ----------------------------- */
 function SectionHeader({
   title,
   count,
@@ -103,10 +102,12 @@ export default function HomePage() {
     null
   );
 
+  /* Quick links */
   const goto = (id: string) => {
     const el = document.getElementById(id);
     if (!el) return;
     el.scrollIntoView({ behavior: "smooth", block: "start" });
+
     if (typeof window !== "undefined") {
       const path = window.location.pathname;
       history.replaceState(null, "", `${path}#${id}`);
@@ -123,7 +124,6 @@ export default function HomePage() {
 
   return (
     <div className="px-4 md:px-8 py-8 space-y-10 bg-white scroll-smooth">
-      {/* ===== Welcome Banner ===== */}
       <div className="-mx-4 md:-mx-8 -mt-6 md:-mt-6 relative overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_#FEF7E5_0%,_#FFFDF6_100%)]" />
         <div className="pointer-events-none absolute -top-10 -left-10 h-56 w-56 rounded-full bg-[#E7F3FF] blur-3xl opacity-40" />
@@ -150,7 +150,6 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* ✅ Fixed Quick Links (no double-back) */}
             <div className="flex flex-col items-center md:items-end">
               <span className="text-sm text-[#102E4A]/70 mb-2">
                 Quick links:
@@ -165,7 +164,7 @@ export default function HomePage() {
                   <button
                     key={l.id}
                     type="button"
-                    onClick={() => goto(l.id)}
+                    onClick={() => goto(l.id)} 
                     className="rounded-full bg-white border border-[#D0E4F2] px-4 py-1.5 text-sm font-medium text-[#102E4A] shadow-sm hover:bg-[#E7F3FF] hover:scale-105 transition-all"
                   >
                     {l.label}
@@ -177,7 +176,6 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* ===== Categories ===== */}
       <section className="rounded-2xl border bg-white p-5 shadow-sm hover:shadow-md transition-all">
         <div className="flex items-center justify-between">
           <h2 className="font-semibold text-[#102E4A] text-lg">
@@ -185,6 +183,7 @@ export default function HomePage() {
           </h2>
         </div>
 
+        {/* Category Grid */}
         <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-9 gap-4">
           {[
             { name: "Home & Furniture", icon: Home },
@@ -214,14 +213,10 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ===== CONTENT SECTIONS ===== */}
       <div className="-mx-4 md:-mx-8 px-4 md:px-8 py-8 bg-white">
         <div className="mx-auto max-w-[1600px] space-y-10">
-          {/* --- Emergency Lending --- */}
-          <section
-            id="emergency"
-            className="scroll-mt-32 md:scroll-mt-36 lg:scroll-mt-40"
-          >
+          {/* Emergency Lending Section */}
+          <section id="emergency" className="scroll-mt-32 md:scroll-mt-36 lg:scroll-mt-40">
             <SectionHeader
               title="Emergency Lending"
               count={emergency?.length ?? 0}
@@ -230,9 +225,7 @@ export default function HomePage() {
             {emergencyLoading ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i}>
-                    <PostCardSkeleton />
-                  </div>
+                  <PostCardSkeleton key={i} />
                 ))}
               </div>
             ) : emergency.length === 0 ? (
@@ -260,6 +253,7 @@ export default function HomePage() {
               </div>
             )}
 
+            {/* Emergency modal */}
             {selectedEmergency && (
               <Dialog
                 open
@@ -297,11 +291,8 @@ export default function HomePage() {
             )}
           </section>
 
-          {/* --- Featured Listing --- */}
-          <section
-            id="featured"
-            className="scroll-mt-32 md:scroll-mt-36 lg:scroll-mt-40"
-          >
+          {/* Featured Listing Section */}
+          <section id="featured" className="scroll-mt-32 md:scroll-mt-36 lg:scroll-mt-40">
             <SectionHeader
               title="Featured Listing"
               count={items?.length ?? 0}
@@ -310,10 +301,7 @@ export default function HomePage() {
             {itemLoading ? (
               <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-thin scrollbar-thumb-gray-300">
                 {Array.from({ length: 5 }).map((_, a) => (
-                  <div
-                    key={a}
-                    className="min-w-[340px] md:min-w-[360px] snap-start"
-                  >
+                  <div key={a} className="min-w-[340px] md:min-w-[360px] snap-start">
                     <ItemCardSkeleton />
                   </div>
                 ))}
@@ -347,11 +335,8 @@ export default function HomePage() {
             )}
           </section>
 
-          {/* --- PasaBuy Posts --- */}
-          <section
-            id="pasabuy"
-            className="scroll-mt-32 md:scroll-mt-36 lg:scroll-mt-40"
-          >
+          {/* PasaBuy Section */}
+          <section id="pasabuy" className="scroll-mt-32 md:scroll-mt-36 lg:scroll-mt-40">
             <SectionHeader
               title="PasaBuy Posts"
               count={pasabuy?.length ?? 0}
@@ -360,9 +345,7 @@ export default function HomePage() {
             {pasabuyLoading ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i}>
-                    <PostCardSkeleton />
-                  </div>
+                  <PostCardSkeleton key={i} />
                 ))}
               </div>
             ) : pasabuy.length === 0 ? (
@@ -390,6 +373,7 @@ export default function HomePage() {
               </div>
             )}
 
+            {/* PasaBuy Modal */}
             {selectedPasaBuy && (
               <Dialog
                 open
@@ -427,11 +411,8 @@ export default function HomePage() {
             )}
           </section>
 
-          {/* --- Giveaways --- */}
-          <section
-            id="giveaways"
-            className="scroll-mt-32 md:scroll-mt-36 lg:scroll-mt-40"
-          >
+          {/* Donation & Giveaways Section */}
+          <section id="giveaways" className="scroll-mt-32 md:scroll-mt-36 lg:scroll-mt-40">
             <SectionHeader
               title="Donation & Giveaways"
               count={giveaways?.length ?? 0}

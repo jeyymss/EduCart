@@ -161,7 +161,7 @@ export default function Transactions({ userId }: { userId: string }) {
       </TabsList>
 
       <div className="flex items-center gap-3">
-        {/* ✅ Dropdown: All, Sales, Purchases */}
+        {/* Dropdown: All, Sales, Purchases */}
         <DropdownMenu>
           <DropdownMenuTrigger className="flex items-center gap-1 px-3 py-2 border rounded-lg bg-white shadow-sm text-sm font-medium hover:bg-gray-50">
             {typeFilter}

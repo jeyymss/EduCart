@@ -111,7 +111,6 @@ export default function EditProfile({
           .eq("user_id", uid);
       }
 
-      // ✅ FIXED: no-unused-expressions warning removed
       if (onDone) {
         onDone({ avatar_url: avatarUrl, background_url: bgUrl, bio });
       } else {
@@ -126,7 +125,6 @@ export default function EditProfile({
 
   return (
     <div className="relative w-full">
-      {/* Taller cover */}
       <div className="relative w-full h-60 md:h-80 lg:h-96 overflow-hidden">
         {bgPreview ? (
           <Image
@@ -152,7 +150,6 @@ export default function EditProfile({
           onChange={onPickBackground}
         />
 
-        {/* Camera overlay for background */}
         <button
           onClick={() => bgInputRef.current?.click()}
           className="absolute inset-0 flex items-center justify-center bg-black/30 text-white opacity-0 hover:opacity-100 transition"
@@ -207,7 +204,6 @@ export default function EditProfile({
               onChange={onPickAvatar}
             />
 
-            {/* Camera overlay for avatar */}
             <button
               onClick={() => avatarInputRef.current?.click()}
               className="absolute inset-0 flex items-center justify-center bg-black/40 text-white opacity-0 hover:opacity-100 transition"
@@ -218,7 +214,7 @@ export default function EditProfile({
             </button>
           </div>
 
-          {/* Bio editor */}
+          {/* Bio */}
           <div className="flex-1 mt-2">
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Bio

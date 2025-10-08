@@ -85,7 +85,6 @@ export default function IndividualCreditsPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Back button aligned left */}
       <div className="bg-white px-6 py-4 border-b">
         <div className="max-w-7xl mx-auto flex">
           <Button
@@ -102,9 +101,7 @@ export default function IndividualCreditsPage() {
         </div>
       </div>
 
-      {/* Main content */}
       <div className="max-w-5xl mx-auto px-6 py-10">
-        {/* Header */}
         <h1 className="text-2xl font-bold mb-2 text-center">Buy Posting Credits</h1>
         <p className="text-muted-foreground text-center mb-8">
           Purchase credits to list your items for sale on EduCart
@@ -118,7 +115,6 @@ export default function IndividualCreditsPage() {
               className="rounded-2xl border border-gray-300 p-6 shadow-sm"
               style={{ backgroundColor: pkg.bg }}
             >
-              {/* Title with inline Recommended */}
               <h2 className="text-lg font-semibold mb-2">
                 {pkg.title}{" "}
                 {pkg.recommended && (
@@ -143,7 +139,6 @@ export default function IndividualCreditsPage() {
                 ))}
               </ul>
 
-              {/* Purchase Button with hover */}
               <Button
                 variant="outline"
                 className="w-full bg-white hover:bg-[#E59E2C] hover:text-white transition-colors rounded-md"
@@ -155,7 +150,6 @@ export default function IndividualCreditsPage() {
           ))}
         </div>
 
-        {/* Free posts info */}
         <div className="mt-10 border border-gray-300 rounded-2xl bg-white p-6 shadow-sm">
           <p className="font-medium text-red-500">❤ Earn Free Posts</p>
           <p className="text-sm text-muted-foreground">
@@ -164,16 +158,46 @@ export default function IndividualCreditsPage() {
           </p>
         </div>
 
-        {/* FAQ Section */}
-        <div className="mt-10 border border-gray-300 rounded-2xl bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-semibold mb-4">Frequently Asked Questions</h2>
-          <div className="space-y-4">
-            {faqs.map((faq, index) => (
-              <div key={index}>
-                <p className="font-medium">{faq.q}</p>
-                <p className="text-sm text-gray-700">{faq.a}</p>
+     {/* FAQ */}
+      <div className="max-w-6xl mx-auto px-6 pb-12">
+        <div className="bg-white rounded-xl p-6 shadow-sm border space-y-6">
+          <h2 className="text-lg font-semibold">Frequently Asked Questions</h2>
+
+          <div>
+            <h3 className="font-medium">What are posting credits?</h3>
+            <p className="text-sm text-gray-600">
+              Posting credits allow businesses and organizations to post items on EduCart.
+              Each credit equals one listing, regardless of the type.
+            </p>
+          </div>
+
+          <div>
+            <h3 className="font-medium">How many free posting credits do I get?</h3>
+            <p className="text-sm text-gray-600">
+              Businesses and organizations receive 5 free credits monthly.
+            </p>
+          </div>
+
+          <div>
+            <h3 className="font-medium">Do unused free credits roll over?</h3>
+            <p className="text-sm text-gray-600">
+              No, unused free credits do not carry over to the next month.
+            </p>
+          </div>
+
+          <div>
+            <h3 className="font-medium">Do purchased credits expire?</h3>
+            <p className="text-sm text-gray-600">
+              Yes, purchased credits expire 30 days after purchase.
+            </p>
+          </div>
+
+          <div>
+            <h3 className="font-medium">Can I get a refund for unused credits?</h3>
+            <p className="text-sm text-gray-600">
+              No refunds are issued, but unused credits stay until used.
+            </p>
               </div>
-            ))}
           </div>
         </div>
       </div>

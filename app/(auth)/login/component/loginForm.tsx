@@ -26,7 +26,7 @@ export default function LoginForm() {
   const [forgotEmail, setForgotEmail] = useState("");
   const [resetMessage, setResetMessage] = useState("");
 
-  // Loading modal + success modal (same pattern as your SignUp)
+  // Loading modal + success modal 
   const [showLoadingModal, setShowLoadingModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
@@ -39,7 +39,7 @@ export default function LoginForm() {
       setShowLoadingModal(true);
 
       const formData = new FormData(e.currentTarget);
-      const result = await login(formData); // typed as LoginResult
+      const result = await login(formData); 
 
       setShowLoadingModal(false);
 
@@ -75,7 +75,6 @@ export default function LoginForm() {
   return (
     <>
       <div className="flex flex-col md:flex-row min-h-[75vh] justify-center items-center px-4 lg:px-8">
-        {/* LEFT SIDE – Login */}
         <div className="w-full max-w-2xl flex flex-col justify-center items-center px-6">
           <div className="w-full border-2 border-[#F4EFEB] p-6 md:p-10 lg:p-12 rounded-lg">
             <div className="text-center space-y-2">
@@ -204,7 +203,6 @@ export default function LoginForm() {
             </form>
           </div>
 
-          {/* "Create Account" on mobile only */}
           <div className="md:hidden items-center mt-5">
             <span className="text-sm">New here?</span>
             <Link href={"/signup"}>
@@ -216,7 +214,7 @@ export default function LoginForm() {
         </div>
       </div>
 
-      {/* Loading Modal (same style as your SignUp) */}
+      {/* Loading Modal */}
       {showLoadingModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-md bg-opacity-50">
           <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full text-center space-y-4">
