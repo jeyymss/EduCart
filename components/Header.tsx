@@ -234,7 +234,10 @@ export function Header() {
 
                 {/* Credits */}
                 <div className="flex items-center gap-1">
-                  <BadgeCent className="w-4 h-4" />
+                  <Link href={"/credits/individual"}>
+                    <BadgeCent className="w-4 h-4" />
+                  </Link>
+
                   {user?.post_credits_balance}
                 </div>
 

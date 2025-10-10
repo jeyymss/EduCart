@@ -208,7 +208,7 @@ export default function ProfilePage() {
                 className="absolute inset-0"
               >
                 <Image
-                  src={displayUser.background_url ?? "/placeholder-bg.jpg"}
+                  src={displayUser.background_url ?? "/gray.jpg"}
                   alt="Background"
                   fill
                   className="object-cover"
@@ -262,7 +262,7 @@ export default function ProfilePage() {
                     }}
                   >
                     <Image
-                      src={displayUser?.avatar_url ?? "/placeholder-avatar.png"}
+                      src={displayUser?.avatar_url ?? "/avatarplaceholder.png"}
                       alt="Avatar"
                       width={AVATAR_DIM}
                       height={AVATAR_DIM}

@@ -10,6 +10,7 @@ const publicPaths = [
   "/error",
   "/reset-password",
   "/organization-signup",
+  "/api/paymongo/webhook",
 ];
 
 export async function updateSession(request: NextRequest) {
@@ -46,7 +47,7 @@ export async function updateSession(request: NextRequest) {
   // 2) Is this a public path?
   const isPublicPath = publicPaths.some((path) => {
     const pattern = path.replace(":id", "[^/]+");
-    const regex = new RegExp(`^${pattern}$`);
+    const regex = new RegExp(`^${pattern}(/)?$`, "i"); // allow trailing slash
     return regex.test(currentPath);
   });
 
