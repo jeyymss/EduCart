@@ -2,16 +2,19 @@
 
 import { createClient } from "@/utils/supabase/server";
 
-// Reusable helper
+
 async function updatePostStatus(postId: string, newStatus: string) {
   const supabase = await createClient();
 
   // Get current user
   const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser();
-  if (userError || !user) throw new Error("Not authenticated");
+    data: { session },
+    error: sessionError,
+  } = await supabase.auth.getSession();
+  if (sessionError || !session) throw new Error("Not authenticated");
+
+  //set user id
+  const userID = session.user.id
 
   // Fetch current post to check status & ownership
   const { data: post, error: fetchError } = await supabase
@@ -21,7 +24,7 @@ async function updatePostStatus(postId: string, newStatus: string) {
     .single();
 
   if (fetchError || !post) throw new Error("Post not found");
-  if (post.post_user_id !== user.id) throw new Error("Unauthorized");
+  if (post.post_user_id !== userID) throw new Error("Unauthorized");
 
   // If already same status, no update needed
   if (post.status === newStatus) {

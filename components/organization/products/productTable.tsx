@@ -27,13 +27,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal, ArrowUpDown } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
+
 import { toast } from "sonner";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useDisplayOrgItems } from "@/hooks/queries/displayOrgItem";
@@ -41,7 +35,6 @@ import { useDisplayOrgItems } from "@/hooks/queries/displayOrgItem";
 export function OrganizationPostsTable({ userId }: { userId: string }) {
   const { data, isLoading, isError } = useDisplayOrgItems(userId);
   const queryClient = useQueryClient();
-  const [selectedPost, setSelectedPost] = React.useState<any | null>(null);
   const [filter, setFilter] = React.useState("All");
 
   // 🔧 Mutations

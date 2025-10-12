@@ -28,18 +28,18 @@ export default function SidebarList({
   const [conversations, setConversations] = useState(initialConvos);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
-  // ✅ Get current user once
+  // Get current user once
   useEffect(() => {
     async function getUser() {
       const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      setCurrentUserId(user?.id ?? null);
+        data: { session },
+      } = await supabase.auth.getSession();
+      setCurrentUserId(session?.user.id ?? null);
     }
     getUser();
   }, [supabase]);
 
-  // ✅ Subscribe to new messages
+  // Subscribe to new messages
   useEffect(() => {
     const channel = supabase
       .channel("conversation-messages")
@@ -50,7 +50,7 @@ export default function SidebarList({
           schema: "public",
           table: "messages",
         },
-        (payload) => {
+        (payload: any) => {
           const newMessage = payload.new as {
             conversation_id: number;
             body: string | null;
@@ -98,14 +98,14 @@ export default function SidebarList({
   }
 
   async function handleClick(conversationId: number) {
-    // ✅ Only mark as read, don’t reorder
+    // Only mark as read, don’t reorder
     setConversations((prev) =>
       prev.map((c) =>
         c.conversation_id === conversationId ? { ...c, has_unread: false } : c
       )
     );
 
-    // ✅ Update DB last_read_at
+    // Update DB last_read_at
     const {
       data: { user },
     } = await supabase.auth.getUser();

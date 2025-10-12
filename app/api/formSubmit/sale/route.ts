@@ -12,12 +12,21 @@ export async function ForSale(
 ) {
   return await withErrorHandling(async () => {
     const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
 
-    if (!user) throw new Error("User not authenticated");
-    if (!user.email) return { error: "User email is missing." };
+    //get user session
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (!session) throw new Error("User not authenticated");
+
+    //set user email
+    const userEmail = session.user.email
+    if (!userEmail) return { error: "User email is missing." };
+
+    //set user ID
+    const userID = session.user.id
+    if (!userID) return { error: "User ID is missing." };
 
     const itemTitle = formData.get("itemTitle") as string;
     const itemPrice = Number(formData.get("itemPrice"));
@@ -32,7 +41,7 @@ export async function ForSale(
       images,
       "post-images",
       "post",
-      user.email
+      userEmail
     );
     if (imageUrls.length === 0)
       return { error: "Failed to upload item images." };
@@ -55,7 +64,7 @@ export async function ForSale(
 
     const { error: insertError } = await supabase.from("posts").insert([
       {
-        post_user_id: user.id,
+        post_user_id: userID,
         post_type_id: postType.id,
         category_id: category.id,
         item_condition: selectedCondition,

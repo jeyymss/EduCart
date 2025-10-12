@@ -1,7 +1,7 @@
 "use client"; 
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { manageUsers } from "@/hooks/queries/manageUsers";
+import { manageUsers } from "@/hooks/queries/admin/manageUsers";
 
 function initialsFrom(name?: string) {
   if (!name) return "ED"; 

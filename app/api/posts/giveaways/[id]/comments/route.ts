@@ -6,7 +6,7 @@ export async function GET(
   context: { params: Promise<{ id: string }> }
 ) {
   const supabase = await createClient();
-  const { id } = await context.params; // ✅ await params
+  const { id } = await context.params; 
 
   const { data, error } = await supabase.rpc("get_giveaway_comments", {
     input_post_id: id,
@@ -24,7 +24,7 @@ export async function POST(
   context: { params: Promise<{ id: string }> }
 ) {
   const supabase = await createClient();
-  const { id } = await context.params; // ✅ await params
+  const { id } = await context.params; 
 
   const { body, parentId } = await req.json();
 

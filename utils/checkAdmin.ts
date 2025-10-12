@@ -5,25 +5,27 @@ export async function checkIfAdmin() {
 
   //Get current user
   const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser();
-  if (userError || !user) {
+    data: { session },
+    error: sessionError,
+  } = await supabase.auth.getSession();
+  if (sessionError || !session) {
     return { isAdmin: false, user: null };
   }
+
+  const userId = session.user.id
 
   // Check if user is in admin.admin_users and enabled
   const { data: adminRecord, error } = await supabase
     .from("admin_users")
     .select("user_id, is_enabled")
-    .eq("user_id", user.id)
+    .eq("user_id", userId)
     .eq("is_enabled", true)
     .maybeSingle();
 
   if (error) {
     console.error("Error checking admin:", error);
-    return { isAdmin: false, user };
+    return { isAdmin: false, session };
   }
 
-  return { isAdmin: !!adminRecord, user };
+  return { isAdmin: !!adminRecord, session };
 }

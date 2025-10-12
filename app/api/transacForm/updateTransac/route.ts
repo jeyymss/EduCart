@@ -12,7 +12,7 @@ export async function UpdateTransactionStatus(
   return await withErrorHandling(async () => {
     const supabase = await createClient();
 
-    // ✅ Update transaction status
+    // Update transaction status
     const { error: updateError } = await supabase
       .from("transactions")
       .update({ status: newStatus })
@@ -23,7 +23,7 @@ export async function UpdateTransactionStatus(
       return { error: updateError.message };
     }
 
-    // ✅ Insert system message so both sides see update
+    // Insert system message so both sides see update
     const { error: messageError } = await supabase.from("messages").insert([
       {
         conversation_id: conversationId,

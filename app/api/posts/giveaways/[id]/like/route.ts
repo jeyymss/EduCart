@@ -7,7 +7,7 @@ export async function POST(
 ) {
   const supabase = await createClient();
 
-  // ✅ await the params
+  
   const { id } = await context.params;
 
   const { data, error } = await supabase.rpc("toggle_giveaway_like", {

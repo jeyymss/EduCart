@@ -42,9 +42,15 @@ export default function BackgroundUploader({
     setUploading(true);
 
     try {
-      const { data: auth, error: authErr } = await supabase.auth.getUser();
-      if (authErr) throw new Error(`Auth failed: ${authErr.message}`);
-      const uid = auth?.user?.id;
+      //get session
+      const {
+        data: { session },
+        error: sessionError,
+      } = await supabase.auth.getSession();
+      
+      if (sessionError) throw new Error(`Auth failed: ${sessionError.message}`);
+
+      const uid = session?.user.id;
       if (!uid) throw new Error("You must be logged in.");
 
       const ext = file.name.split(".").pop() || "jpg";
@@ -56,7 +62,7 @@ export default function BackgroundUploader({
           upsert: false,
           contentType: file.type || "image/*",
           cacheControl: "3600",
-          metadata: { owner: uid }, // ✅ add metadata
+          metadata: { owner: uid }, // add metadata
         });
 
       if (uploadError)

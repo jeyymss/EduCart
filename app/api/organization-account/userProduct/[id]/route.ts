@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 
-// ✅ GET — fetch all posts for the organization user
+
 export async function GET(
   req: Request,
   { params }: { params: { id: string } }
@@ -35,7 +35,7 @@ export async function GET(
   return NextResponse.json(data);
 }
 
-//  PATCH — update post status
+// update post status
 export async function PATCH(
   req: Request,
   { params }: { params: { id: string } }
@@ -55,7 +55,7 @@ export async function PATCH(
   return NextResponse.json({ success: true, newStatus: status });
 }
 
-//DELETE — delete a post
+//delete a post
 export async function DELETE(
   req: Request,
   { params }: { params: { id: string } }

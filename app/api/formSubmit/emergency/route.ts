@@ -9,12 +9,19 @@ export async function EmergencySubmit(
 ) {
   return await withErrorHandling(async () => {
     const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
 
-    if (!user) throw new Error("User not authenticated");
-    if (!user.email) return { error: "User email is missing." };
+    //get user session
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (!session) throw new Error("User not authenticated");
+    if (!session.user.email) return { error: "User email is missing." };
+    
+    //get user id
+    const userId = session.user.email
+
+    if(!userId) return { error: "User ID is missing."};
 
     const itemTitle = formData.get("itemTitle") as string;
     const itemDescription = formData.get("itemDescription") as string;
@@ -31,7 +38,7 @@ export async function EmergencySubmit(
     //Insert in posts table
     const { error: insertError } = await supabase.from("posts").insert([
       {
-        post_user_id: user.id,
+        post_user_id: userId,
         post_type_id: postType.id,
         item_title: itemTitle,
         item_description: itemDescription,

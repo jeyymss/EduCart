@@ -16,14 +16,21 @@ export async function RentTransaction(
 ) {
   return await withErrorHandling(async () => {
     const supabase = await createClient();
+
+    //get user session
     const {
-      data: { user },
-    } = await supabase.auth.getUser();
+      data: { session },
+    } = await supabase.auth.getSession();
 
-    if (!user) throw new Error("User not authenticated");
-    if (!user.email) return { error: "User email is missing." };
+    if (!session) throw new Error("User not authenticated");
+    if (!session.user.email) return { error: "User email is missing." };
 
-    // ✅ Check for existing pending transaction
+    //set user id
+    const userID = session.user.id
+
+    if (!userID) return { error: "User ID is missing." };
+
+    // Check for existing pending transaction
     const { data: existingPending, error: checkError } = await supabase
       .from("transactions")
       .select("id")
@@ -68,12 +75,12 @@ export async function RentTransaction(
       return { error: "Payment method is required." };
     }
 
-    // ✅ Insert transaction and RETURN id
+    // Insert transaction and RETURN id
     const { data: insertedTransaction, error: insertError } = await supabase
       .from("transactions")
       .insert([
         {
-          buyer_id: user.id,
+          buyer_id: userID,
           conversation_id: conversationId,
           seller_id: sellerId,
           post_id: post_id,
@@ -89,7 +96,7 @@ export async function RentTransaction(
           status: "Pending",
         },
       ])
-      .select("id") // 👈 return the transaction ID
+      .select("id") 
       .single();
 
     if (insertError) {
@@ -99,11 +106,11 @@ export async function RentTransaction(
       };
     }
 
-    // ✅ Insert system message linked to this transaction
+    //  Insert system message linked to this transaction
     const { error: messageError } = await supabase.from("messages").insert([
       {
         conversation_id: conversationId,
-        sender_user_id: user.id, // buyer is sender
+        sender_user_id: userID, // buyer is sender
         transaction_id: insertedTransaction.id,
         type: "system",
         body: "Transaction Created",

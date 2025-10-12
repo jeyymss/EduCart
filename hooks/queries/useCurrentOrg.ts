@@ -15,15 +15,15 @@ export type OrganizationRow = {
   subscription_quota_used: number;
   post_credits_balance: number;
   is_gcash_linked: boolean;
-  total_earnings: string; // numeric comes back as string
-  created_at: string; // ISO
-  updated_at: string; // ISO
+  total_earnings: string; 
+  created_at: string; 
+  updated_at: string; 
   university_id: number | null;
 };
 
 export const useCurrentOrganization = () => {
   return useQuery<OrganizationRow | null>({
-    queryKey: ["organization", "me"], // still good key name
+    queryKey: ["organization", "me"], 
     queryFn: async () => {
       const res = await fetch("/api/user-profile-view/organization");
       const data = await res.json();

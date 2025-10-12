@@ -12,7 +12,7 @@ export async function GET() {
 
     const supabase = await createClient();
 
-    // ✅ Fetch counts in parallel
+    // Fetch counts in parallel
     const [individualsRes, orgsRes, txnsRes] = await Promise.all([
       supabase.from("individuals").select("*", { count: "exact", head: true }),
       supabase

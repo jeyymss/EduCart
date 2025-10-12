@@ -11,7 +11,7 @@ export default function IndividualCreditsPage() {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const supabase = createClient();
 
-  // 🧠 Fetch user email from session
+  // Fetch user email from session
   useEffect(() => {
     const getSession = async () => {
       const {
@@ -22,7 +22,7 @@ export default function IndividualCreditsPage() {
     getSession();
   }, [supabase]);
 
-  // 💳 Packages
+  // Packages
   const packages = [
     {
       id: 1,

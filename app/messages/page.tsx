@@ -5,18 +5,20 @@ export default async function MessagesIndexPage() {
   const supabase = await createClient();
 
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    data: { session },
+  } = await supabase.auth.getSession();
 
-  if (!user) {
+  if (!session) {
     redirect("/login");
   }
+
+  const userID = session.user.id
 
   // ✅ query conversations
   const { data, error } = await supabase
     .from("my_convo")
     .select("conversation_id, last_message_created_at")
-    .eq("current_user_id", user.id)
+    .eq("current_user_id", userID)
     .order("last_message_created_at", { ascending: false })
     .limit(1);
 

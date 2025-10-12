@@ -4,16 +4,19 @@ import { NextResponse } from "next/server";
 export async function GET() {
   const supabase = await createClient();
 
-  // ✅ get logged-in user
+  // get user session
   const {
-    data: { user },
-    error: userErr,
-  } = await supabase.auth.getUser();
-  if (userErr)
-    return NextResponse.json({ error: userErr.message }, { status: 401 });
-  if (!user) return NextResponse.json(null);
+    data: { session },
+    error: sessionError,
+  } = await supabase.auth.getSession();
 
-  // ✅ fetch org by user_id
+  if (sessionError)
+    return NextResponse.json({ error: sessionError.message }, { status: 401 });
+  if (!session) return NextResponse.json(null);
+
+  const userId = session.user.id
+
+  //fetch org by userId
   const { data, error } = await supabase
     .from("organizations")
     .select(
@@ -22,7 +25,7 @@ export async function GET() {
         abbreviation
       ), organization_name, organization_description, email, avatar_url, background_url, role, subscription_quota_used, post_credits_balance, is_gcash_linked, total_earnings, created_at, updated_at, university_id`
     )
-    .eq("user_id", user.id)
+    .eq("user_id", userId)
     .maybeSingle();
 
   if (error)

@@ -39,10 +39,14 @@ export default function AvatarUploader({ currentUrl, onUploaded }: Props) {
     try {
       setUploading(true);
 
-      // who am I
-      const { data: auth, error: authErr } = await supabase.auth.getUser();
-      if (authErr) throw authErr;
-      const uid = auth?.user?.id;
+      const {
+        data: { session },
+        error: sessionError,
+      } = await supabase.auth.getSession();
+      
+      if (sessionError) throw new Error(`Auth failed: ${sessionError.message}`);
+
+      const uid = session?.user.id;
       if (!uid) throw new Error("You must be logged in.");
 
       // upload to Storage

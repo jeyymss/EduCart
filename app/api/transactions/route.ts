@@ -58,7 +58,7 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  // ✅ Flatten results
+  // Flatten results
   const transactions = (data || [])
     .map((row) => {
       const snap = row.snapshot || {};
@@ -80,7 +80,7 @@ export async function GET(req: Request) {
       const isBuyer = row.buyer_id === userId;
       const isSeller = row.seller_id === userId;
 
-      // ✅ RULE: Cancelled items should only show to buyer, not seller
+      //Cancelled items should only show to buyer, not seller
       if (status === "cancelled" && !isBuyer) return null;
 
       return {

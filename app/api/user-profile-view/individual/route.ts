@@ -4,19 +4,23 @@ import { createClient } from "@/utils/supabase/server";
 export async function GET() {
   const supabase = await createClient();
 
+  //get user session
   const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
+    data: { session },
+    error: sessionError,
+  } = await supabase.auth.getSession();
 
-  if (authError) {
-    return NextResponse.json({ error: authError.message }, { status: 500 });
+  if (sessionError) {
+    return NextResponse.json({ error: sessionError.message }, { status: 500 });
   }
-  if (!user) {
+  if (!session) {
     return NextResponse.json({ error: "Not logged in" }, { status: 401 });
   }
 
-  // IMPORTANT: select/alias the columns to match your `UserProfile` type
+  //set user id
+  const userId = session.user.id;
+
+  //get user info
   const { data, error } = await supabase
     .from("individuals")
     .select(
@@ -37,7 +41,7 @@ export async function GET() {
       bio
     `
     )
-    .eq("user_id", user.id)
+    .eq("user_id", userId)
     .single();
 
   if (error) {

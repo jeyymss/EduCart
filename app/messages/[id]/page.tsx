@@ -12,9 +12,12 @@ export default async function ConversationPage({
 
   const supabase = await createClient();
 
-  // ✅ Current user
-  const { data: authUser } = await supabase.auth.getUser();
-  const currentUserId = authUser?.user?.id ?? "";
+  // Current user
+  const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+  const currentUserId = session?.user.id ?? "";
 
   if (!currentUserId) {
     return <div>You must be logged in</div>;

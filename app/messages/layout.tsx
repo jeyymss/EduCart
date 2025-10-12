@@ -26,12 +26,12 @@ export default async function MessagesLayout({
 }) {
   const supabase = await createClient();
 
-  // ✅ Get current logged-in user
+  // Get current logged-in user
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    data: { session },
+  } = await supabase.auth.getSession();
 
-  if (!user) {
+  if (!session) {
     // not logged in, no access
     return (
       <div className="flex items-center justify-center h-full">
@@ -39,6 +39,9 @@ export default async function MessagesLayout({
       </div>
     );
   }
+
+  //set user id
+  const userID = session.user.id
 
   const { data, error } = await supabase
     .from("my_convo")
@@ -57,7 +60,7 @@ export default async function MessagesLayout({
     has_unread  
   `
     )
-    .eq("current_user_id", user?.id)
+    .eq("current_user_id", userID)
     .order("last_message_created_at", { ascending: false });
 
   if (error) {
@@ -71,7 +74,7 @@ export default async function MessagesLayout({
     <div className="flex flex-col min-h-screen">
       <div className="grid grid-cols-[320px_1fr] h-[calc(100vh-64px)] p-5 pt-10 gap-3 overflow-hidden">
         <MessagesRealtimeRefresher
-          currentUserId={user.id}
+          currentUserId={userID}
           conversationIds={convoIds}
         />
 

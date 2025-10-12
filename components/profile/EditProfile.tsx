@@ -67,9 +67,14 @@ export default function EditProfile({
     setErr(null);
 
     try {
-      const { data: auth, error: authErr } = await supabase.auth.getUser();
-      if (authErr) throw authErr;
-      const uid = auth?.user?.id;
+      const {
+        data: { session },
+        error: sessionError,
+      } = await supabase.auth.getSession();
+      
+      if (sessionError) throw new Error(`Auth failed: ${sessionError.message}`);
+
+      const uid = session?.user.id;
       if (!uid) throw new Error("You must be logged in.");
 
       let avatarUrl = currentAvatar ?? null;

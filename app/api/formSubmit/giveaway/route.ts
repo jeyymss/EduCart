@@ -12,12 +12,24 @@ export async function Giveaway(
 ) {
   return await withErrorHandling(async () => {
     const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
 
-    if (!user) throw new Error("User not authenticated");
-    if (!user.email) return { error: "User email is missing." };
+    //get user session
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (!session) throw new Error("User not authenticated");
+    
+
+    //get user email
+    const userEmail = session.user.email
+
+    if (!userEmail) return { error: "User email is missing." };
+
+    //get user id
+    const userId = session.user.id
+
+    if(!userId) return { error: "User ID is missing." };
 
     const itemTitle = formData.get("itemTitle") as string;
     const itemDescription = formData.get("itemDescription") as string;
@@ -32,7 +44,7 @@ export async function Giveaway(
       images,
       "post-images",
       "post",
-      user.email
+      userEmail
     );
     if (imageUrls.length === 0)
       return { error: "Failed to upload item images." };
@@ -58,7 +70,7 @@ export async function Giveaway(
     // Insert into Posts
     const { error: insertError } = await supabase.from("posts").insert([
       {
-        post_user_id: user.id,
+        post_user_id: userId,
         post_type_id: postType.id,
         category_id: category.id,
         item_condition: selectedCondition,
