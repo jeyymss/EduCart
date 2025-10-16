@@ -14,6 +14,7 @@ import { AdvancedFilters } from "@/components/profile/AdvancedFilters";
 import type { AdvancedFilterValue } from "@/components/profile/AdvancedFilters";
 import TransactionCard from "@/components/transaction/TransactionCard/TransactionCard";
 import { useTransactions, Tx } from "@/hooks/queries/useTransactions";
+import TransactionDetailsModal from "@/components/transaction/TransactionCard/TransactionDetailsModal";
 
 type TxStatus = "active" | "completed" | "cancelled";
 type TxType = "All" | "Sales" | "Purchases";
@@ -33,6 +34,10 @@ export default function Transactions({ userId }: { userId: string }) {
   const [search, setSearch] = React.useState<string>("");
   const [adv, setAdv] = React.useState<AdvancedFilterValue>({ ...EMPTY_ADV });
 
+  // 👇 NEW: state to control the modal and selected transaction
+  const [isModalOpen, setIsModalOpen] = React.useState(false);
+  const [selectedTx, setSelectedTx] = React.useState<Tx | null>(null);
+
   const {
     data: transactions = [],
     isLoading,
@@ -49,6 +54,16 @@ export default function Transactions({ userId }: { userId: string }) {
           : true
       );
   }, [transactions, statusTab, typeFilter, search]);
+
+  // 👇 helper: open details for a given id
+  const handleView = React.useCallback(
+    (id: string) => {
+      const found = transactions.find((t) => t.id === id) ?? null;
+      setSelectedTx(found);
+      setIsModalOpen(Boolean(found));
+    },
+    [transactions]
+  );
 
   const Header = (
     <div className="sticky top-0 z-20 bg-white border-b flex justify-between items-center gap-4 px-2 py-2">
@@ -119,7 +134,8 @@ export default function Transactions({ userId }: { userId: string }) {
                 status={tx.status}
                 postType={tx.post_type}
                 image={tx.image_url}
-                onView={(id) => console.log("view", id)}
+                // 👇 UPDATED: open modal with details
+                onView={handleView}
                 onPrimary={(id) => console.log("primary action", id)}
               />
             </div>
@@ -141,6 +157,29 @@ export default function Transactions({ userId }: { userId: string }) {
         <TabsContent value="completed">{ListBody}</TabsContent>
         <TabsContent value="cancelled">{ListBody}</TabsContent>
       </Tabs>
+
+      {/* 👇 NEW: Details modal (data shaped straight from your Tx type) */}
+      <TransactionDetailsModal
+        open={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        data={
+          selectedTx
+            ? {
+                id: selectedTx.id,
+                title: selectedTx.title,
+                price: selectedTx.price,
+                total: selectedTx.total ?? selectedTx.price,
+                method: selectedTx.method,
+                type: selectedTx.type,
+                status: selectedTx.status,
+                created_at: (selectedTx as any).created_at, // keep if present in your Tx
+                buyer: (selectedTx as any).buyer_name,      // adapt to your schema
+                seller: (selectedTx as any).seller_name,    // adapt to your schema
+                address: (selectedTx as any).address,       // adapt to your schema
+              }
+            : undefined
+        }
+      />
     </section>
   );
 }

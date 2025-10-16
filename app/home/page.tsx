@@ -29,18 +29,6 @@ import {
 } from "@/hooks/queries/displayItems";
 import { useGiveawayPosts } from "@/hooks/queries/GiveawayPosts";
 
-import {
-  Home,
-  ShoppingBag,
-  Dumbbell,
-  Monitor,
-  BookOpen,
-  Shirt,
-  Sparkles,
-  Watch,
-  Gamepad2,
-} from "lucide-react";
-
 function SectionHeader({
   title,
   count,
@@ -102,18 +90,6 @@ export default function HomePage() {
     null
   );
 
-  /* Quick links */
-  const goto = (id: string) => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.scrollIntoView({ behavior: "smooth", block: "start" });
-
-    if (typeof window !== "undefined") {
-      const path = window.location.pathname;
-      history.replaceState(null, "", `${path}#${id}`);
-    }
-  };
-
   if (itemError && emergencyError) {
     return (
       <div className="px-4 md:px-8 py-10">
@@ -124,95 +100,51 @@ export default function HomePage() {
 
   return (
     <div className="px-4 md:px-8 py-8 space-y-10 bg-white scroll-smooth">
-      <div className="-mx-4 md:-mx-8 -mt-6 md:-mt-6 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_#FEF7E5_0%,_#FFFDF6_100%)]" />
-        <div className="pointer-events-none absolute -top-10 -left-10 h-56 w-56 rounded-full bg-[#E7F3FF] blur-3xl opacity-40" />
-        <div className="pointer-events-none absolute -bottom-16 -right-10 h-64 w-64 rounded-full bg-[#FFF1D0] blur-3xl opacity-50" />
-
-        <div className="relative w-full">
-          <div className="mx-auto max-w-[1600px] h-[230px] md:h-[250px] lg:h-[270px] px-4 md:px-8 flex items-center justify-between gap-6 md:gap-8">
-            <div className="relative flex items-center -ml-10 md:-ml-16 lg:-ml-20">
-              <Image
-                src="/hand.png"
-                alt="EduCart"
-                width={420}
-                height={420}
-                className="h-auto w-[340px] sm:w-[360px] md:w-[400px] lg:w-[420px] object-contain drop-shadow-sm"
-                priority
-              />
-              <div className="absolute left-[78%] sm:left-[80%] md:left-[82%] lg:left-[83%] top-1/2 -translate-y-1/2">
-                <h1 className="text-5xl sm:text-6xl font-extrabold text-[#102E4A] whitespace-nowrap">
-                  Hello there!
-                </h1>
-                <p className="mt-2 text-base md:text-lg text-[#102E4A]/80 leading-tight">
-                  let’s shop, share, and support each other!
-                </p>
-              </div>
-            </div>
-
-            <div className="flex flex-col items-center md:items-end">
-              <span className="text-sm text-[#102E4A]/70 mb-2">
-                Quick links:
-              </span>
-              <div className="flex flex-wrap justify-center md:justify-end gap-2">
-                {[
-                  { label: "🚨 Emergency", id: "emergency" },
-                  { label: "⭐ Featured", id: "featured" },
-                  { label: "🤝 PasaBuy", id: "pasabuy" },
-                  { label: "🎁 Giveaways", id: "giveaways" },
-                ].map((l) => (
-                  <button
-                    key={l.id}
-                    type="button"
-                    onClick={() => goto(l.id)} 
-                    className="rounded-full bg-white border border-[#D0E4F2] px-4 py-1.5 text-sm font-medium text-[#102E4A] shadow-sm hover:bg-[#E7F3FF] hover:scale-105 transition-all"
-                  >
-                    {l.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
+      {/* CATEGORY GRID */}
       <section className="rounded-2xl border bg-white p-5 shadow-sm hover:shadow-md transition-all">
         <div className="flex items-center justify-between">
           <h2 className="font-semibold text-[#102E4A] text-lg">
-            Browse by Category
+            Browse by Category Listing
           </h2>
         </div>
 
-        {/* Category Grid */}
         <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-9 gap-4">
           {[
-            { name: "Home & Furniture", icon: Home },
-            { name: "Pet Supplies", icon: ShoppingBag },
-            { name: "Sports", icon: Dumbbell },
-            { name: "Electronics", icon: Monitor },
-            { name: "Academic", icon: BookOpen },
-            { name: "Clothing", icon: Shirt },
-            { name: "Beauty & Personal Care", icon: Sparkles },
-            { name: "Accessories", icon: Watch },
-            { name: "Hobbies & Toys", icon: Gamepad2 },
-          ].map((cat) => {
-            const Icon = cat.icon;
-            return (
-              <Link
-                key={cat.name}
-                href="#"
-                className="flex flex-col items-center justify-center rounded-xl border bg-white p-4 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md hover:bg-[#E7F3FF]/40"
-              >
-                <Icon className="h-7 w-7 text-[#102E4A] mb-2" />
-                <span className="text-xs font-medium text-[#102E4A] text-center">
+            { name: "Hobbies & Toys", src: "/hobbies.jpg", href: "#" },
+            { name: "Accessories", src: "/accessories.jpg", href: "#" },
+            { name: "Beauty & Personal Care", src: "/beauty.jpg", href: "#" },
+            { name: "Clothing", src: "/clothing.jpg", href: "#" },
+            { name: "Academic", src: "/academic.jpg", href: "#" },
+            { name: "Electronics", src: "/electronics.jpg", href: "#" },
+            { name: "Sports", src: "/sports.jpg", href: "#" },
+            { name: "Pet Supplies", src: "/pet.jpg", href: "#" },
+            { name: "Home & Furniture", src: "/home.jpg", href: "#" },
+          ].map((cat) => (
+            <Link
+              key={cat.name}
+              href={cat.href}
+              className="group relative block overflow-hidden rounded-xl border bg-white shadow-sm transition-all hover:-translate-y-1 hover:shadow-md"
+            >
+              <div className="relative aspect-square w-full">
+                <Image
+                  src={cat.src}
+                  alt={cat.name}
+                  fill
+                  sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 12vw"
+                  className="object-cover transition-transform duration-300 group-hover:scale-105"
+                  priority={false}
+                />
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent opacity-90" />
+                <span className="absolute inset-x-0 bottom-0 m-2 rounded-lg bg-white/85 px-2.5 py-1 text-center text-[11px] font-semibold text-[#102E4A] ring-1 ring-black/10 backdrop-blur group-hover:bg-white">
                   {cat.name}
                 </span>
-              </Link>
-            );
-          })}
+              </div>
+            </Link>
+          ))}
         </div>
       </section>
 
+      {/* MAIN CONTENT SECTIONS */}
       <div className="-mx-4 md:-mx-8 px-4 md:px-8 py-8 bg-white">
         <div className="mx-auto max-w-[1600px] space-y-10">
           {/* Emergency Lending Section */}
@@ -253,7 +185,6 @@ export default function HomePage() {
               </div>
             )}
 
-            {/* Emergency modal */}
             {selectedEmergency && (
               <Dialog
                 open
@@ -373,7 +304,6 @@ export default function HomePage() {
               </div>
             )}
 
-            {/* PasaBuy Modal */}
             {selectedPasaBuy && (
               <Dialog
                 open
