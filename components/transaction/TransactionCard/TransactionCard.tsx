@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import PostTypeBadge from "@/components/postTypeBadge";
 
@@ -10,24 +9,20 @@ export type TxStatus = "active" | "completed" | "cancelled";
 
 export type TransactionCardProps = {
   id: string;
-  type: TxSide; // "Purchases" | "Sales"
-  method: TxMethod; // "Meetup" | "Delivery"
+  type: TxSide;            // "Purchases" | "Sales"
+  method: TxMethod;        // "Meetup" | "Delivery"
   title: string;
   price: number;
   total?: number;
-  image?: string; // default /bluecart.png
+  image?: string;        
   onView: (id: string) => void;
   onPrimary?: (id: string) => void;
   primaryLabel?: string;
-  status?: TxStatus; // 👈 added
-  postType?: string; // 👈 added, e.g. "Sale", "Rent", "Trade"
+  status?: TxStatus;
+  postType?: string;      
 };
 
-function computeLabel(
-  type: TxSide,
-  method: TxMethod,
-  status?: TxStatus
-): string {
+function computeLabel(type: TxSide, method: TxMethod, status?: TxStatus) {
   if (status === "cancelled") return "Cancelled";
   if (type === "Purchases") return "Received";
   return method === "Delivery" ? "Add Delivery" : "Delivered";
@@ -40,83 +35,65 @@ export default function TransactionCard({
   title,
   price,
   total,
-  image,
   onView,
   onPrimary,
   primaryLabel,
   status = "active",
   postType,
 }: TransactionCardProps) {
-  const img = image ?? "/bluecart.png";
-  const badgeText = postType ?? (type === "Sales" ? "Sale" : "Buy"); // ✅ dynamic post type
+  const badgeText = postType ?? (type === "Sales" ? "Sale" : "Buy");
   const action = primaryLabel ?? computeLabel(type, method, status);
-
-  // ✅ Conditional button color
-  const buttonColor =
-    status === "cancelled"
-      ? "bg-red-600 hover:bg-red-700"
-      : "bg-slate-900 hover:bg-slate-800";
-
-  // ✅ Optional dimming for cancelled cards
-  const cardOpacity = status === "cancelled" ? "opacity-80" : "opacity-100";
+  const isCancelled = status === "cancelled";
 
   return (
-    <div
-      className={`relative rounded-md overflow-hidden border border-gray-200 shadow hover:shadow-md transition bg-white flex flex-col h-full ${cardOpacity}`}
+    <tr
+      className={`hover:bg-gray-50 transition-colors cursor-pointer ${isCancelled ? "opacity-80" : ""}`}
+      onClick={() => onView(id)}
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") onView(id);
+      }}
     >
-      {/* Image (same as ItemCard) */}
-      <div className="relative w-full h-60">
-        <Image src={img} alt={title} fill className="object-cover" />
-        <PostTypeBadge
-          type={badgeText as any}
-          className="absolute top-2 left-2 shadow"
-        />
-        {/* Tiny chip for method */}
-        <span className="absolute top-2 right-2 text-[10px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 border border-gray-300">
+      {/* Name */}
+      <td className="px-6 py-4 font-medium text-gray-900">
+        {title}
+      </td>
+
+      {/* Total Price (one only) */}
+      <td className="px-6 py-4 font-semibold text-[#E59E2C] whitespace-nowrap">
+        ₱{(total ?? price).toLocaleString()}
+      </td>
+
+      {/* Listing type (Rent/Sale/Trade) */}
+      <td className="px-6 py-4">
+        <PostTypeBadge type={badgeText as any} className="shadow-sm" />
+      </td>
+
+      {/* Transaction type (Meetup/Delivery) */}
+      <td className="px-6 py-4">
+        <span className="inline-flex items-center text-xs px-3 py-1 rounded-full border bg-gray-50 text-gray-700">
           {method}
         </span>
-      </div>
+      </td>
 
-      <div className="p-3 flex flex-col gap-2 flex-1">
-        <div className="flex items-start justify-between gap-2">
-          <h2 className="text-lg font-semibold text-[#333333] line-clamp-2">
-            {title}
-          </h2>
+      {/* Action */}
+      <td
+        className="px-6 py-4 text-right"
+        onClick={(e) => e.stopPropagation()} 
+      >
+        {onPrimary && (
           <Button
-            variant="outline"
             size="sm"
-            className="rounded-full text-xs px-3 py-0.5 h-7"
-            onClick={() => onView(id)}
+            className={`rounded-full text-xs px-5 h-8 text-white ${
+              isCancelled ? "bg-red-600 hover:bg-red-700" : "bg-slate-900 hover:bg-slate-800"
+            }`}
+            disabled={isCancelled}
+            onClick={() => onPrimary(id)}
           >
-            View
+            {action}
           </Button>
-        </div>
-
-        <p className="text-[#E59E2C] font-medium text-sm">
-          ₱{price.toLocaleString()}
-        </p>
-
-        {/* Footer: Total inline with button */}
-        <div className="mt-auto flex items-center justify-between">
-          <div className="text-sm text-gray-600">
-            <span className="font-medium">Total:</span>{" "}
-            <span className="text-[#E59E2C]">
-              ₱{(total ?? price).toLocaleString()}
-            </span>
-          </div>
-
-          {onPrimary && (
-            <Button
-              size="sm"
-              className={`rounded-full text-xs px-4 h-8 text-white ${buttonColor}`}
-              onClick={() => onPrimary(id)}
-              disabled={status === "cancelled"}
-            >
-              {action}
-            </Button>
-          )}
-        </div>
-      </div>
-    </div>
+        )}
+      </td>
+    </tr>
   );
 }

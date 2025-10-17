@@ -34,7 +34,6 @@ export default function Transactions({ userId }: { userId: string }) {
   const [search, setSearch] = React.useState<string>("");
   const [adv, setAdv] = React.useState<AdvancedFilterValue>({ ...EMPTY_ADV });
 
-  // 👇 NEW: state to control the modal and selected transaction
   const [isModalOpen, setIsModalOpen] = React.useState(false);
   const [selectedTx, setSelectedTx] = React.useState<Tx | null>(null);
 
@@ -55,7 +54,6 @@ export default function Transactions({ userId }: { userId: string }) {
       );
   }, [transactions, statusTab, typeFilter, search]);
 
-  // 👇 helper: open details for a given id
   const handleView = React.useCallback(
     (id: string) => {
       const found = transactions.find((t) => t.id === id) ?? null;
@@ -66,7 +64,7 @@ export default function Transactions({ userId }: { userId: string }) {
   );
 
   const Header = (
-    <div className="sticky top-0 z-20 bg-white border-b flex justify-between items-center gap-4 px-2 py-2">
+    <div className="sticky top-0 z-20 bg-white border-b flex justify-between items-center gap-4 px-4 py-3">
       <TabsList className="flex bg-transparent h-auto">
         {(["active", "completed", "cancelled"] as TxStatus[]).map((tab) => (
           <TabsTrigger key={tab} value={tab} className="tab-trigger capitalize">
@@ -76,7 +74,6 @@ export default function Transactions({ userId }: { userId: string }) {
       </TabsList>
 
       <div className="flex items-center gap-3">
-        {/* Dropdown: All, Sales, Purchases */}
         <DropdownMenu>
           <DropdownMenuTrigger className="flex items-center gap-1 px-3 py-2 border rounded-lg bg-white shadow-sm text-sm font-medium hover:bg-gray-50">
             {typeFilter}
@@ -97,7 +94,7 @@ export default function Transactions({ userId }: { userId: string }) {
         <Input
           type="text"
           placeholder="Search transactions"
-          className="h-9 w-[200px] text-sm"
+          className="h-9 w-[220px] text-sm"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -112,7 +109,7 @@ export default function Transactions({ userId }: { userId: string }) {
     </div>
   );
 
-  const ListBody = (
+  const TableBody = (
     <div className="p-4">
       {isLoading ? (
         <div className="text-sm text-gray-500">Loading transactions...</div>
@@ -121,25 +118,46 @@ export default function Transactions({ userId }: { userId: string }) {
       ) : filtered.length === 0 ? (
         <div className="text-sm text-gray-500">No transactions found.</div>
       ) : (
-        <div className="grid gap-3 md:gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 mt-3">
-          {filtered.map((tx) => (
-            <div key={tx.id} className="h-full">
-              <TransactionCard
-                id={tx.id}
-                type={tx.type}
-                method={tx.method}
-                title={tx.title}
-                price={tx.price}
-                total={tx.total}
-                status={tx.status}
-                postType={tx.post_type}
-                image={tx.image_url}
-                // 👇 UPDATED: open modal with details
-                onView={handleView}
-                onPrimary={(id) => console.log("primary action", id)}
-              />
-            </div>
-          ))}
+        <div className="overflow-x-auto rounded-xl border bg-white">
+          <table className="w-full table-fixed text-sm">
+            {/* Even column spread */}
+            <colgroup>
+              <col style={{ width: "40%" }} />
+              <col style={{ width: "15%" }} />
+              <col style={{ width: "15%" }} />
+              <col style={{ width: "15%" }} />
+              <col style={{ width: "15%" }} />
+            </colgroup>
+
+            <thead className="bg-gray-50 text-gray-700 text-[13px] uppercase font-semibold">
+              <tr>
+                <th className="px-6 py-3 text-left">Name</th>
+                <th className="px-6 py-3 text-left">Total Price</th>
+                <th className="px-6 py-3 text-left">Listing Type</th>
+                <th className="px-6 py-3 text-left">Transaction Type</th>
+                <th className="px-6 py-3 text-right">Action</th>
+              </tr>
+            </thead>
+
+            <tbody className="divide-y">
+              {filtered.map((tx) => (
+                <TransactionCard
+                  key={tx.id}
+                  id={tx.id}
+                  type={tx.type}
+                  method={tx.method}
+                  title={tx.title}
+                  price={tx.price}
+                  total={tx.total}
+                  status={tx.status}
+                  postType={tx.post_type}
+                  image={tx.image_url}
+                  onView={handleView}
+                  onPrimary={(id) => console.log("primary action", id)}
+                />
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </div>
@@ -153,12 +171,11 @@ export default function Transactions({ userId }: { userId: string }) {
         className="w-full"
       >
         {Header}
-        <TabsContent value="active">{ListBody}</TabsContent>
-        <TabsContent value="completed">{ListBody}</TabsContent>
-        <TabsContent value="cancelled">{ListBody}</TabsContent>
+        <TabsContent value="active">{TableBody}</TabsContent>
+        <TabsContent value="completed">{TableBody}</TabsContent>
+        <TabsContent value="cancelled">{TableBody}</TabsContent>
       </Tabs>
 
-      {/* 👇 NEW: Details modal (data shaped straight from your Tx type) */}
       <TransactionDetailsModal
         open={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -172,10 +189,10 @@ export default function Transactions({ userId }: { userId: string }) {
                 method: selectedTx.method,
                 type: selectedTx.type,
                 status: selectedTx.status,
-                created_at: (selectedTx as any).created_at, // keep if present in your Tx
-                buyer: (selectedTx as any).buyer_name,      // adapt to your schema
-                seller: (selectedTx as any).seller_name,    // adapt to your schema
-                address: (selectedTx as any).address,       // adapt to your schema
+                created_at: (selectedTx as any).created_at,
+                buyer: (selectedTx as any).buyer_name,
+                seller: (selectedTx as any).seller_name,
+                address: (selectedTx as any).address,
               }
             : undefined
         }

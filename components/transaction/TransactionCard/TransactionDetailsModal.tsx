@@ -11,7 +11,6 @@ import {
   BadgeCheck,
   Package,
   ReceiptText,
-  Truck,
   Calendar,
   MapPin,
   X,
@@ -83,13 +82,13 @@ export default function TransactionDetailsModal({
       >
         {/* Header */}
         <div className="relative">
-          <div className="absolute inset-0 bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 rounded-t-2xl" />
+          <div className="absolute inset-0 rounded-t-2xl bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800" />
 
           <button
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="absolute top-2.5 right-3.5 z-10 text-white hover:text-gray-300 transition-colors"
+            className="absolute right-3.5 top-2.5 z-10 text-white transition-colors hover:text-gray-300"
           >
             <X className="h-5 w-5" />
           </button>
@@ -153,8 +152,8 @@ export default function TransactionDetailsModal({
           <div className="space-y-2 text-sm text-slate-700">
             <div className="flex items-center gap-2">
               <Tag>{data.type}</Tag>
-              <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-xs text-slate-700 ring-1 ring-slate-200">
-                <Truck className="h-3.5 w-3.5" />
+
+              <span className="inline-flex items-center text-xs px-3 py-1 rounded-full border bg-gray-50 text-gray-700">
                 {data.method}
               </span>
             </div>
