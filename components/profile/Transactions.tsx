@@ -183,6 +183,7 @@ export default function Transactions({ userId }: { userId: string }) {
           selectedTx
             ? {
                 id: selectedTx.id,
+                reference_code: selectedTx.reference_code,
                 title: selectedTx.title,
                 price: selectedTx.price,
                 total: selectedTx.total ?? selectedTx.price,

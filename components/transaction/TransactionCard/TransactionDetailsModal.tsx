@@ -22,6 +22,7 @@ type TransactionDetailsModalProps = {
   onClose: () => void;
   data?: {
     id: string;
+    reference_code: string | undefined;
     title: string;
     price: number;
     total: number;
@@ -77,6 +78,8 @@ export default function TransactionDetailsModal({
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent
+        onInteractOutside={(e) => e.preventDefault()}
+        onEscapeKeyDown={(e) => e.preventDefault()}
         className="max-w-lg overflow-hidden rounded-2xl p-0 shadow-xl"
         aria-describedby={undefined}
       >
@@ -88,7 +91,7 @@ export default function TransactionDetailsModal({
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="absolute right-3.5 top-2.5 z-10 text-white transition-colors hover:text-gray-300"
+            className="absolute right-3.5 top-2.5 z-10 text-white transition-colors hover:text-gray-300 hover:cursor-pointer"
           >
             <X className="h-5 w-5" />
           </button>
@@ -105,7 +108,7 @@ export default function TransactionDetailsModal({
                 </DialogTitle>
               </DialogHeader>
               <p className="text-xs text-white/70">
-                Ref: <span className="font-mono">{data.id}</span>
+                Ref: <span className="font-mono">{data.reference_code}</span>
               </p>
             </div>
 

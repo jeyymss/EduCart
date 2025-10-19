@@ -227,11 +227,11 @@ export default function ItemDetailsPage() {
 
             <div className="flex gap-3">
               <MessageSellerButton
-                className="flex-1 bg-[#F3D58D] hover:bg-[#F3D58D]/90 text-black font-medium py-3"
+                className="flex-1 bg-[#F3D58D] hover:bg-[#F3D58D]/90 text-black font-medium py-3 hover:cursor-pointer"
                 postId={item.post_id}
                 sellerId={item.post_user_id}
               />
-              <Button variant="outline" className="flex-1 py-3 bg-transparent">
+              <Button variant="outline" className="flex-1 py-3 bg-transparent hover:cursor-pointer">
                 Make an Offer
               </Button>
             </div>
