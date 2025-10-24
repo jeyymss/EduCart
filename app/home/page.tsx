@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
 
@@ -31,6 +31,16 @@ import {
 } from "@/hooks/queries/displayItems";
 import { useGiveawayPosts } from "@/hooks/queries/GiveawayPosts";
 
+import dynamic from "next/dynamic";
+// Mobile ribbon 
+const MobileTopNav = dynamic(() => import("@/components/mobile/MobileTopNav"), {
+  ssr: false,
+});
+
+const cv = { contentVisibility: "auto" as const, containIntrinsicSize: "800px" };
+const hoverCard =
+  "transition-all duration-300 md:hover:-translate-y-1 md:hover:shadow-lg rounded-2xl bg-white";
+
 function SectionHeader({
   title,
   count,
@@ -41,9 +51,9 @@ function SectionHeader({
   href?: string;
 }) {
   return (
-    <div className="mb-3 flex items-end justify-between">
-      <div className="flex items-center gap-3">
-        <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight text-[#102E4A]">
+    <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
+      <div className="flex flex-wrap items-center gap-3">
+        <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight text-[#102E4A]">
           {title}
         </h2>
         {typeof count === "number" && (
@@ -52,7 +62,7 @@ function SectionHeader({
           </span>
         )}
       </div>
-      <Link href={href}>
+      <Link href={href} className="shrink-0">
         <Button
           variant="ghost"
           className="h-8 px-3 text-[#577C8E] hover:bg-[#577C8E]/10"
@@ -67,6 +77,9 @@ function SectionHeader({
 export default function HomePage() {
   const router = useRouter();
   const [q, setQ] = useState("");
+
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   const {
     data: items = [],
@@ -111,46 +124,62 @@ export default function HomePage() {
   }
 
   return (
-    <div className="px-0 md:px-0 py-0 bg-white scroll-smooth">
-     {/* SEARCH RIBBON */}
-<div className="w-full bg-[#102E4A] mt-0 pt-0">
-  <div className="mx-auto max-w-[1600px] px-4 md:px-8 py-6 md:py-8">
-    <form
-      onSubmit={handleSearchSubmit}
-      className="flex justify-center"
-      role="search"
-      aria-label="Site search"
-    >
-      <div className="relative w-full max-w-2xl md:max-w-3xl mt-3">
-        <input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="Search anything…"
-          className="w-full rounded-full bg-white pr-12 pl-4 md:pl-5 h-12 md:h-12 text-[15px] outline-none shadow-md ring-1 ring-black/10 placeholder:text-gray-400"
-        />
-        <button
-          type="submit"
-          aria-label="Search"
-          className="absolute right-1.5 top-1/2 -translate-y-1/2 inline-flex h-9 w-9 items-center justify-center rounded-full bg-[#E7F3FF] ring-1 ring-black/10 hover:bg-white transition"
-        >
-          <Search className="h-4 w-4 text-[#102E4A]" />
-        </button>
+    <div className="bg-white scroll-smooth pt-2 md:pt-0">
+      {/* MOBILE PRIMARY NAV RIBBON (md:hidden) */}
+      <MobileTopNav />
+
+      {/* SEARCH RIBBON */}
+      <div className="w-full bg-[#102E4A]">
+        <div className="mx-auto max-w-[1600px] px-4 sm:px-6 md:px-8 py-5 sm:py-6 md:py-8">
+          <form
+            onSubmit={handleSearchSubmit}
+            className="flex justify-center"
+            role="search"
+            aria-label="Site search"
+            suppressHydrationWarning
+          >
+            <div className="relative w-full max-w-xl sm:max-w-2xl md:max-w-3xl">
+              {mounted ? (
+                <input
+                  value={q}
+                  onChange={(e) => setQ(e.target.value)}
+                  placeholder="Search anything…"
+                  className="w-full rounded-full bg-white pr-12 pl-4 md:pl-5 h-11 sm:h-12 text-[15px] outline-none shadow-md ring-1 ring-black/10 placeholder:text-gray-400"
+                />
+              ) : (
+                <input
+                  defaultValue=""
+                  readOnly
+                  placeholder="Search anything…"
+                  className="w-full rounded-full bg-white pr-12 pl-4 md:pl-5 h-11 sm:h-12 text-[15px] outline-none shadow-md ring-1 ring-black/10 placeholder:text-gray-400"
+                />
+              )}
+
+              <button
+                type="submit"
+                aria-label="Search"
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 inline-flex h-9 w-9 items-center justify-center rounded-full bg-[#E7F3FF] ring-1 ring-black/10 hover:bg-white transition"
+              >
+                <Search className="h-4 w-4 text-[#102E4A]" />
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
-    </form>
-  </div>
-</div>
 
-
-      <div className="px-4 md:px-8 py-8 space-y-10">
+      <div className="px-4 sm:px-6 md:px-8 py-8 space-y-10 max-w-[1600px] mx-auto">
         {/* CATEGORY GRID */}
-        <section className="rounded-2xl border bg-white p-5 shadow-sm hover:shadow-md transition-all">
+        <section
+          className="rounded-2xl border bg-white p-4 sm:p-5 shadow-sm md:hover:shadow-md transition-all"
+          style={cv}
+        >
           <div className="flex items-center justify-between">
-            <h2 className="font-semibold text-[#102E4A] text-lg">
+            <h2 className="font-semibold text-[#102E4A] text-base sm:text-lg">
               Browse by Category Listing
             </h2>
           </div>
 
-          <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-9 gap-4">
+          <div className="mt-4 grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-9 gap-3 sm:gap-4">
             {[
               { name: "Hobbies & Toys", src: "/hobbies.jpg", href: "#" },
               { name: "Accessories", src: "/accessories.jpg", href: "#" },
@@ -165,19 +194,20 @@ export default function HomePage() {
               <Link
                 key={cat.name}
                 href={cat.href}
-                className="group relative block overflow-hidden rounded-xl border bg-white shadow-sm transition-all hover:-translate-y-1 hover:shadow-md"
+                className="group relative block overflow-hidden rounded-xl border bg-white shadow-sm md:hover:-translate-y-1 md:hover:shadow-md transition-all"
               >
                 <div className="relative aspect-square w-full">
                   <Image
                     src={cat.src}
                     alt={cat.name}
                     fill
-                    sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 12vw"
+                    loading="lazy"
+                    decoding="async"
+                    sizes="(max-width: 640px) 45vw, (max-width: 768px) 30vw, (max-width: 1024px) 18vw, 12vw"
                     className="object-cover transition-transform duration-300 group-hover:scale-105"
-                    priority={false}
                   />
                   <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent opacity-90" />
-                  <span className="absolute inset-x-0 bottom-0 m-2 rounded-lg bg-white/85 px-2.5 py-1 text-center text-[11px] font-semibold text-[#102E4A] ring-1 ring-black/10 backdrop-blur group-hover:bg-white">
+                  <span className="absolute inset-x-0 bottom-0 m-2 rounded-lg bg-white/85 px-2.5 py-1 text-center text-[10px] sm:text-[11px] font-semibold text-[#102E4A] ring-1 ring-black/10 backdrop-blur md:group-hover:bg-white">
                     {cat.name}
                   </span>
                 </div>
@@ -187,10 +217,14 @@ export default function HomePage() {
         </section>
 
         {/* MAIN CONTENT SECTIONS */}
-        <div className="-mx-4 md:-mx-8 px-4 md:px-8 py-8 bg-white">
-          <div className="mx-auto max-w-[1600px] space-y-10">
-            {/* Emergency Lending Section */}
-            <section id="emergency" className="scroll-mt-32 md:scroll-mt-36 lg:scroll-mt-40">
+        <div className="-mx-4 sm:-mx-6 md:-mx-8 px-4 sm:px-6 md:px-8 py-8 bg-white">
+          <div className="mx-auto max-w-[1600px] space-y-12">
+            {/* Emergency Lending */}
+            <section
+              id="emergency"
+              className="scroll-mt-28 sm:scroll-mt-32 md:scroll-mt-36 lg:scroll-mt-40"
+              style={cv}
+            >
               <SectionHeader
                 title="Emergency Lending"
                 count={emergency?.length ?? 0}
@@ -213,7 +247,7 @@ export default function HomePage() {
                       key={emg.post_id}
                       type="button"
                       onClick={() => setSelectedEmergency(emg)}
-                      className="text-left transition-all duration-300 transform hover:-translate-y-1 hover:shadow-lg rounded-2xl bg-white focus:outline-none"
+                      className={`${hoverCard} text-left focus:outline-none`}
                     >
                       <EmergencyCard
                         id={emg.post_id}
@@ -264,17 +298,24 @@ export default function HomePage() {
               )}
             </section>
 
-            {/* Featured Listing Section */}
-            <section id="featured" className="scroll-mt-32 md:scroll-mt-36 lg:scroll-mt-40">
+            {/* Featured Listing */}
+            <section
+              id="featured"
+              className="scroll-mt-28 sm:scroll-mt-32 md:scroll-mt-36 lg:scroll-mt-40"
+              style={cv}
+            >
               <SectionHeader
                 title="Featured Listing"
                 count={items?.length ?? 0}
                 href="#"
               />
               {itemLoading ? (
-                <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-thin scrollbar-thumb-gray-300">
+                <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-thin scrollbar-thumb-gray-300 py-1">
                   {Array.from({ length: 5 }).map((_, a) => (
-                    <div key={a} className="min-w-[340px] md:min-w-[360px] snap-start">
+                    <div
+                      key={a}
+                      className="min-w-[280px] sm:min-w-[320px] md:min-w-[360px] snap-start"
+                    >
                       <ItemCardSkeleton />
                     </div>
                   ))}
@@ -284,11 +325,11 @@ export default function HomePage() {
                   No items available.
                 </div>
               ) : (
-                <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-thin scrollbar-thumb-gray-300">
+                <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-thin scrollbar-thumb-gray-300 py-1">
                   {items.map((item) => (
                     <div
                       key={item.post_id}
-                      className="min-w-[340px] md:min-w-[360px] snap-start transition-all duration-300 transform hover:-translate-y-1 hover:shadow-lg rounded-2xl bg-white"
+                      className="min-w-[280px] sm:min-w-[320px] md:min-w-[360px] snap-start md:hover:shadow-lg rounded-2xl bg-white"
                     >
                       <ItemCard
                         id={item.post_id}
@@ -308,8 +349,12 @@ export default function HomePage() {
               )}
             </section>
 
-            {/* PasaBuy Section */}
-            <section id="pasabuy" className="scroll-mt-32 md:scroll-mt-36 lg:scroll-mt-40">
+            {/* PasaBuy */}
+            <section
+              id="pasabuy"
+              className="scroll-mt-28 sm:scroll-mt-32 md:scroll-mt-36 lg:scroll-mt-40"
+              style={cv}
+            >
               <SectionHeader
                 title="PasaBuy Posts"
                 count={pasabuy?.length ?? 0}
@@ -332,7 +377,7 @@ export default function HomePage() {
                       key={post.post_id}
                       type="button"
                       onClick={() => setSelectedPasaBuy(post)}
-                      className="text-left transition-all duration-300 transform hover:-translate-y-1 hover:shadow-lg rounded-2xl bg-white focus:outline-none"
+                      className={`${hoverCard} text-left focus:outline-none`}
                     >
                       <PasabuyCard
                         id={post.post_id}
@@ -383,8 +428,12 @@ export default function HomePage() {
               )}
             </section>
 
-            {/* Donation & Giveaways Section */}
-            <section id="giveaways" className="scroll-mt-32 md:scroll-mt-36 lg:scroll-mt-40">
+            {/* Donation & Giveaways */}
+            <section
+              id="giveaways"
+              className="scroll-mt-28 sm:scroll-mt-32 md:scroll-mt-36 lg:scroll-mt-40"
+              style={cv}
+            >
               <SectionHeader
                 title="Donation & Giveaways"
                 count={giveaways?.length ?? 0}
@@ -401,10 +450,7 @@ export default function HomePage() {
                   </div>
                 ) : (
                   giveaways.map((post) => (
-                    <div
-                      key={post.id}
-                      className="transition-all duration-300 transform hover:-translate-y-1 hover:shadow-lg rounded-2xl bg-white"
-                    >
+                    <div key={post.id} className={hoverCard}>
                       <GiveawayPostCard post={post} />
                     </div>
                   ))
