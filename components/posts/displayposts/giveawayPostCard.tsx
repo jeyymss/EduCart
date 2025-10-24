@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { createPortal } from "react-dom";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,21 +13,23 @@ import {
   GiveawayPost,
   GiveawayComment,
 } from "@/hooks/queries/GiveawayPosts";
-import { Heart } from "lucide-react";
+import { Heart, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { getRelativeTime } from "@/utils/getRelativeTime";
-import Link from "next/link";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useUserProfile } from "@/hooks/useUserProfile";
+
+/* full-screen modal */
+function Portal({ children }: { children: React.ReactNode }) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  if (!mounted) return null;
+  return createPortal(children, document.body);
+}
 
 export default function GiveawayFeed() {
   const { data: posts, isLoading } = useGiveawayPosts();
 
   if (isLoading) return <p>Loading posts...</p>;
-
   if (!posts || posts.length === 0) return <p>No giveaway posts yet.</p>;
 
   return (
@@ -49,10 +53,48 @@ export function GiveawayPostCard({ post }: { post: GiveawayPost }) {
   const profileLink =
     profile?.id === post.post_user_id ? `/profile` : `/${post.post_user_id}`;
 
-  // ✅ show only 3 unless expanded
-  const visibleComments = showAllComments
-    ? comments || []
-    : (comments || []).slice(0, 3);
+  // images
+  const images = useMemo<string[]>(
+    () => (Array.isArray(post.image_urls) ? post.image_urls.filter(Boolean) : []),
+    [post.image_urls]
+  );
+  const imgCount = images.length;
+
+  // Modal
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+
+  const openModalAt = (idx: number) => {
+    setSelectedImageIndex(idx);
+    setIsModalOpen(true);
+  };
+
+  const goPrev = useCallback(() => {
+    setSelectedImageIndex((i) => (imgCount ? (i - 1 + imgCount) % imgCount : 0));
+  }, [imgCount]);
+
+  const goNext = useCallback(() => {
+    setSelectedImageIndex((i) => (imgCount ? (i + 1) % imgCount : 0));
+  }, [imgCount]);
+
+  // scroll lock
+  useEffect(() => {
+    if (!isModalOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setIsModalOpen(false);
+      if (e.key === "ArrowLeft") goPrev();
+      if (e.key === "ArrowRight") goNext();
+    };
+    window.addEventListener("keydown", onKey);
+    const original = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = original;
+    };
+  }, [isModalOpen, goPrev, goNext]);
+
+  const visibleComments = showAllComments ? comments || [] : (comments || []).slice(0, 3);
 
   return (
     <div className="border rounded-lg bg-white shadow-sm">
@@ -76,10 +118,7 @@ export function GiveawayPostCard({ post }: { post: GiveawayPost }) {
               <h1>Visit Profile</h1>
             </TooltipContent>
           </Tooltip>
-
-          <p className="text-xs text-gray-500">
-            {getRelativeTime(post.created_at)}
-          </p>
+          <p className="text-xs text-gray-500">{getRelativeTime(post.created_at)}</p>
         </div>
       </div>
 
@@ -88,23 +127,53 @@ export function GiveawayPostCard({ post }: { post: GiveawayPost }) {
         <h3 className="text-lg font-semibold">{post.item_title}</h3>
         <div className="flex gap-2 mt-1 text-xs">
           {post.item_condition && (
-            <span className="bg-gray-200 rounded px-2 py-0.5">
-              {post.item_condition}
-            </span>
+            <span className="bg-gray-200 rounded px-2 py-0.5">{post.item_condition}</span>
           )}
           {post.category_name && (
-            <span className="bg-gray-200 rounded px-2 py-0.5">
-              {post.category_name}
-            </span>
+            <span className="bg-gray-200 rounded px-2 py-0.5">{post.category_name}</span>
           )}
         </div>
-        <p className="mt-2 text-gray-700 mb-2">{post.item_description}</p>
-        {post.image_urls?.[0] && (
-          <img
-            src={post.image_urls[0]}
-            alt={post.item_title}
-            className="w-full mt-3 mb-3 rounded-lg"
-          />
+
+        <p className="mt-2 text-gray-700">{post.item_description}</p>
+
+        {/* Feed Image(s) */}
+        {imgCount > 0 && (
+          <div className="mt-3 mb-3">
+            <button
+              type="button"
+              onClick={() => openModalAt(0)}
+              className="relative block w-full overflow-hidden rounded-lg bg-black/5"
+              aria-label="Open image"
+            >
+              <img
+                src={images[0]}
+                alt={post.item_title}
+                className="w-full h-auto max-h-[520px] object-cover rounded-lg transition-transform duration-200 hover:scale-[1.01]"
+                loading="lazy"
+                decoding="async"
+              />
+              {imgCount > 1 && (
+                <span className="absolute bottom-2 right-2 rounded-full bg-black/70 text-white text-xs px-2 py-1">
+                  +{imgCount - 1} more
+                </span>
+              )}
+            </button>
+
+            {imgCount > 1 && (
+              <div className="mt-2 flex gap-2 overflow-x-auto">
+                {images.slice(1, 5).map((url, i) => (
+                  <button
+                    key={url + i}
+                    onClick={() => openModalAt(i + 1)}
+                    className="relative w-20 h-20 flex-none overflow-hidden rounded-md hover:opacity-90"
+                    aria-label={`Open image ${i + 2}`}
+                  >
+                    <img src={url} alt={`Thumbnail ${i + 2}`} className="w-full h-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         )}
       </div>
 
@@ -115,7 +184,6 @@ export function GiveawayPostCard({ post }: { post: GiveawayPost }) {
 
       {/* Actions */}
       <div className="flex gap-3 px-4 py-2 border-t text-sm text-gray-600">
-        {/* Like Button with Heart + Count */}
         <Button
           variant="ghost"
           size="sm"
@@ -125,18 +193,11 @@ export function GiveawayPostCard({ post }: { post: GiveawayPost }) {
             post.is_liked ? "text-red-500" : "text-gray-400"
           } hover:text-red-600 transition-colors`}
         >
-          {/* Counter */}
           <span className="text-sm">{post.like_count}</span>
-
-          {/* Heart icon */}
           <Heart className={`h-6 w-6 ${post.is_liked ? "fill-red-500" : ""}`} />
         </Button>
 
-        {/* Comment Button */}
-        <Button
-          variant="ghost"
-          className="flex items-center gap-1 hover:text-blue-500 transition-colors"
-        >
+        <Button variant="ghost" className="flex items-center gap-1 hover:text-blue-500 transition-colors">
           Comment
         </Button>
       </div>
@@ -147,17 +208,12 @@ export function GiveawayPostCard({ post }: { post: GiveawayPost }) {
           <Comment key={c.id} comment={c} postId={post.id} />
         ))}
 
-        {/* View All Button */}
         {!showAllComments && comments && comments.length > 3 && (
-          <button
-            onClick={() => setShowAllComments(true)}
-            className="text-sm text-blue-600 mt-2"
-          >
+          <button onClick={() => setShowAllComments(true)} className="text-sm text-blue-600 mt-2">
             View all {comments.length} comments
           </button>
         )}
 
-        {/* Add Comment */}
         <div className="mt-3 flex gap-2">
           <input
             className="border rounded px-2 py-1 flex-1"
@@ -177,10 +233,85 @@ export function GiveawayPostCard({ post }: { post: GiveawayPost }) {
           </Button>
         </div>
       </div>
+
+      {/* FULL-SCREEN MODAL */}
+      {isModalOpen && imgCount > 0 && (
+        <Portal>
+          <div
+            className="fixed inset-0 z-[9999] bg-black/80 flex items-center justify-center"
+            onClick={() => setIsModalOpen(false)}
+            aria-modal="true"
+            role="dialog"
+          >
+            <div
+              className="relative w-full h-full flex items-center justify-center p-4 md:p-8"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="relative inline-flex items-center">
+                {/* Image frame */}
+                <div
+                  className="
+                    relative overflow-hidden rounded-lg shadow-2xl
+                    max-w-[min(92vw,56rem)] max-h-[80vh] bg-black/10
+                  "
+                >
+                  <img
+                    src={images[selectedImageIndex] || "/placeholder.svg"}
+                    alt="Full view"
+                    className="block w-auto h-auto max-w-[min(92vw,56rem)] max-h-[80vh] object-contain"
+                    draggable={false}
+                  />
+                </div>
+
+                {/* LEFT arrow */}
+                {imgCount > 1 && (
+                  <button
+                    type="button"
+                    className="absolute left-[-3.5rem] top-1/2 -translate-y-1/2 bg-white/95 hover:bg-white rounded-full p-3 shadow"
+                    onClick={goPrev}
+                    aria-label="Previous image"
+                  >
+                    <ChevronLeft className="h-6 w-6 text-black" />
+                  </button>
+                )}
+
+                {/* RIGHT arrow */}
+                {imgCount > 1 && (
+                  <button
+                    type="button"
+                    className="absolute right-[-3.5rem] top-1/2 -translate-y-1/2 bg-white/95 hover:bg-white rounded-full p-3 shadow"
+                    onClick={goNext}
+                    aria-label="Next image"
+                  >
+                    <ChevronRight className="h-6 w-6 text-black" />
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  className="absolute right-[-3.5rem] -top-4 bg-white/95 hover:bg-white rounded-full p-2 shadow"
+                  onClick={() => setIsModalOpen(false)}
+                  aria-label="Close image viewer"
+                >
+                  <X className="h-5 w-5 text-black" />
+                </button>
+
+                {/* Counter under the frame */}
+                {imgCount > 1 && (
+                  <div className="absolute left-1/2 -translate-x-1/2 mt-[calc(100%+12px)] text-white text-sm bg-black/50 inline-block px-3 py-1 rounded-full">
+                    {selectedImageIndex + 1} / {imgCount}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </Portal>
+      )}
     </div>
   );
 }
 
+/* Comment Component */
 function Comment({
   comment,
   postId,
@@ -191,15 +322,13 @@ function Comment({
   const [showReply, setShowReply] = useState(false);
   const [replyText, setReplyText] = useState("");
   const [showReplies, setShowReplies] = useState(false);
-
-  // ✅ always use postId, not comment.post_id
   const addComment = useAddGiveawayComment(postId);
 
   const handleReply = () => {
     if (!replyText.trim()) return;
     addComment.mutate({ body: replyText, parentId: comment.id });
     setReplyText("");
-    setShowReply(false); // hide box after posting
+    setShowReply(false);
   };
 
   return (
@@ -209,21 +338,16 @@ function Comment({
         <AvatarFallback>{comment.full_name?.[0]}</AvatarFallback>
       </Avatar>
       <div className="flex-1">
-        {/* Comment Content */}
         <p className="text-sm font-medium">{comment.full_name}</p>
         <p className="text-sm text-gray-700">{comment.content}</p>
-        <p className="text-xs text-gray-500">
-          {getRelativeTime(comment.created_at)}
-        </p>
+        <p className="text-xs text-gray-500">{getRelativeTime(comment.created_at)}</p>
 
-        {/* Action buttons */}
         <div className="flex gap-3 mt-1 text-xs text-gray-600">
           <button onClick={() => setShowReply((prev) => !prev)}>
             {showReply ? "Cancel" : "Reply"}
           </button>
         </div>
 
-        {/* Reply input (only visible when Reply is clicked) */}
         {showReply && (
           <div className="mt-2 flex gap-2">
             <input
@@ -242,18 +366,13 @@ function Comment({
           </div>
         )}
 
-        {/* Nested replies */}
         {comment.replies?.length > 0 && (
           <div className="ml-8 mt-2 border-l pl-3">
             {comment.replies.slice(0, showReplies ? undefined : 1).map((r) => (
-              <Comment key={r.id} comment={r} postId={postId} /> // ✅ always forward postId
+              <Comment key={r.id} comment={r} postId={postId} />
             ))}
-
             {comment.replies.length > 1 && !showReplies && (
-              <button
-                onClick={() => setShowReplies(true)}
-                className="text-sm text-blue-600 mt-1"
-              >
+              <button onClick={() => setShowReplies(true)} className="text-sm text-blue-600 mt-1">
                 View all {comment.replies.length} replies
               </button>
             )}
