@@ -32,7 +32,7 @@ import {
 import { useGiveawayPosts } from "@/hooks/queries/GiveawayPosts";
 
 import dynamic from "next/dynamic";
-// Mobile ribbon 
+// Mobile ribbon
 const MobileTopNav = dynamic(() => import("@/components/mobile/MobileTopNav"), {
   ssr: false,
 });
@@ -76,7 +76,7 @@ function SectionHeader({
 
 export default function HomePage() {
   const router = useRouter();
-  const [q, setQ] = useState("");
+  const [q, setQ] = useState<string>("");
 
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
@@ -118,14 +118,14 @@ export default function HomePage() {
   if (itemError && emergencyError) {
     return (
       <div className="px-4 md:px-8 py-10">
-        Error: {(itemError && (emergencyError as Error)).message}
+        Error: {(emergencyError as Error).message}
       </div>
     );
   }
 
   return (
     <div className="bg-white scroll-smooth pt-2 md:pt-0">
-      {/* MOBILE PRIMARY NAV RIBBON (md:hidden) */}
+      {/* MOBILE PRIMARY NAV RIBBON*/}
       <MobileTopNav />
 
       {/* SEARCH RIBBON */}
@@ -139,21 +139,15 @@ export default function HomePage() {
             suppressHydrationWarning
           >
             <div className="relative w-full max-w-xl sm:max-w-2xl md:max-w-3xl">
-              {mounted ? (
-                <input
-                  value={q}
-                  onChange={(e) => setQ(e.target.value)}
-                  placeholder="Search anything…"
-                  className="w-full rounded-full bg-white pr-12 pl-4 md:pl-5 h-11 sm:h-12 text-[15px] outline-none shadow-md ring-1 ring-black/10 placeholder:text-gray-400"
-                />
-              ) : (
-                <input
-                  defaultValue=""
-                  readOnly
-                  placeholder="Search anything…"
-                  className="w-full rounded-full bg-white pr-12 pl-4 md:pl-5 h-11 sm:h-12 text-[15px] outline-none shadow-md ring-1 ring-black/10 placeholder:text-gray-400"
-                />
-              )}
+              <input
+                value={q ?? ""}               
+                onChange={(e) => setQ(e.target.value)}
+                readOnly={!mounted}           
+                placeholder="Search anything…"
+                className="w-full rounded-full bg-white pr-12 pl-4 md:pl-5 h-11 sm:h-12 text-[15px] outline-none shadow-md ring-1 ring-black/10 placeholder:text-gray-400"
+                autoComplete="off"
+                inputMode="search"
+              />
 
               <button
                 type="submit"

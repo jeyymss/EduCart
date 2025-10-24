@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { createPortal } from "react-dom";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -93,7 +93,7 @@ export function GiveawayPostCard({ post }: { post: GiveawayPost }) {
     };
   }, [isModalOpen, goPrev, goNext]);
 
-  // show 1 comment only by default
+  // show 1 comment by default
   const visibleComments = showAllComments ? comments || [] : (comments || []).slice(0, 1);
   const hasMoreThanOne = (comments?.length || 0) > 1;
 
@@ -188,7 +188,7 @@ export function GiveawayPostCard({ post }: { post: GiveawayPost }) {
       {/* Comments */}
       <div className="px-4 py-2">
         {visibleComments.map((c) => (
-          <Comment key={c.id} comment={c} postId={post.id} />
+          <CommentItem key={c.id} comment={c} postId={post.id} />
         ))}
 
         {!showAllComments && hasMoreThanOne && (
@@ -233,64 +233,205 @@ export function GiveawayPostCard({ post }: { post: GiveawayPost }) {
       {/* Modal */}
       {isModalOpen && imgCount > 0 && (
         <Portal>
-          <div
-            className="fixed inset-0 z-[9999] bg-black/80 flex items-center justify-center"
-            onClick={() => setIsModalOpen(false)}
-          >
-            <div
-              className="relative w-full h-full flex items-center justify-center p-4 md:p-8"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="relative inline-flex items-center">
-                <div className="relative overflow-hidden rounded-lg shadow-2xl max-w-[min(92vw,56rem)] max-h-[80vh] bg-black/10">
-                  <img
-                    src={images[selectedImageIndex] || "/placeholder.svg"}
-                    alt="Full view"
-                    className="block w-auto h-auto max-w-[min(92vw,56rem)] max-h-[80vh] object-contain"
-                    draggable={false}
-                  />
-                </div>
-
-                {imgCount > 1 && (
-                  <>
-                    <button
-                      className="absolute left-[-3.5rem] top-1/2 -translate-y-1/2 bg-white/95 rounded-full p-3 shadow hover:bg-white"
-                      onClick={goPrev}
-                    >
-                      <ChevronLeft className="h-6 w-6 text-black" />
-                    </button>
-                    <button
-                      className="absolute right-[-3.5rem] top-1/2 -translate-y-1/2 bg-white/95 rounded-full p-3 shadow hover:bg-white"
-                      onClick={goNext}
-                    >
-                      <ChevronRight className="h-6 w-6 text-black" />
-                    </button>
-                  </>
-                )}
-
-                <button
-                  className="absolute right-[-3.5rem] -top-4 bg-white/95 hover:bg-white rounded-full p-2 shadow"
-                  onClick={() => setIsModalOpen(false)}
-                >
-                  <X className="h-5 w-5 text-black" />
-                </button>
-
-                {imgCount > 1 && (
-                  <div className="absolute left-1/2 -translate-x-1/2 mt-[calc(100%+12px)] text-white text-sm bg-black/50 inline-block px-3 py-1 rounded-full">
-                    {selectedImageIndex + 1} / {imgCount}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
+          <ModalWithResponsiveGestures
+            images={images}
+            index={selectedImageIndex}
+            setIndex={setSelectedImageIndex}
+            onClose={() => setIsModalOpen(false)}
+            goPrev={goPrev}
+            goNext={goNext}
+            count={imgCount}
+          />
         </Portal>
       )}
     </div>
   );
 }
 
+/* ----------------------------------------------
+  mobile swipe + hard scroll lock
+-----------------------------------------------*/
+function ModalWithResponsiveGestures({
+  images,
+  index,
+  setIndex,
+  onClose,
+  goPrev,
+  goNext,
+  count,
+}: {
+  images: string[];
+  index: number;
+  setIndex: (i: number) => void;
+  onClose: () => void;
+  goPrev: () => void;
+  goNext: () => void;
+  count: number;
+}) {
+  // Strong scroll lock 
+  useEffect(() => {
+    const scrollY = window.scrollY || document.documentElement.scrollTop;
+    const { style } = document.body;
+    const prev = {
+      top: style.top,
+      position: style.position,
+      width: style.width,
+      overflow: style.overflow,
+    };
+    style.position = "fixed";
+    style.top = `-${scrollY}px`;
+    style.width = "100%";
+    style.overflow = "hidden";
+    return () => {
+      style.position = prev.position;
+      style.top = prev.top;
+      style.width = prev.width;
+      style.overflow = prev.overflow;
+      window.scrollTo(0, scrollY);
+    };
+  }, []);
+
+  // swipe 
+  const startX = useRef<number | null>(null);
+  const startY = useRef<number | null>(null);
+  const lastX = useRef<number>(0);
+  const lastT = useRef<number>(0);
+  const deltaX = useRef(0);
+  const isSwiping = useRef(false);
+  const imgWrapRef = useRef<HTMLDivElement | null>(null);
+
+  const TOUCH_THRESHOLD = 30; 
+  const ANGLE_LOCK = 25; 
+  const FLICK_VELOCITY = 0.45; 
+
+  const setTranslate = (x: number, withTransition = false) => {
+    if (!imgWrapRef.current) return;
+    imgWrapRef.current.style.transition = withTransition ? "transform 200ms ease-out" : "none";
+    imgWrapRef.current.style.transform = `translateX(${x}px)`;
+  };
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    const t = e.touches[0];
+    startX.current = t.clientX;
+    startY.current = t.clientY;
+    deltaX.current = 0;
+    isSwiping.current = false;
+    lastX.current = t.clientX;
+    lastT.current = e.timeStamp;
+    setTranslate(0, false);
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    if (startX.current == null || startY.current == null) return;
+    const t = e.touches[0];
+    const dx = t.clientX - startX.current;
+    const dy = t.clientY - startY.current;
+    const angle = Math.abs((Math.atan2(dy, dx) * 180) / Math.PI);
+
+    if (angle < ANGLE_LOCK || angle > 180 - ANGLE_LOCK) {
+      isSwiping.current = true;
+      deltaX.current = dx;
+      setTranslate(dx * 0.15, false); 
+      lastX.current = t.clientX;
+      lastT.current = e.timeStamp;
+      e.preventDefault(); 
+    }
+  };
+
+  const onTouchEnd = (e: React.TouchEvent) => {
+    const dt = Math.max(1, e.timeStamp - lastT.current);
+    const vx = (lastX.current - (startX.current ?? lastX.current)) / dt; // px/ms
+    const shouldFlickNext = vx < -FLICK_VELOCITY;
+    const shouldFlickPrev = vx > FLICK_VELOCITY;
+
+    setTranslate(0, true);
+
+    if (!isSwiping.current) return;
+
+    const abs = Math.abs(deltaX.current);
+    if (abs > TOUCH_THRESHOLD || shouldFlickNext || shouldFlickPrev) {
+      if (deltaX.current < 0 || shouldFlickNext) goNext();
+      else goPrev();
+    }
+
+    startX.current = null;
+    startY.current = null;
+    deltaX.current = 0;
+    isSwiping.current = false;
+
+    setTimeout(() => {
+      if (imgWrapRef.current) imgWrapRef.current.style.transition = "none";
+    }, 210);
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-[9999] bg-black/80 flex items-center justify-center"
+      onClick={onClose} 
+    >
+      <div
+        className="relative w-full h-full flex items-center justify-center p-4 md:p-8"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="relative inline-flex items-center">
+          {/* Image container */}
+          <div
+            ref={imgWrapRef}
+            className="relative overflow-hidden rounded-lg shadow-2xl bg-black/10 will-change-transform touch-pan-y"
+            style={{ maxWidth: "96vw", maxHeight: "90vh" }}
+            onTouchStart={onTouchStart}
+            onTouchMove={onTouchMove}
+            onTouchEnd={onTouchEnd}
+          >
+            <img
+              src={images[index] || "/placeholder.svg"}
+              alt="Full view"
+              className="block w-[96vw] md:w-auto h-auto max-w-[96vw] md:max-w-[min(92vw,56rem)] max-h-[90vh] object-contain select-none"
+              draggable={false}
+            />
+            {count > 1 && (
+              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 rounded-full px-3 py-1 text-xs text-white bg-black/60">
+                {index + 1} / {count}
+              </div>
+            )}
+          </div>
+
+          {/* Arrows outside image ; hidden on mobile */}
+          {count > 1 && (
+            <>
+              <button
+                className="hidden md:flex absolute md:-left-16 top-1/2 -translate-y-1/2 bg-white/95 rounded-full p-3 shadow hover:bg-white"
+                onClick={goPrev}
+                aria-label="Previous image"
+              >
+                <ChevronLeft className="h-6 w-6 text-black" />
+              </button>
+              <button
+                className="hidden md:flex absolute md:-right-16 top-1/2 -translate-y-1/2 bg-white/95 rounded-full p-3 shadow hover:bg-white"
+                onClick={goNext}
+                aria-label="Next image"
+              >
+                <ChevronRight className="h-6 w-6 text-black" />
+              </button>
+            </>
+          )}
+
+          {/* Close button */}
+          <button
+            className="absolute right-2 top-2 md:-top-4 md:-right-14 bg-white/95 hover:bg-white rounded-full p-2 shadow"
+            onClick={onClose}
+            aria-label="Close"
+          >
+            <X className="h-5 w-5 text-black" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* Comment Component */
-function Comment({ comment, postId }: { comment: GiveawayComment; postId: string }) {
+function CommentItem({ comment, postId }: { comment: GiveawayComment; postId: string }) {
   const [showReply, setShowReply] = useState(false);
   const [replyText, setReplyText] = useState("");
   const [showReplies, setShowReplies] = useState(false);
@@ -353,7 +494,7 @@ function Comment({ comment, postId }: { comment: GiveawayComment; postId: string
             {showReplies && (
               <>
                 {comment.replies.map((r) => (
-                  <Comment key={r.id} comment={r} postId={postId} />
+                  <CommentItem key={r.id} comment={r} postId={postId} />
                 ))}
                 <button
                   onClick={() => setShowReplies(false)}
