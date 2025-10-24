@@ -5,6 +5,9 @@ import { Poppins } from "next/font/google";
 import Providers from "./providers";
 import ScrollToTop from "@/components/ScrollToTop";
 import { Toaster } from "@/components/ui/sonner";
+import { LoadingProvider } from "@/components/loading/LoadingOverlay";
+import RouteLoading from "@/components/loading/RouteLoading";
+import { Suspense } from "react";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -26,12 +29,18 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={poppins.className}>
-        <Providers>
-          <HeaderWrapper />
-          <main className="pt-16">{children}</main>
-          <Toaster richColors position="top-right" />
-          <ScrollToTop />
-        </Providers>
+        <LoadingProvider>
+          <Suspense fallback={null}>
+            <RouteLoading />
+
+            <Providers>
+              <HeaderWrapper />
+              <main className="pt-16">{children}</main>
+              <Toaster richColors position="top-right" />
+              <ScrollToTop />
+            </Providers>
+          </Suspense>
+        </LoadingProvider>
       </body>
     </html>
   );
