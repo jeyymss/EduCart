@@ -154,14 +154,14 @@ export function AddDeliveryDialog({
 
         <DialogFooter className="mt-3 flex justify-end gap-2">
           <DialogClose asChild>
-            <Button variant="outline" disabled={isSubmitting}>
+            <Button variant="outline" disabled={isSubmitting} className="hover:cursor-pointer">
               Cancel
             </Button>
           </DialogClose>
           <Button
             onClick={handleSubmit}
             disabled={!selectedCourier || isSubmitting}
-            className="bg-[#102E4A] hover:bg-[#0d2439] text-white transition-all"
+            className="bg-[#102E4A] hover:bg-[#0d2439] text-white transition-all hover:cursor-pointer"
           >
             {isSubmitting ? (
               <>
