@@ -34,12 +34,14 @@ interface AddDeliveryDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   transactionId: string;
+  onUpdated?: () => void;
 }
 
 export function AddDeliveryDialog({
   open,
   onOpenChange,
   transactionId,
+  onUpdated
 }: AddDeliveryDialogProps) {
   const [couriers, setCouriers] = React.useState<Courier[]>([]);
   const [selectedCourier, setSelectedCourier] = React.useState<string>("");
@@ -89,6 +91,8 @@ export function AddDeliveryDialog({
 
       toast.success("Courier successfully assigned!");
       onOpenChange(false);
+      onUpdated?.(); // ✅ trigger parent refetch
+      // window.location.reload(); // optional fallback if no re-fetch system
     } catch (err) {
       console.error("Error updating courier:", err);
       toast.error("Something went wrong while saving.");
@@ -97,6 +101,7 @@ export function AddDeliveryDialog({
       toast.dismiss(loadingToast);
     }
   };
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

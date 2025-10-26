@@ -32,6 +32,7 @@ export async function GET(req: Request) {
     .select(
       `
       id,
+      transaction_id,
       reference_code,
       buyer_id,
       seller_id,
@@ -85,6 +86,7 @@ export async function GET(req: Request) {
 
       return {
         id: row.id,
+        transaction_id: row.transaction_id,
         reference_code: row.reference_code,
         status,
         type: isBuyer ? "Purchases" : "Sales",

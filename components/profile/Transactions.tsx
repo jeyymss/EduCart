@@ -144,6 +144,7 @@ export default function Transactions({ userId }: { userId: string }) {
                 <TransactionCard
                   key={tx.id}
                   id={tx.id}
+                  transactionId={tx.transaction_id}
                   type={tx.type}
                   method={tx.method}
                   title={tx.title}

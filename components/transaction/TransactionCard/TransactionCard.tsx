@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import PostTypeBadge from "@/components/postTypeBadge";
 import {
@@ -15,6 +15,9 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { AddDeliveryDialog } from "@/components/transaction/AddDelivery";
+import { createClient } from "@/utils/supabase/client";
+import { toast } from "sonner";
+import { CourierStatusDialog } from "@/components/transaction/CourierStatusDialog";
 
 export type TxMethod = "Meetup" | "Delivery";
 export type TxSide = "Purchases" | "Sales";
@@ -29,9 +32,10 @@ export type TxStatus =
   | "Processing";
 
 export type TransactionCardProps = {
-  id: string;
-  type: TxSide; // "Purchases" | "Sales"
-  method: TxMethod; // "Meetup" | "Delivery"
+  id: string; // transaction_records.id (for viewing)
+  transactionId: string; // ✅ transactions.id (for updates)
+  type: TxSide;
+  method: TxMethod;
   title: string;
   price: number;
   total?: number;
@@ -43,10 +47,8 @@ export type TransactionCardProps = {
   postType?: string;
 };
 
-// 🧠 Dynamic action label logic
 function computeActionLabel(type: TxSide, status?: TxStatus): string {
   if (!status) return type === "Purchases" ? "Received" : "Add Delivery";
-
   switch (status) {
     case "Cancelled":
     case "cancelled":
@@ -63,6 +65,7 @@ function computeActionLabel(type: TxSide, status?: TxStatus): string {
 
 export default function TransactionCard({
   id,
+  transactionId,
   type,
   method,
   title,
@@ -76,32 +79,85 @@ export default function TransactionCard({
 }: TransactionCardProps) {
   const [openReceived, setOpenReceived] = useState(false);
   const [openDelivery, setOpenDelivery] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [courierId, setCourierId] = useState<number | null>(null); // ✅ new state
+  const supabase = createClient();
 
   const badgeText = postType ?? (type === "Sales" ? "Sale" : "Buy");
   const action = primaryLabel ?? computeActionLabel(type, status);
-  const isCancelled =
+  const isTerminal =
     status?.toLowerCase?.() === "cancelled" ||
     status?.toLowerCase?.() === "completed";
 
-  const handleConfirmReceived = () => {
-    setOpenReceived(false);
-    if (onPrimary) onPrimary(id);
+  // ✅ Fetch courier_id for this transaction
+  useEffect(() => {
+    const fetchCourier = async () => {
+      const { data, error } = await supabase
+        .from("transactions")
+        .select("courier_id")
+        .eq("id", transactionId)
+        .single();
+
+      if (error) {
+        console.warn("Failed to fetch courier_id:", error);
+        return;
+      }
+      setCourierId(data?.courier_id ?? null);
+    };
+
+    if (transactionId) fetchCourier();
+  }, [transactionId, supabase]);
+
+  const handleConfirmReceived = async () => {
+    try {
+      setIsUpdating(true);
+      const loadingToast = toast.loading("Updating transaction...");
+
+      const { data, error } = await supabase
+        .from("transactions")
+        .update({ status: "Completed" })
+        .eq("id", transactionId)
+        .select("*");
+
+      if (error) throw error;
+      if (!data?.length) {
+        console.warn("No rows updated. Check RLS or wrong transactionId.", {
+          transactionId,
+        });
+      }
+
+      toast.success("✅ Transaction marked as completed!");
+      onPrimary?.(transactionId);
+      window.location.reload();
+    } catch (err) {
+      console.error("Error updating transaction:", err);
+      toast.error("❌ Failed to update transaction.");
+    } finally {
+      setIsUpdating(false);
+      setOpenReceived(false);
+    }
   };
+
+  const isReceivedDisabled = !courierId; // ✅ disable if courier_id is null
 
   return (
     <>
-      {/* 🚚 AddDeliveryDialog */}
+      {/* 🚚 AddDeliveryDialog uses the real transactionId */}
       {action === "Add Delivery" && (
         <AddDeliveryDialog
           open={openDelivery}
           onOpenChange={setOpenDelivery}
-          transactionId={id}
+          transactionId={transactionId}
+          onUpdated={() => {
+          setCourierId(1); // Mock instant refresh — ideally refetch
+          onPrimary?.(transactionId);
+        }}
         />
       )}
 
       <tr
         className={`hover:bg-gray-50 transition-colors cursor-pointer ${
-          isCancelled ? "opacity-80" : ""
+          isTerminal ? "opacity-80" : ""
         }`}
         onClick={() => onView(id)}
         tabIndex={0}
@@ -114,7 +170,7 @@ export default function TransactionCard({
 
         {/* Total Price */}
         <td className="px-6 py-4 font-semibold text-[#E59E2C] whitespace-nowrap">
-          ₱{(total ?? price).toLocaleString()}
+          ₱{Number(total ?? price ?? 0).toLocaleString()}
         </td>
 
         {/* Listing Type */}
@@ -130,7 +186,10 @@ export default function TransactionCard({
         </td>
 
         {/* Action Button */}
-        <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
+        <td
+          className="px-6 py-4 text-right"
+          onClick={(e) => e.stopPropagation()}
+        >
           {onPrimary && (
             <>
               {action === "Received" ? (
@@ -138,17 +197,26 @@ export default function TransactionCard({
                   <AlertDialogTrigger asChild>
                     <Button
                       size="sm"
-                      className="rounded-full text-xs px-5 h-8 text-white bg-slate-900 hover:bg-slate-800 hover:cursor-pointer"
+                      className={`rounded-full text-xs px-5 h-8 text-white ${
+                        isReceivedDisabled
+                          ? "bg-gray-400 cursor-not-allowed"
+                          : "bg-slate-900 hover:bg-slate-800 hover:cursor-pointer"
+                      }`}
+                      disabled={isUpdating || isReceivedDisabled}
                     >
-                      {action}
+                      {isUpdating
+                        ? "Processing..."
+                        : isReceivedDisabled
+                        ? "Waiting for courier"
+                        : action}
                     </Button>
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
                       <AlertDialogTitle>Confirm Receipt</AlertDialogTitle>
                       <AlertDialogDescription>
-                        Are you sure you&apos;ve received the item? Once confirmed,
-                        the transaction will be marked as completed.
+                        Are you sure you’ve received the item? Once confirmed, the
+                        transaction will be marked as completed.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -158,20 +226,43 @@ export default function TransactionCard({
                       <AlertDialogAction
                         onClick={handleConfirmReceived}
                         className="hover:cursor-pointer"
+                        disabled={isUpdating}
                       >
-                        Yes, Received
+                        {isUpdating ? "Updating..." : "Yes, Received"}
                       </AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>
               ) : action === "Add Delivery" ? (
-                <Button
-                  size="sm"
-                  className="rounded-full text-xs px-5 h-8 text-white bg-slate-900 hover:bg-slate-800 hover:cursor-pointer"
-                  onClick={() => setOpenDelivery(true)}
-                >
-                  {action}
-                </Button>
+                <>
+                  {!courierId ? (
+                    // ✨ Seller hasn’t added courier yet
+                    <Button
+                      size="sm"
+                      className="rounded-full text-xs px-5 h-8 text-white bg-slate-900 hover:bg-slate-800 hover:cursor-pointer"
+                      onClick={() => setOpenDelivery(true)}
+                    >
+                      Add Delivery
+                    </Button>
+                  ) : (
+                    // ✅ Courier already added — show status modal
+                      <>
+                        <Button
+                          size="sm"
+                          className="rounded-full text-xs px-5 h-8 text-white bg-blue-600 hover:bg-blue-700 hover:cursor-pointer"
+                          onClick={() => setOpenDelivery(true)} // reuse dialog toggle
+                        >
+                          Courier Added
+                        </Button>
+
+                        <CourierStatusDialog
+                          open={openDelivery}
+                          onOpenChange={setOpenDelivery}
+                          transactionId={transactionId}
+                        />
+                      </>
+                    )}
+                </>
               ) : (
                 <Button
                   size="sm"

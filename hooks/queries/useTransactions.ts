@@ -9,6 +9,7 @@ export type TxMethod = "Meetup" | "Delivery";
 
 export interface Tx {
   id: string;
+  transaction_id: string;
   reference_code?: string;
   status: "active" | "completed" | "cancelled";
   type: "Sales" | "Purchases";
