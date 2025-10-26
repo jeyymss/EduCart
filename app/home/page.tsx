@@ -125,46 +125,47 @@ export default function HomePage() {
 
   return (
     <div className="bg-white scroll-smooth pt-2 md:pt-0">
-      {/* MOBILE PRIMARY NAV RIBBON*/}
+      {/* MOBILE PRIMARY NAV RIBBON */}
       <MobileTopNav />
 
-      {/* SEARCH RIBBON */}
-      <div className="w-full bg-[#102E4A]">
-        <div className="mx-auto max-w-[1600px] px-4 sm:px-6 md:px-8 py-5 sm:py-6 md:py-8">
-          <form
-            onSubmit={handleSearchSubmit}
-            className="flex justify-center"
-            role="search"
-            aria-label="Site search"
-            suppressHydrationWarning
-          >
-            <div className="relative w-full max-w-xl sm:max-w-2xl md:max-w-3xl">
-              <input
-                value={q ?? ""}               
-                onChange={(e) => setQ(e.target.value)}
-                readOnly={!mounted}           
-                placeholder="Search anything…"
-                className="w-full rounded-full bg-white pr-12 pl-4 md:pl-5 h-11 sm:h-12 text-[15px] outline-none shadow-md ring-1 ring-black/10 placeholder:text-gray-400"
-                autoComplete="off"
-                inputMode="search"
-              />
+      <div id="home-top-search-origin">
+        <div id="home-top-search" className="w-full bg-[#102E4A]">
+          <div className="mx-auto max-w-[1600px] px-4 sm:px-6 md:px-8 py-3 sm:py-6 md:py-8"> {/* CHANGED: py-5 -> py-3 */}
+            <form
+              onSubmit={handleSearchSubmit}
+              className="flex justify-center"
+              role="search"
+              aria-label="Site search"
+              suppressHydrationWarning
+            >
+              <div className="relative w-full max-w-xl sm:max-w-2xl md:max-w-3xl">
+                <input
+                  value={q ?? ""}
+                  onChange={(e) => setQ(e.target.value)}
+                  readOnly={!mounted}
+                  placeholder="Search anything…"
+                  className="w-full rounded-full bg-white pr-12 pl-4 md:pl-5 h-11 sm:h-12 text-[15px] outline-none shadow-md ring-1 ring-black/10 placeholder:text-gray-400"
+                  autoComplete="off"
+                  inputMode="search"
+                />
 
-              <button
-                type="submit"
-                aria-label="Search"
-                className="absolute right-1.5 top-1/2 -translate-y-1/2 inline-flex h-9 w-9 items-center justify-center rounded-full bg-[#E7F3FF] ring-1 ring-black/10 hover:bg-white transition"
-              >
-                <Search className="h-4 w-4 text-[#102E4A]" />
-              </button>
-            </div>
-          </form>
+                <button
+                  type="submit"
+                  aria-label="Search"
+                  className="absolute right-1.5 top-1/2 -translate-y-1/2 inline-flex h-9 w-9 items-center justify-center rounded-full bg-[#E7F3FF] ring-1 ring-black/10 hover:bg-white transition"
+                >
+                  <Search className="h-4 w-4 text-[#102E4A]" />
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
 
-      <div className="px-4 sm:px-6 md:px-8 py-8 space-y-10 max-w-[1600px] mx-auto">
+      <div className="px-4 sm:px-6 md:px-8 pt-1 pb-8 md:pt-8 space-y-10 max-w-[1600px] mx-auto">
         {/* CATEGORY GRID */}
         <section
-          className="rounded-2xl border bg-white p-4 sm:p-5 shadow-sm md:hover:shadow-md transition-all"
+          className="-mt-18 md:mt-0 rounded-2xl border bg-white p-4 sm:p-5 shadow-sm md:hover:shadow-md transition-all"
           style={cv}
         >
           <div className="flex items-center justify-between">

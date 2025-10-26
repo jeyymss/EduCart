@@ -6,27 +6,38 @@ import { Button } from "@/components/ui/button";
 import { ChevronUp } from "lucide-react";
 
 type Props = {
-  appearAfter?: number;          
-  positionClassName?: string;   
-  className?: string;            
-  scrollContainerId?: string;     
+  appearAfter?: number;
+  positionClassName?: string;
+  className?: string;
+  scrollContainerId?: string;
 };
 
 export default function ScrollToTop({
   appearAfter = 120,
-  positionClassName = "fixed bottom-6 right-6",
+  // Keep your right/spacing defaults; bottom on mobile is handled via inline style below
+  positionClassName = "fixed right-4 md:right-6 md:bottom-6",
   className = "",
   scrollContainerId,
 }: Props) {
-  const pathname = usePathname();   // ✅ kept
+  const pathname = usePathname();
   const [visible, setVisible] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const ticking = useRef(false);
+
+  // Detect mobile to push the button above the bottom app bar
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767.98px)");
+    const update = () => setIsMobile(mq.matches);
+    update();
+    mq.addEventListener?.("change", update);
+    return () => mq.removeEventListener?.("change", update);
+  }, []);
 
   useEffect(() => {
     const el: (Window & typeof globalThis) | HTMLElement =
       scrollContainerId ? (document.getElementById(scrollContainerId) as HTMLElement) : window;
 
-    if (!el) return; 
+    if (!el) return;
 
     const getScrollTop = () =>
       scrollContainerId ? (el as HTMLElement).scrollTop : window.scrollY;
@@ -52,7 +63,7 @@ export default function ScrollToTop({
     }
   }, [appearAfter, scrollContainerId]);
 
-  // ✅ use pathname: reset scroll on route change
+  // Reset scroll on route change
   useEffect(() => {
     window.scrollTo({ top: 0 });
   }, [pathname]);
@@ -69,9 +80,15 @@ export default function ScrollToTop({
 
   return (
     <div
-      className={`${positionClassName} z-50 transition-opacity duration-300 ${
+      className={`${positionClassName} z-40 transition-opacity duration-300 ${
         visible ? "opacity-100" : "opacity-0 pointer-events-none"
       }`}
+      // On mobile, lift it above the 84px bottom bar + safe area; keep default on md+
+      style={
+        isMobile
+          ? { bottom: "calc(env(safe-area-inset-bottom, 0px) + 96px)" } // ~6rem above edge
+          : undefined
+      }
     >
       <Button
         size="icon"

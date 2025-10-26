@@ -4,13 +4,13 @@ import Image from "next/image";
 
 export default function AuthFeatureCard() {
   return (
-    <div className="hidden md:flex w-[55%] justify-center items-center">
-      <div className="flex flex-col items-center justify-center space-y-16 p-6 lg:space-y-20 lg:p-8">
+    <div className="hidden md:flex w-1/2 xl:w-[52%] justify-center items-center">
+      <div className="flex flex-col items-center justify-center space-y-14 lg:space-y-16 p-6 lg:p-8">
         {/* Yellow Card */}
         <div
-          className="relative bg-[#FAD794] rounded-2xl shadow-lg 
-            p-8 w-[460px] 
-            md:p-10 md:w-[520px] 
+          className="relative bg-[#FAD794] rounded-2xl shadow-lg
+            p-8 w-[480px]
+            md:p-10 md:w-[540px]
             lg:p-12 lg:w-[600px]"
         >
           <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-800 leading-snug">
@@ -21,11 +21,10 @@ export default function AuthFeatureCard() {
           </p>
 
           <div
-            className="absolute 
-            right-[-14px] bottom-[-36px] w-[140px] 
-            md:right-[-16px] md:bottom-[-40px] md:w-[160px] 
-            lg:right-[-20px] lg:bottom-[-48px] lg:w-[200px] 
-            h-auto"
+            className="absolute
+              right-[-12px] bottom-[-34px] w-[140px]
+              md:right-[-14px] md:bottom-[-38px] md:w-[160px]
+              lg:right-[-18px] lg:bottom-[-46px] lg:w-[200px]"
           >
             <Image
               src="/cart.png"
@@ -40,10 +39,11 @@ export default function AuthFeatureCard() {
 
         {/* Features */}
         <div
-          className="border border-[#FAD794] rounded-2xl shadow-md text-center 
-            flex justify-between 
-            px-8 py-5 w-[450px] text-sm 
-            md:px-10 md:py-6 lg:w-[550px] md:text-base"
+          className="border border-[#FAD794] rounded-2xl shadow-md text-center
+            flex justify-between items-stretch
+            px-8 py-5 w-[470px] text-sm
+            md:px-10 md:py-6 md:w-[540px] md:text-base
+            lg:w-[600px]"
         >
           {/* Feature 1 */}
           <div className="flex-1">
@@ -51,7 +51,7 @@ export default function AuthFeatureCard() {
             <p className="text-gray-500 text-xs md:text-sm">To Use</p>
           </div>
 
-          <div className="border-l border-gray-300 mx-4 md:mx-5 lg:mx-6 h-full" />
+          <div className="border-l border-gray-300 mx-4 md:mx-5 lg:mx-6" />
 
           {/* Feature 2 */}
           <div className="flex-1">
@@ -59,7 +59,7 @@ export default function AuthFeatureCard() {
             <p className="text-gray-500 text-xs md:text-sm">Prices</p>
           </div>
 
-          <div className="border-l border-gray-300 mx-4 md:mx-5 lg:mx-6 h-full" />
+          <div className="border-l border-gray-300 mx-4 md:mx-5 lg:mx-6" />
 
           {/* Feature 3 */}
           <div className="flex-1">

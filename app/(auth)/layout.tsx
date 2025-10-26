@@ -19,7 +19,7 @@ export default function AuthLayout({
     <>
       <HeaderLogin /> 
       <main className="flex items-center min-h-screen pt-5">
-        <div className="w-full md:w-[45%] ml-50">{children}</div>
+        <div className="w-full md:w-[45%] ml-45">{children}</div>
         <div className="flex-1 mr-8">
           <AuthFeatureCard />
         </div>
