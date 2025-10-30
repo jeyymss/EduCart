@@ -32,6 +32,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { getRelativeTime } from "@/utils/getRelativeTime";
+import UserReviews from "@/components/profile/UserReviews";
 
 // ---- Types ----
 type PublicListing = {
@@ -349,8 +350,10 @@ export default function PublicProfilePage() {
           <aside>
             <div className="sticky top-20">
               <div className="border border-gray-300 rounded-2xl bg-white p-6 shadow-sm space-y-4">
-                <h2 className="text-xl font-semibold">Reviews</h2>
-                <div className="text-sm text-muted-foreground">No reviews yet.</div>
+                <h2 className="text-xl font-semibold mb-2">Reviews</h2>
+
+                {/* Load reviews dynamically */}
+                <UserReviews userId={userId} />
               </div>
             </div>
           </aside>

@@ -25,6 +25,7 @@ import EditProfile from "@/components/profile/EditProfile";
 import { FavoritesList } from "@/components/profile/FavoriteList";
 import Transactions from "@/components/profile/Transactions";
 import { UserPosts } from "@/components/profile/UserPosts";
+import UserReviews from "@/components/profile/UserReviews";
 
 const AVATAR_DIM = 128;
 
@@ -579,16 +580,17 @@ export default function ProfilePage() {
 
             {/* REVIEWS */}
             <TabsContent value="reviews">
-              <motion.section
-                className="border rounded-2xl bg-white shadow-sm p-4"
-                variants={fadeUp}
-                initial="initial"
-                animate="animate"
-                exit="exit"
-              >
-                Reviews go here.
-              </motion.section>
-            </TabsContent>
+            <motion.section
+              className="border rounded-2xl bg-white shadow-sm p-4"
+              variants={fadeUp}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+            >
+              <h2 className="text-lg font-semibold mb-4">My Reviews</h2>
+              <UserReviews userId={displayUser.id} />
+            </motion.section>
+          </TabsContent>
 
             {/* SETTINGS */}
             <TabsContent value="settings">

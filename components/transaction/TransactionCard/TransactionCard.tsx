@@ -18,6 +18,7 @@ import { AddDeliveryDialog } from "@/components/transaction/AddDelivery";
 import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
 import { CourierStatusDialog } from "@/components/transaction/CourierStatusDialog";
+import LeaveReviewDialog from "../LeaveReviewDialog";
 
 export type TxMethod = "Meetup" | "Delivery";
 export type TxSide = "Purchases" | "Sales";
@@ -80,7 +81,11 @@ export default function TransactionCard({
   const [openReceived, setOpenReceived] = useState(false);
   const [openDelivery, setOpenDelivery] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
-  const [courierId, setCourierId] = useState<number | null>(null); // ✅ new state
+  const [courierId, setCourierId] = useState<number | null>(null);
+  const [openReview, setOpenReview] = useState(false);
+  const [sellerId, setSellerId] = useState<string | null>(null);
+  const [buyerId, setBuyerId] = useState<string | null>(null);
+
   const supabase = createClient();
 
   const badgeText = postType ?? (type === "Sales" ? "Sale" : "Buy");
@@ -108,6 +113,21 @@ export default function TransactionCard({
     if (transactionId) fetchCourier();
   }, [transactionId, supabase]);
 
+  useEffect(() => {
+  const fetchUsers = async () => {
+    const { data, error } = await supabase
+      .from("transactions")
+      .select("buyer_id, seller_id")
+      .eq("id", transactionId)
+      .single();
+    if (error) return console.warn("User fetch failed:", error);
+    setBuyerId(data?.buyer_id ?? null);
+    setSellerId(data?.seller_id ?? null);
+  };
+    if (transactionId) fetchUsers();
+  }, [transactionId]);
+
+
   const handleConfirmReceived = async () => {
     try {
       setIsUpdating(true);
@@ -120,15 +140,13 @@ export default function TransactionCard({
         .select("*");
 
       if (error) throw error;
-      if (!data?.length) {
-        console.warn("No rows updated. Check RLS or wrong transactionId.", {
-          transactionId,
-        });
-      }
 
       toast.success("✅ Transaction marked as completed!");
-      onPrimary?.(transactionId);
-      window.location.reload();
+      toast.dismiss(loadingToast);
+
+      // 🧡 Open review dialog right after marking completed
+      setTimeout(() => setOpenReview(true), 300);
+
     } catch (err) {
       console.error("Error updating transaction:", err);
       toast.error("❌ Failed to update transaction.");
@@ -137,6 +155,7 @@ export default function TransactionCard({
       setOpenReceived(false);
     }
   };
+
 
   const isReceivedDisabled = !courierId; // ✅ disable if courier_id is null
 
@@ -282,6 +301,16 @@ export default function TransactionCard({
           )}
         </td>
       </tr>
+
+      {openReview && sellerId && buyerId && (
+      <LeaveReviewDialog
+        open={openReview}
+        onOpenChange={setOpenReview}
+        transactionId={transactionId}
+        sellerId={sellerId}
+        buyerId={buyerId}
+      />
+    )}
     </>
   );
 }
