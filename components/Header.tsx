@@ -58,7 +58,7 @@ export function Header() {
   const isLoginPage = pathname === "/login";
   const isSignupPage =
     pathname === "/signup" || pathname === "/organization-account";
-  const isLandingPage = pathname === "/"; // 👈 hide center nav here
+  const isLandingPage = pathname === "/"; 
 
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
@@ -125,7 +125,7 @@ export function Header() {
               </Link>
             </div>
 
-            {/* NAVIGATION CENTER — hidden on landing and auth pages */}
+            {/* NAVIGATION CENTER */}
             {!isLandingPage && !isLoginPage && !isSignupPage ? (
               <nav className="hidden md:flex justify-center">
                 <NavigationMenu>
@@ -161,8 +161,8 @@ export function Header() {
 
             {/* ACTIONS (right) */}
             <div className="hidden md:flex items-center justify-end space-x-5">
-              {/* Logged-in actions */}
-              {!isLoginPage && !isSignupPage && isLoggedIn === true && (
+              {/* Logged-in actions (Cart, Credits, Messages, Profile) */}
+              {isLoggedIn === true && (
                 <>
                   {/* LIST dialog */}
                   <Dialog>
@@ -291,8 +291,8 @@ export function Header() {
                 </>
               )}
 
-              {/* Logged-out actions */}
-              {!isLoginPage && !isSignupPage && isLoggedIn === false && (
+              {/* Logged-out actions (Sign Up / Log In) */}
+              {!isLandingPage && !isLoginPage && !isSignupPage && isLoggedIn === false && (
                 <>
                   <Link href="/signup">
                     <Button
