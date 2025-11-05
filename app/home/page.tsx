@@ -32,6 +32,7 @@ import {
 import { useGiveawayPosts } from "@/hooks/queries/GiveawayPosts";
 
 import dynamic from "next/dynamic";
+import MessageSellerButton from "@/components/messages/MessageSellerBtn";
 // Mobile ribbon
 const MobileTopNav = dynamic(() => import("@/components/mobile/MobileTopNav"), {
   ssr: false,
@@ -286,7 +287,10 @@ export default function HomePage() {
                       </p>
                     </div>
                     <DialogFooter>
-                      <Button>Message</Button>
+                      <MessageSellerButton      
+                        postId={selectedEmergency.post_id}
+                        sellerId={selectedEmergency.post_user_id}
+                      />
                     </DialogFooter>
                   </DialogContent>
                 </Dialog>
@@ -416,7 +420,10 @@ export default function HomePage() {
                       </p>
                     </div>
                     <DialogFooter>
-                      <Button>Message</Button>
+                      <MessageSellerButton      
+                        postId={selectedPasaBuy.post_id}
+                        sellerId={selectedPasaBuy.post_user_id}
+                      />
                     </DialogFooter>
                   </DialogContent>
                 </Dialog>

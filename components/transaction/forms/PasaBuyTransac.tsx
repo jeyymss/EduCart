@@ -11,12 +11,11 @@ import {
 import { useState, useRef, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { TradeTransaction } from "@/app/api/transacForm/TradeTransac/route";
+import { PasaBuyTransaction } from "@/app/api/transacForm/PasaBuyTransac/route";
 
 interface FormProps {
   conversationId: number;
   itemTitle: string | null;
-  itemTrade: string;
   itemPrice: number | null;
   sellerId: string;
   post_id: string;
@@ -24,10 +23,9 @@ interface FormProps {
   onClose?: () => void;
 }
 
-export default function TradeTransacForm({
+export default function PasaBuyTransacForm({
   conversationId,
   itemTitle,
-  itemTrade,
   itemPrice,
   sellerId,
   post_id,
@@ -71,7 +69,7 @@ export default function TradeTransacForm({
       setLoading(true);
       const formData = new FormData(e.currentTarget);
 
-      const result = await TradeTransaction(
+      const result = await PasaBuyTransaction(
         formData,
         conversationId,
         itemPrice,
@@ -99,23 +97,13 @@ export default function TradeTransacForm({
     <form className="space-y-3" ref={formRef} onSubmit={handleSubmit}>
       <Label>Item</Label>
       <Input
-        value={`${itemTitle} for ₱${itemPrice} + ${itemTrade}`}
+        value={`${itemTitle}`}
         disabled
         name="itemTitle"
       />
 
-      <Label>Price ₱ </Label>
-      <Input
-        value={itemPrice ? `${itemPrice.toLocaleString()}` : "No additional Cash"}
-        disabled
-        readOnly
-      />
-
-      <Label>Added Cash</Label>
-      <Input type="number" placeholder="0.00" name="cashAdded" />
-
-      <Label>Offered Item</Label>
-      <Input placeholder="Add your offered item" name="offeredItem" />
+      <Label>PasaBuy Fee</Label>
+      <Input type="number" placeholder="0.00" name="pasabuyFee" />
 
       <Label>Preferred Method</Label>
       <Select value={selectedType} onValueChange={setSelectedType}>

@@ -27,6 +27,7 @@ import TradeTransacForm from "@/components/transaction/forms/TradeTransac";
 import RentTransacForm from "@/components/transaction/forms/RentTransac";
 import LiveTransactionCard from "@/components/transaction/liveTransaction";
 import PastTransactionDetails from "@/components/transaction/pastTransactions";
+import PasaBuyTransacForm from "@/components/transaction/forms/PasaBuyTransac";
 
 type ChatMessage = {
   id: number;
@@ -355,6 +356,12 @@ export default function ChatClient({
               </>
             )}
 
+            {postType === "PasaBuy" && (
+              <>
+                <p className="text-sm font-medium truncate">{itemTitle}</p>
+              </>
+            )}
+
             {postType === "Emergency Lending" && (
               <>
                 <p className="text-sm font-medium truncate">{itemTitle}</p>
@@ -635,6 +642,36 @@ export default function ChatClient({
                         conversationId={conversationId}
                         itemPrice={itemPrice}
                         itemTrade={itemTrade}
+                        itemTitle={itemTitle}
+                        sellerId={otherUserId}
+                        post_id={postId}
+                        postType={postType || ""}
+                        onClose={() => {
+                          setOpen(false);
+                          setShowSuccess(true);
+                        }}
+                      />
+                    )}
+
+                    {postType === "PasaBuy" && (
+                      <PasaBuyTransacForm
+                        conversationId={conversationId}
+                        itemPrice={itemPrice}
+                        itemTitle={itemTitle}
+                        sellerId={otherUserId}
+                        post_id={postId}
+                        postType={postType || ""}
+                        onClose={() => {
+                          setOpen(false);
+                          setShowSuccess(true);
+                        }}
+                      />
+                    )}
+
+                    {postType === "Emergency Lending" && (
+                      <PasaBuyTransacForm
+                        conversationId={conversationId}
+                        itemPrice={itemPrice}
                         itemTitle={itemTitle}
                         sellerId={otherUserId}
                         post_id={postId}
