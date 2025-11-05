@@ -2,6 +2,7 @@
 
 type SaleItem = {
   item_title: string
+  quantity: number
   category_name: string
   item_description: string
   item_price?: number
@@ -36,6 +37,10 @@ export default function SaleDetails({ item }: { item: SaleItem }) {
         <div>
           <h2 className="text-sm font-medium text-gray-500 mb-1">Condition</h2>
           <p className="text-gray-700">{item.item_condition || "Not specified"}</p>
+        </div>
+        <div>
+          <h2 className="text-sm font-medium text-gray-500 mb-1">Stock</h2>
+          <p className="text-gray-700">{item.quantity || "Not specified"}</p>
         </div>
       </div>
     </div>
