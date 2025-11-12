@@ -33,6 +33,7 @@ import { useGiveawayPosts } from "@/hooks/queries/GiveawayPosts";
 
 import dynamic from "next/dynamic";
 import MessageSellerButton from "@/components/messages/MessageSellerBtn";
+import Footer from "@/components/Footer";
 // Mobile ribbon
 const MobileTopNav = dynamic(() => import("@/components/mobile/MobileTopNav"), {
   ssr: false,
@@ -462,6 +463,8 @@ export default function HomePage() {
           </div>
         </div>
       </div>
+
+      <Footer />
     </div>
   );
 }

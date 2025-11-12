@@ -85,7 +85,7 @@ export default function SaleTransacForm({
       if (result?.error) {
         setError(result.error);
       } else {
-        onClose?.(); // ✅ closes the parent dialog
+        onClose?.(); 
       }
     } catch (err) {
       console.error(err);

@@ -110,6 +110,18 @@ export function ForSaleForm({ selectedType }: FormProps) {
         required
       />
 
+      {/* Stock */}
+      <Label className="text-sm">
+        Stock<span className="text-red-600">*</span>
+      </Label>
+      <Input
+        type="number"
+        name="itemStock"
+        placeholder="Stock"
+        className="w-full border border-gray-300 p-2 rounded-md"
+        required
+      />
+
       {/* Price */}
       <Label className="text-sm">
         Price<span className="text-red-600">*</span>

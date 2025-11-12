@@ -231,9 +231,12 @@ export default function ItemDetailsPage() {
                 postId={item.post_id}
                 sellerId={item.post_user_id}
               />
-              <Button variant="outline" className="flex-1 py-3 bg-transparent hover:cursor-pointer">
+              {item.post_type_name == "Sale" && (
+                <Button variant="outline" className="flex-1 py-3 bg-transparent hover:cursor-pointer">
                 Make an Offer
               </Button>
+              )} 
+              
             </div>
 
             {item.post_user_id && (

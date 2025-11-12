@@ -29,6 +29,7 @@ export async function ForSale(
     if (!userID) return { error: "User ID is missing." };
 
     const itemTitle = formData.get("itemTitle") as string;
+    const itemStock = Number(formData.get("itemStock"));
     const itemPrice = Number(formData.get("itemPrice"));
     const itemDescription = formData.get("itemDescription") as string;
     const images = formData.getAll("itemImage") as File[];
@@ -66,6 +67,7 @@ export async function ForSale(
       {
         post_user_id: userID,
         post_type_id: postType.id,
+        quantity: itemStock,
         category_id: category.id,
         item_condition: selectedCondition,
         item_title: itemTitle,
