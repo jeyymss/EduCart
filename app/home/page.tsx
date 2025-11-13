@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Search } from "lucide-react";
+import { ChevronDown, Search } from "lucide-react";
 
 import { ItemCard } from "@/components/posts/displayposts/ItemCard";
 import { EmergencyCard } from "@/components/posts/displayposts/emergencyCard";
@@ -34,6 +34,21 @@ import { useGiveawayPosts } from "@/hooks/queries/GiveawayPosts";
 import dynamic from "next/dynamic";
 import MessageSellerButton from "@/components/messages/MessageSellerBtn";
 import Footer from "@/components/Footer";
+
+// NEW imports for shared toolbar UI
+import { Input } from "@/components/ui/input";
+import {
+  AdvancedFilters,
+  type AdvancedFilterValue,
+  type PostOpt,
+} from "@/components/profile/AdvancedFilters";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
 // Mobile ribbon
 const MobileTopNav = dynamic(() => import("@/components/mobile/MobileTopNav"), {
   ssr: false,
@@ -42,6 +57,19 @@ const MobileTopNav = dynamic(() => import("@/components/mobile/MobileTopNav"), {
 const cv = { contentVisibility: "auto" as const, containIntrinsicSize: "800px" };
 const hoverCard =
   "transition-all duration-300 md:hover:-translate-y-1 md:hover:shadow-lg rounded-2xl bg-white";
+
+/* Post type  */
+type ToolbarPost = "All" | PostOpt;
+
+const POST_TYPE_OPTIONS: ToolbarPost[] = [
+  "All",
+  "Sale",
+  "Rent",
+  "Trade",
+  "Emergency Lending",
+  "PasaBuy",
+  "Donation and Giveaway",
+];
 
 function SectionHeader({
   title,
@@ -80,6 +108,17 @@ export default function HomePage() {
   const router = useRouter();
   const [q, setQ] = useState<string>("");
 
+  //  advanced filters
+  const [postType, setPostType] = useState<ToolbarPost | null>(null);
+  const [adv, setAdv] = useState<AdvancedFilterValue>({
+    time: null,
+    price: null,
+    posts: [],
+    category: undefined,
+    minPrice: null,
+    maxPrice: null,
+  });
+
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
@@ -113,8 +152,29 @@ export default function HomePage() {
   function handleSearchSubmit(e: React.FormEvent) {
     e.preventDefault();
     const term = q.trim();
-    if (!term) return;
-    router.push(`/browse?search=${encodeURIComponent(term)}`);
+
+    const params = new URLSearchParams();
+
+    if (term) params.set("search", term);
+
+    // pass post type to browse
+    if (postType && postType !== "All") {
+      params.set("type", postType);
+    }
+
+    // pass advanced filters to browse (all optional)
+    if (adv.category) params.set("category", adv.category);
+    if (adv.time) params.set("time", adv.time);
+    if (adv.price) params.set("priceSort", adv.price);
+    if (adv.posts && adv.posts.length > 0)
+      params.set("posts", adv.posts.join(","));
+    if (adv.minPrice != null) params.set("minPrice", String(adv.minPrice));
+    if (adv.maxPrice != null) params.set("maxPrice", String(adv.maxPrice));
+
+    const qs = params.toString();
+    if (!qs) return; 
+
+    router.push(`/browse?${qs}`);
   }
 
   if (itemError && emergencyError) {
@@ -130,9 +190,10 @@ export default function HomePage() {
       {/* MOBILE PRIMARY NAV RIBBON */}
       <MobileTopNav />
 
+      {/* --- TOP SEARCH BAR--- */}
       <div id="home-top-search-origin">
         <div id="home-top-search" className="w-full bg-[#102E4A]">
-          <div className="mx-auto max-w-[1600px] px-4 sm:px-6 md:px-8 py-3 sm:py-6 md:py-8"> {/* CHANGED: py-5 -> py-3 */}
+          <div className="mx-auto max-w-[1600px] px-4 sm:px-6 md:px-8 py-3 sm:py-6 md:py-8">
             <form
               onSubmit={handleSearchSubmit}
               className="flex justify-center"
@@ -140,30 +201,57 @@ export default function HomePage() {
               aria-label="Site search"
               suppressHydrationWarning
             >
-              <div className="relative w-full max-w-xl sm:max-w-2xl md:max-w-3xl">
-                <input
-                  value={q ?? ""}
-                  onChange={(e) => setQ(e.target.value)}
-                  readOnly={!mounted}
-                  placeholder="Search anything…"
-                  className="w-full rounded-full bg-white pr-12 pl-4 md:pl-5 h-11 sm:h-12 text-[15px] outline-none shadow-md ring-1 ring-black/10 placeholder:text-gray-400"
-                  autoComplete="off"
-                  inputMode="search"
-                />
+              <div className="flex w-full max-w-4xl items-center gap-2 sm:gap-3 rounded-full bg-white shadow-md ring-1 ring-black/10 px-3 sm:px-4 py-1.5 sm:py-2">
+                {/* Post Type dropdown */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-[#E7F3FF] text-xs sm:text-sm font-medium text-[#102E4A] whitespace-nowrap hover:bg-[#d7e8ff] focus:outline-none">
+                    {postType ?? "All Types"}
+                    <ChevronDown className="w-4 h-4" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start">
+                    {POST_TYPE_OPTIONS.map((label) => (
+                      <DropdownMenuItem
+                        key={label}
+                        onClick={() =>
+                          setPostType(label === "All" ? null : label)
+                        }
+                      >
+                        {label}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
 
-                <button
-                  type="submit"
-                  aria-label="Search"
-                  className="absolute right-1.5 top-1/2 -translate-y-1/2 inline-flex h-9 w-9 items-center justify-center rounded-full bg-[#E7F3FF] ring-1 ring-black/10 hover:bg-white transition"
-                >
-                  <Search className="h-4 w-4 text-[#102E4A]" />
-                </button>
+                {/* Search input */}
+                <div className="flex-1 flex items-center gap-2">
+                  <Search className="w-4 h-4 text-gray-400 hidden sm:block" />
+                  <Input
+                    value={q ?? ""}
+                    onChange={(e) => setQ(e.target.value)}
+                    readOnly={!mounted}
+                    placeholder="Search anything..."
+                    className="h-9 sm:h-10 w-full border-none shadow-none px-0 sm:px-1 text-sm focus-visible:ring-0 focus-visible:ring-offset-0"
+                    autoComplete="off"
+                    inputMode="search"
+                  />
+                </div>
+
+                {/* Advanced Filters */}
+                <div className="flex-shrink-0">
+                  <AdvancedFilters
+                    value={adv}
+                    onApply={(next) => setAdv({ ...next })}
+                  />
+                </div>
+
+                <button type="submit" className="hidden" aria-hidden="true" />
               </div>
             </form>
           </div>
         </div>
       </div>
 
+      {/* PAGE CONTENT */}
       <div className="px-4 sm:px-6 md:px-8 pt-1 pb-8 md:pt-8 space-y-10 max-w-[1600px] mx-auto">
         {/* CATEGORY GRID */}
         <section
@@ -273,14 +361,16 @@ export default function HomePage() {
                         {selectedEmergency.item_description ?? ""}
                       </p>
                       <p>
-                        <strong>Name:</strong> {selectedEmergency.full_name ?? ""}
+                        <strong>Name:</strong>{" "}
+                        {selectedEmergency.full_name ?? ""}
                       </p>
                       <p>
                         <strong>University:</strong>{" "}
                         {selectedEmergency.university_abbreviation ?? ""}
                       </p>
                       <p>
-                        <strong>Role:</strong> {selectedEmergency.role ?? ""}
+                        <strong>Role:</strong>{" "}
+                        {selectedEmergency.role ?? ""}
                       </p>
                       <p>
                         <strong>Posted:</strong>{" "}
@@ -288,7 +378,7 @@ export default function HomePage() {
                       </p>
                     </div>
                     <DialogFooter>
-                      <MessageSellerButton      
+                      <MessageSellerButton
                         postId={selectedEmergency.post_id}
                         sellerId={selectedEmergency.post_user_id}
                       />
@@ -406,7 +496,8 @@ export default function HomePage() {
                         {selectedPasaBuy.item_description ?? ""}
                       </p>
                       <p>
-                        <strong>Name:</strong> {selectedPasaBuy.full_name ?? ""}
+                        <strong>Name:</strong>{" "}
+                        {selectedPasaBuy.full_name ?? ""}
                       </p>
                       <p>
                         <strong>University:</strong>{" "}
@@ -421,7 +512,7 @@ export default function HomePage() {
                       </p>
                     </div>
                     <DialogFooter>
-                      <MessageSellerButton      
+                      <MessageSellerButton
                         postId={selectedPasaBuy.post_id}
                         sellerId={selectedPasaBuy.post_user_id}
                       />
