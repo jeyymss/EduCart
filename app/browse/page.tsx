@@ -3,23 +3,33 @@
 import { useMemo, useState } from "react";
 import { ChevronDown, Search } from "lucide-react";
 import { useSearchParams } from "next/navigation";
+import dynamic from "next/dynamic";
 
 import { ItemCard } from "@/components/posts/displayposts/ItemCard";
 import { useBrowsepageItems } from "@/hooks/queries/displayItems";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+
 import { Input } from "@/components/ui/input";
+
 import {
   AdvancedFilters,
   type AdvancedFilterValue,
   type PostOpt,
 } from "@/components/profile/AdvancedFilters";
 
-/* TYPES & OPTIONS  */
+/* MOBILE NAV */
+const MobileTopNav = dynamic(
+  () => import("@/components/mobile/MobileTopNav"),
+  { ssr: false }
+);
+
+/* TYPES & OPTIONS */
 type ToolbarPost = "All" | PostOpt;
 
 const POST_TYPE_OPTIONS: ToolbarPost[] = [
@@ -30,6 +40,19 @@ const POST_TYPE_OPTIONS: ToolbarPost[] = [
   "Emergency Lending",
   "PasaBuy",
   "Donation and Giveaway",
+];
+
+const CATEGORIES: string[] = [
+  "All Categories",
+  "Home & Furniture",
+  "Pet Supplies",
+  "Sports",
+  "Electronics",
+  "Academic",
+  "Clothing",
+  "Beauty & Personal Care",
+  "Accessories",
+  "Hobbies & Toys",
 ];
 
 function asPostOpt(s: string): PostOpt | null {
@@ -53,29 +76,14 @@ function getPrice(v: unknown): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-/* Categories */
-const CATEGORIES: string[] = [
-  "All Categories",
-  "Home & Furniture",
-  "Pet Supplies",
-  "Sports",
-  "Electronics",
-  "Academic",
-  "Clothing",
-  "Beauty & Personal Care",
-  "Accessories",
-  "Hobbies & Toys",
-];
-
-/* ----------------------------- COMPONENT ----------------------------- */
 export default function BrowsePage() {
   const { data: items, isLoading, error } = useBrowsepageItems();
-
   const searchParams = useSearchParams();
   const initialSearch = (searchParams.get("search") ?? "").toString();
 
   const [postType, setPostType] = useState<ToolbarPost | null>(null);
   const [search, setSearch] = useState(initialSearch);
+
   const [adv, setAdv] = useState<AdvancedFilterValue>({
     time: null,
     price: null,
@@ -85,21 +93,20 @@ export default function BrowsePage() {
     maxPrice: null,
   });
 
+  /* FILTERED RESULTS */
   const filtered = useMemo(() => {
     if (!items) return [];
     const q = search.trim().toLowerCase();
 
     const withIndex = items.map((it, i) => ({ it, i }));
 
-    const list = withIndex
+    return withIndex
       .filter(({ it }) => {
-        // toolbar "All Types" dropdown
         if (postType && postType !== "All") {
           const current = asPostOpt(String(it.post_type_name));
           if (current !== postType) return false;
         }
 
-        // text search
         if (q) {
           const hay = `${it.item_title ?? ""} ${it.category_name ?? ""} ${
             it.full_name ?? ""
@@ -107,123 +114,62 @@ export default function BrowsePage() {
           if (!hay.includes(q)) return false;
         }
 
-        // advanced: specific post types
         if (adv.posts.length > 0) {
           const current = asPostOpt(String(it.post_type_name));
           if (!current || !adv.posts.includes(current)) return false;
         }
 
-        // advanced: category
         if (adv.category && adv.category !== "All Categories") {
           if (String(it.category_name) !== adv.category) return false;
         }
 
-        // advanced: price range
         const priceNum = getPrice(it.item_price);
-        if (
-          adv.minPrice != null &&
-          priceNum != null &&
-          priceNum < adv.minPrice
-        )
+        if (adv.minPrice != null && priceNum != null && priceNum < adv.minPrice)
           return false;
-        if (
-          adv.maxPrice != null &&
-          priceNum != null &&
-          priceNum > adv.maxPrice
-        )
+
+        if (adv.maxPrice != null && priceNum != null && priceNum > adv.maxPrice)
           return false;
 
         return true;
       })
-      .sort((A, B) => {
-        const a = A.it;
-        const b = B.it;
-
-        // advanced: price sort
-        if (adv.price) {
-          const pa = getPrice(a.item_price);
-          const pb = getPrice(b.item_price);
-          const NA_LOW = Number.POSITIVE_INFINITY;
-          const NA_HIGH = Number.NEGATIVE_INFINITY;
-          const na = adv.price === "low" ? pa ?? NA_LOW : pa ?? NA_HIGH;
-          const nb = adv.price === "low" ? pb ?? NA_LOW : pb ?? NA_HIGH;
-          if (na !== nb) return adv.price === "low" ? na - nb : nb - na;
-        }
-
-        // advanced: time sort
-        if (adv.time) {
-          const ta = +new Date(a.created_at);
-          const tb = +new Date(b.created_at);
-          if (ta !== tb) return adv.time === "newest" ? tb - ta : ta - tb;
-        }
-
-        return A.i - B.i;
-      })
       .map(({ it }) => it);
-
-    return list;
   }, [items, postType, search, adv]);
 
   if (error)
     return <div className="p-10">Error: {(error as Error).message}</div>;
 
   return (
-    <div className="flex min-h-screen bg-white">
-      {/* Sidebar */}
-      <aside className="hidden md:block w-64 bg-white border-r shadow-sm p-6 sticky top-[calc(var(--app-header-h)+8px)] h-[calc(100vh-88px)] overflow-y-auto">
-        <h2 className="font-semibold text-[#102E4A] mb-4">Filter Categories</h2>
-        <nav className="space-y-2 text-sm" aria-label="Categories">
-          {CATEGORIES.map((cat) => {
-            const isActive = (adv.category ?? "All Categories") === cat;
-            return (
-              <button
-                key={cat}
-                type="button"
-                className={`w-full text-left px-3 py-2 rounded-lg transition ${
-                  isActive
-                    ? "bg-[#eaf1fb] text-[#102E4A] font-medium"
-                    : "hover:bg-[#f3f6fa]"
-                }`}
-                aria-current={isActive ? "page" : undefined}
-                onClick={() =>
-                  setAdv((prev) => ({
-                    ...prev,
-                    category: cat === "All Categories" ? undefined : cat,
-                  }))
-                }
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    setAdv((prev) => ({
-                      ...prev,
-                      category: cat === "All Categories" ? undefined : cat,
-                    }));
-                  }
-                }}
-              >
-                {cat}
-              </button>
-            );
-          })}
-        </nav>
-      </aside>
+    <div className="bg-white min-h-screen">
 
-      {/* Main Content */}
-      <main className="flex-1 p-0 md:p-0">
-        {/* Sticky Top Search + Filters (Home-style) */}
-        <div
-          className="sticky z-30 bg-[#102E4A]"
-          style={{ top: "calc(var(--app-header-h))" }}
-        >
-          <div className="mx-auto max-w-[1600px] px-4 sm:px-6 md:px-8 py-3 sm:py-4">
+      {/* MOBILE TOP NAV */}
+      <MobileTopNav />
+
+      {/* TOP SEARCH — MATCH HOME PAGE EXACTLY */}
+      <div id="home-top-search-origin" className="w-full">
+        <div id="home-top-search" className="w-full bg-[#102E4A]">
+          <div className="mx-auto max-w-[1600px] px-4 sm:px-6 md:px-8 py-3 sm:py-6 md:py-8">
             <div className="flex justify-center">
-              <div className="flex w-full max-w-4xl items-center gap-2 sm:gap-3 rounded-full bg-white shadow-md ring-1 ring-black/10 px-3 sm:px-4 py-1.5 sm:py-2">
-                {/* Post Type dropdown */}
+
+              {/* IDENTICAL TO HOME */}
+              <div className="
+                flex w-full max-w-4xl items-center
+                gap-2 sm:gap-3
+                rounded-full bg-white shadow-md
+                ring-1 ring-black/10
+                px-3 sm:px-4 py-1 sm:py-2
+              ">
+
+                {/* Post Type Dropdown */}
                 <DropdownMenu>
-                  <DropdownMenuTrigger className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-[#E7F3FF] text-xs sm:text-sm font-medium text-[#102E4A] whitespace-nowrap hover:bg-[#d7e8ff] focus:outline-none">
+                  <DropdownMenuTrigger
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-full 
+                               bg-[#E7F3FF] text-xs sm:text-sm font-medium text-[#102E4A] 
+                               whitespace-nowrap hover:bg-[#d7e8ff]"
+                  >
                     {postType ?? "All Types"}
                     <ChevronDown className="w-4 h-4" />
                   </DropdownMenuTrigger>
+
                   <DropdownMenuContent align="start">
                     {POST_TYPE_OPTIONS.map((label) => (
                       <DropdownMenuItem
@@ -238,19 +184,22 @@ export default function BrowsePage() {
                   </DropdownMenuContent>
                 </DropdownMenu>
 
-                {/* Search input */}
+                {/* Search Input – identical height as home */}
                 <div className="flex-1 flex items-center gap-2">
                   <Search className="w-4 h-4 text-gray-400 hidden sm:block" />
+
                   <Input
-                    type="text"
-                    placeholder="Search anything..."
-                    className="h-9 sm:h-10 w-full border-none shadow-none px-0 sm:px-1 text-sm focus-visible:ring-0 focus-visible:ring-offset-0"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search anything..."
+                    className="h-9 sm:h-10 w-full border-none shadow-none 
+                               px-0 sm:px-1 text-sm focus-visible:ring-0 focus-visible:ring-offset-0"
+                    autoComplete="off"
+                    inputMode="search"
                   />
                 </div>
 
-                {/* Advanced filters */}
+                {/* Advanced Filters */}
                 <div className="flex-shrink-0">
                   <AdvancedFilters
                     value={adv}
@@ -261,53 +210,122 @@ export default function BrowsePage() {
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Content below toolbar */}
-        <div className="p-6 md:p-10 space-y-8">
-          <section>
-            <h1 className="font-bold text-2xl text-[#102E4A] mb-6">
-              Featured Listings
-            </h1>
+      {/* MAIN RESPONSIVE LAYOUT */}
+      <div className="flex">
 
-            {isLoading ? (
-              <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {Array.from({ length: 8 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className="h-72 rounded-2xl bg-gray-100 animate-pulse shadow-sm"
-                  />
-                ))}
-              </div>
-            ) : filtered.length === 0 ? (
-              <div className="text-center text-gray-600 mt-12">
-                <p className="text-lg font-medium">No items found</p>
-              </div>
-            ) : (
-              <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {filtered.map((item) => (
-                  <div
-                    key={item.post_id}
-                    className="transition-all duration-300 transform rounded-2xl hover:-translate-y-1 hover:shadow-lg bg-white animate-fadeIn"
+        {/* DESKTOP SIDEBAR */}
+        <aside className="
+          hidden md:block w-64 bg-white border-r p-6 
+          sticky top-[90px] h-[calc(100vh-90px)] overflow-y-auto shadow-sm
+        ">
+          <h2 className="font-semibold text-[#102E4A] mb-4">Filter Categories</h2>
+
+          <nav className="space-y-2 text-sm">
+            {CATEGORIES.map((cat) => {
+              const active = (adv.category ?? "All Categories") === cat;
+
+              return (
+                <button
+                  key={cat}
+                  type="button"
+                  className={`w-full text-left px-3 py-2 rounded-lg ${
+                    active
+                      ? "bg-[#eaf1fb] text-[#102E4A] font-medium"
+                      : "hover:bg-[#f3f6fa]"
+                  }`}
+                  onClick={() =>
+                    setAdv((prev) => ({
+                      ...prev,
+                      category: cat === "All Categories" ? undefined : cat,
+                    }))
+                  }
+                >
+                  {cat}
+                </button>
+              );
+            })}
+          </nav>
+        </aside>
+
+        {/* MAIN CONTENT */}
+        <main className="flex-1 px-4 pt-4 sm:px-6 md:px-10 lg:px-12 xl:px-16">
+
+          {/* Mobile dropdown */}
+          <div className="md:hidden mb-3">
+            <DropdownMenu>
+              <DropdownMenuTrigger className="
+                w-full flex items-center justify-between px-4 py-2 
+                bg-white rounded-xl shadow ring-1 ring-black/10 
+                text-[#102E4A] text-sm font-medium
+              ">
+                {adv.category ?? "All Categories"}
+                <ChevronDown className="w-4 h-4" />
+              </DropdownMenuTrigger>
+
+              <DropdownMenuContent className="w-full max-w-4xl">
+                {CATEGORIES.map((cat) => (
+                  <DropdownMenuItem
+                    key={cat}
+                    onClick={() =>
+                      setAdv((prev) => ({
+                        ...prev,
+                        category: cat === "All Categories" ? undefined : cat,
+                      }))
+                    }
                   >
-                    <ItemCard
-                      id={item.post_id}
-                      condition={item.item_condition}
-                      title={item.item_title}
-                      category_name={item.category_name}
-                      image_urls={item.image_urls}
-                      price={item.item_price}
-                      post_type={item.post_type_name}
-                      seller={item.full_name || "Unknown"}
-                      created_at={item.created_at}
-                      status={item.status}
-                    />
-                  </div>
+                    {cat}
+                  </DropdownMenuItem>
                 ))}
-              </div>
-            )}
-          </section>
-        </div>
-      </main>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+
+          {/* Featured listings */}
+          <h1 className="font-extrabold text-2xl sm:text-3xl text-[#102E4A] mb-4">
+            Featured Listings
+          </h1>
+
+          {/* LIST GRID */}
+          {isLoading ? (
+            <div className="grid gap-5 grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="h-56 sm:h-72 rounded-2xl bg-gray-100 animate-pulse shadow-sm"
+                />
+              ))}
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="text-center text-gray-600 mt-12">
+              <p className="text-lg font-medium">No items found</p>
+            </div>
+          ) : (
+            <div className="grid gap-5 grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {filtered.map((item) => (
+                <div
+                  key={item.post_id}
+                  className="rounded-2xl bg-white overflow-hidden shadow-sm transition-all duration-300 md:hover:-translate-y-1 md:hover:shadow-lg"
+                >
+                  <ItemCard
+                    id={item.post_id}
+                    condition={item.item_condition}
+                    title={item.item_title}
+                    category_name={item.category_name}
+                    image_urls={item.image_urls}
+                    price={item.item_price}
+                    post_type={item.post_type_name}
+                    seller={item.full_name || "Unknown"}
+                    created_at={item.created_at}
+                    status={item.status}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+        </main>
+      </div>
     </div>
   );
 }

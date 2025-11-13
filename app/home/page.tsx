@@ -35,7 +35,6 @@ import dynamic from "next/dynamic";
 import MessageSellerButton from "@/components/messages/MessageSellerBtn";
 import Footer from "@/components/Footer";
 
-// NEW imports for shared toolbar UI
 import { Input } from "@/components/ui/input";
 import {
   AdvancedFilters,
