@@ -41,12 +41,8 @@ import {
 } from "@/components/ui/popover";
 import { getRelativeTime } from "@/utils/getRelativeTime";
 import UserReviews from "@/components/profile/UserReviews";
-import { X } from "lucide-react";
-import { Label } from "@/components/ui/label";
-import {
-  RadioGroup,
-  RadioGroupItem,
-} from "@/components/ui/radio-group"
+import ReportDialog from "@/components/report/reportDialog";
+import { submitUserReport } from "./action";
 
 // ---- Types ----
 type PublicListing = {
@@ -100,7 +96,7 @@ export default function PublicProfilePage() {
   const [pending, start] = useTransition();
   const [showReport, setShowReport] = useState(false);
   const [selectedReportReason, setSelectedReportReason] = useState("");
-  const [showOtherReport, setShowOtherReport] = useState(false);
+  const [otherText, setOtherText] = useState("");
 
   const { data: profile, isLoading, error } = usePublicProfile(userId);
   const {
@@ -193,12 +189,33 @@ export default function PublicProfilePage() {
     });
   };
 
-  const reportSubmit = () => {
-    console.log(selectedReportReason)
-    console.log(selectedReportReason)
-    console.log(selectedReportReason)
-    console.log(selectedReportReason)
-  }
+  const reportSubmit = async () => {
+    if (!selectedReportReason) {
+      alert("Please select a reason.");
+      return;
+    }
+
+    // Prepare final reason + description
+    const finalDescription =
+      selectedReportReason === "OtherReport" ? otherText : null;
+
+    const { error, success } = await submitUserReport({
+      reportedUserId: userId,          
+      reportType: selectedReportReason,
+      description: finalDescription,
+    });
+
+    if (error) {
+      console.error(error);
+      alert("Failed to submit report.");
+      return;
+    }
+
+    alert("Report submitted successfully.");
+    setShowReport(false); // close the modal
+    setSelectedReportReason("");
+    setOtherText("");
+  };
 
   return (
     <div>
@@ -233,79 +250,16 @@ export default function PublicProfilePage() {
         </Popover>
 
         {/* REPORT DIALOG */}
-        <Dialog open={showReport} onOpenChange={setShowReport}>
-          <DialogContent
-            onInteractOutside={(e) => e.preventDefault()}
-            onEscapeKeyDown={(e) => e.preventDefault()}
-            className="space-y-3"
-          >
-            <DialogClose asChild>
-              <button
-                className="absolute right-2 top-2 rounded p-1 hover:cursor-pointer bg-transparent"
-                aria-label="Close"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </DialogClose>
-            <DialogHeader>
-              <DialogTitle>Report User</DialogTitle>
-            </DialogHeader>
-            <form className="flex flex-col space-y-3">
-              <RadioGroup value={selectedReportReason} onValueChange={setSelectedReportReason} className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <RadioGroupItem value="InappropriateLanguage" id="r1" />
-                  <Label htmlFor="r1">Use of inappropriate language</Label>
-                </div>
+        <ReportDialog 
+          open={showReport}
+          onOpenChange={setShowReport}
+          selectedReportReason={selectedReportReason}
+          setSelectedReportReason={setSelectedReportReason}
+          otherText={otherText}
+          setOtherText={setOtherText}
+          onSubmit={reportSubmit}
+        />
 
-                <div className="flex items-center gap-3">
-                  <RadioGroupItem value="Spam" id="r2" />
-                  <Label htmlFor="r2">Spam or repetitive posting</Label>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <RadioGroupItem value="Misleading" id="r3" />
-                  <Label htmlFor="r3">Misleading profile info</Label>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <RadioGroupItem value="Scam" id="r4" />
-                  <Label htmlFor="r4">Fraud, scam, or impersonation</Label>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <RadioGroupItem value="Harassment" id="r5" />
-                  <Label htmlFor="r5">Harassment or abusive behavior</Label>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <RadioGroupItem value="SharingFalse" id="r6" />
-                  <Label htmlFor="r6">Sharing false or dangerous info</Label>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <RadioGroupItem value="RepeatedViolations" id="r7" />
-                  <Label htmlFor="r7">Repeated violations despite warnings</Label>
-                </div>
-
-                {/* OTHER OPTION */}
-                <div className="flex flex-col gap-3">
-                  <div className="flex items-center gap-3">
-                    <RadioGroupItem value="OtherReport" id="r8" />
-                    <Label htmlFor="r8">Other</Label>
-                  </div>
-
-                  {selectedReportReason === "OtherReport" && (
-                    <Input placeholder="Please specify..." />
-                  )}
-                </div>
-              </RadioGroup>
-
-              <Button className="hover:cursor-pointer" onClick={reportSubmit}>
-                Submit
-              </Button>
-            </form>
-          </DialogContent>
-        </Dialog>
       </div>
 
       {/* Profile info */}

@@ -25,7 +25,7 @@ export default function MessageSellerButton({
 
     start(async () => {
       const { data, error } = await supabase.rpc("start_chat_for_post", {
-        // 👇 MUST match the SQL function param name
+        
         input_post_id: postId,
       })
       if (error) {
