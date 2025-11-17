@@ -128,8 +128,7 @@ export default function ChatClient({
           const { data } = await supabase
             .from("messages")
             .select(
-              `
-              *,
+              `*,
               transactions (
                 id,
                 item_title,
@@ -148,8 +147,7 @@ export default function ChatClient({
                 post_id (
                   item_trade
                 )
-              )
-            `
+              )`
             )
             .eq("id", (payload.new as any).id)
             .single();
@@ -565,7 +563,7 @@ export default function ChatClient({
                   onClick={() => fileInputRef.current?.click()}
                   className="px-3 py-2 rounded hover:bg-gray-100 hover:cursor-pointer"
                 >
-                  <Camera />
+                  <Camera className="text-[#E59E2C]" />
                 </button>
               </TooltipTrigger>
               <TooltipContent>
@@ -706,7 +704,9 @@ export default function ChatClient({
             placeholder="Type a message…"
             onKeyDown={(e) => e.key === "Enter" && sendMessage()}
           />
-          <Button onClick={sendMessage}>Send</Button>
+          <Button className="bg-[#E59E2C]" onClick={sendMessage}>
+            Send
+          </Button>
         </div>
       </div>
 

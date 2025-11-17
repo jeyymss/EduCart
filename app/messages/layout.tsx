@@ -1,4 +1,3 @@
-// app/messages/layout.tsx
 import { ReactNode } from "react";
 import { createClient } from "@/utils/supabase/server";
 import MessagesRealtimeRefresher from "@/components/messages/MessagesRealtimeRefresher";
@@ -19,6 +18,7 @@ type Row = {
   last_message_created_at: string | null;
   has_unread: boolean;
 };
+
 export default async function MessagesLayout({
   children,
 }: {
@@ -34,14 +34,14 @@ export default async function MessagesLayout({
   if (!session) {
     // not logged in, no access
     return (
-      <div className="flex items-center justify-center h-full">
-        <p className="text-slate-500">Please log in to view your messages.</p>
+      <div className="flex items-center justify-center h-full bg-gray-50">
+        <p className="text-slate-500 text-lg">Please log in to view your messages.</p>
       </div>
     );
   }
 
-  //set user id
-  const userID = session.user.id
+  // set user id
+  const userID = session.user.id;
 
   const { data, error } = await supabase
     .from("my_convo")
@@ -71,21 +71,21 @@ export default async function MessagesLayout({
   const convoIds = conversations.map((c) => c.conversation_id);
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <div className="grid grid-cols-[320px_1fr] h-[calc(100vh-64px)] p-5 pt-10 gap-3 overflow-hidden">
+    <div className="flex flex-col min-h-screen bg-gray-50">
+      <div className="grid grid-cols-[320px_1fr] h-[calc(100vh-64px)] p-6 pt-12 gap-4 overflow-hidden">
         <MessagesRealtimeRefresher
           currentUserId={userID}
           conversationIds={convoIds}
         />
 
         {/* Sidebar */}
-        <aside className="border border-black rounded-xl overflow-y-auto">
-          <div className="p-4 border-b font-semibold">Messages</div>
+        <aside className="border border-slate-300 rounded-xl overflow-y-auto shadow-lg">
+          <div className="p-4 border-b text-xl font-semibold text-slate-700 bg-gray-100">Messages</div>
           <SidebarList conversations={conversations} />
         </aside>
 
         {/* Chat Window */}
-        <main className="h-full flex flex-col overflow-hidden border rounded-2xl border-black">
+        <main className="h-full flex flex-col overflow-hidden border rounded-2xl border-slate-300 bg-white shadow-md">
           {children}
         </main>
       </div>

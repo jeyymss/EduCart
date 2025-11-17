@@ -122,7 +122,7 @@ export default function SidebarList({
   }
 
   return (
-    <ul className="divide-y">
+    <ul className="divide-y divide-slate-300">
       {conversations.map((row) => {
         const isActive = String(row.conversation_id) === currentId;
 
@@ -130,7 +130,7 @@ export default function SidebarList({
           <li key={row.conversation_id}>
             <button
               onClick={() => handleClick(row.conversation_id)}
-              className={`flex gap-3 items-center w-full text-left p-3 hover:bg-slate-50 hover:cursor-pointer
+              className={`flex gap-3 items-center w-full text-left p-4 hover:bg-slate-50 rounded-lg transition-all duration-200 ease-in-out
                 ${isActive ? "bg-slate-100" : ""}
                 ${row.has_unread && !isActive ? "bg-blue-50" : ""}`}
             >
@@ -138,9 +138,7 @@ export default function SidebarList({
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between">
                   <span
-                    className={`text-sm font-medium truncate ${
-                      row.has_unread ? "font-semibold text-slate-900" : ""
-                    }`}
+                    className={`text-sm font-medium truncate ${row.has_unread ? "font-semibold text-slate-900" : "text-slate-700"}`}
                   >
                     {row.other_user_name ?? "User"}
                   </span>
@@ -151,11 +149,7 @@ export default function SidebarList({
                   )}
                 </div>
                 <div
-                  className={`text-xs truncate ${
-                    row.has_unread
-                      ? "text-slate-800 font-medium"
-                      : "text-slate-500"
-                  }`}
+                  className={`text-xs truncate ${row.has_unread ? "text-slate-800 font-medium" : "text-slate-500"}`}
                 >
                   {row.last_message_body ?? "No messages yet"}
                 </div>
