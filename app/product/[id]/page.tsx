@@ -14,11 +14,12 @@ import { ArrowLeft, Heart, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import MessageSellerButton from "@/components/messages/MessageSellerBtn";
-import {
-  useIsFavorite,
-  useToggleFavorite,
-} from "@/hooks/queries/userFavorites";
+import { useIsFavorite, useToggleFavorite } from "@/hooks/queries/userFavorites";
 import { createClient } from "@/utils/supabase/client";
+
+
+import dynamic from "next/dynamic";
+const MobileBottomNav = dynamic(() => import("@/components/mobile/MobileTopNav"), { ssr: false });
 
 function renderDetails(item: any) {
   switch (item?.post_type_name) {
@@ -47,7 +48,7 @@ export default function ItemDetailsPage() {
   const listerUserId = item?.post_user_id as string | undefined;
   const { data: lister } = usePublicProfile(listerUserId ?? "");
 
-  // ✅ get logged-in user
+  // get logged-in user
   const [userId, setUserId] = useState<string | null>(null);
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -55,11 +56,8 @@ export default function ItemDetailsPage() {
     });
   }, []);
 
-  // ✅ favorites state
-  const { data: isFav = false, isLoading: favLoading } = useIsFavorite(
-    id,
-    userId ?? ""
-  );
+  // favorites state
+  const { data: isFav = false, isLoading: favLoading } = useIsFavorite(id, userId ?? "");
   const toggleFavorite = useToggleFavorite(id, userId ?? "");
 
   const images: string[] = useMemo(
@@ -128,7 +126,7 @@ export default function ItemDetailsPage() {
   return (
     <div className="min-h-screen bg-white">
       {/* Back button header */}
-      <div className="bg-white px-6 py-4 mt-6">
+      <div className="bg-white px-6 py-4 -mt-2 lg:mt-8">
         <div className="max-w-7xl mx-auto">
           <Button
             variant="ghost"
@@ -144,12 +142,12 @@ export default function ItemDetailsPage() {
 
       {/* Main content */}
       <div className="max-w-7xl mx-auto px-6 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-12">
           {/* Left side - Images */}
           <div className="space-y-4">
             {imgCount > 0 && (
               <div
-                className="relative aspect-square bg-white rounded-2xl overflow-hidden shadow-sm cursor-pointer"
+                className="relative aspect-square bg-white rounded-2xl overflow-hidden shadow-sm cursor-pointer mt-[-35px]"
                 onClick={() => setIsModalOpen(true)}
               >
                 <Image
@@ -216,12 +214,8 @@ export default function ItemDetailsPage() {
 
             {item.created_at && (
               <div>
-                <h2 className="text-sm font-medium text-gray-500 mb-1">
-                  Listed
-                </h2>
-                <p className="text-gray-700">
-                  {getRelativeTime(item.created_at)}
-                </p>
+                <h2 className="text-sm font-medium text-gray-500 mb-1">Listed</h2>
+                <p className="text-gray-700">{getRelativeTime(item.created_at)}</p>
               </div>
             )}
 
@@ -233,17 +227,14 @@ export default function ItemDetailsPage() {
               />
               {item.post_type_name == "Sale" && (
                 <Button variant="outline" className="flex-1 py-3 bg-transparent hover:cursor-pointer">
-                Make an Offer
-              </Button>
-              )} 
-              
+                  Make an Offer
+                </Button>
+              )}
             </div>
 
             {item.post_user_id && (
               <div className="bg-white rounded-2xl p-6 shadow-sm">
-                <h3 className="text-sm font-medium text-gray-500 mb-4">
-                  Posted By
-                </h3>
+                <h3 className="text-sm font-medium text-gray-500 mb-4">Posted By</h3>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <Avatar className="h-12 w-12">
@@ -255,9 +246,7 @@ export default function ItemDetailsPage() {
                       <AvatarFallback>{initials}</AvatarFallback>
                     </Avatar>
                     <div>
-                      <p className="font-medium">
-                        {item.full_name ?? "Lister"}
-                      </p>
+                      <p className="font-medium">{item.full_name ?? "Lister"}</p>
                     </div>
                   </div>
                   <div className="flex gap-2">
@@ -274,52 +263,26 @@ export default function ItemDetailsPage() {
 
       {/* Lightbox Modal */}
       {isModalOpen && imgCount > 0 && (
-        <div
-          className="fixed inset-0 bg-black/80 flex items-center justify-center z-50"
-          onClick={() => setIsModalOpen(false)}
-        >
-          <div
-            className="relative w-full max-w-6xl h-[90vh] px-12"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              type="button"
-              className="absolute top-4 right-4 bg-white/95 hover:bg-white rounded-full p-2 shadow z-50"
-              onClick={() => setIsModalOpen(false)}
-              aria-label="Close image viewer"
-            >
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50" onClick={() => setIsModalOpen(false)}>
+          <div className="relative w-full max-w-6xl h-[90vh] px-12" onClick={(e) => e.stopPropagation()}>
+            <button type="button" className="absolute top-4 right-4 bg-white/95 hover:bg-white rounded-full p-2 shadow z-50" onClick={() => setIsModalOpen(false)} aria-label="Close image viewer">
               <X className="h-6 w-6 text-black" />
             </button>
 
             {imgCount > 1 && (
-              <button
-                type="button"
-                className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/95 hover:bg-white rounded-full p-3 shadow z-50"
-                onClick={goPrev}
-                aria-label="Previous image"
-              >
+              <button type="button" className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/95 hover:bg-white rounded-full p-3 shadow z-50" onClick={goPrev} aria-label="Previous image">
                 <ChevronLeft className="h-6 w-6 text-black" />
               </button>
             )}
 
             {imgCount > 1 && (
-              <button
-                type="button"
-                className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/95 hover:bg-white rounded-full p-3 shadow z-50"
-                onClick={goNext}
-                aria-label="Next image"
-              >
+              <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/95 hover:bg-white rounded-full p-3 shadow z-50" onClick={goNext} aria-label="Next image">
                 <ChevronRight className="h-6 w-6 text-black" />
               </button>
             )}
 
             <div className="flex items-center justify-center w-full h-full">
-              <img
-                src={images[selectedImageIndex] || "/placeholder.svg"}
-                alt="Full view"
-                className="max-h-[90vh] max-w-full object-contain"
-                draggable={false}
-              />
+              <img src={images[selectedImageIndex] || "/placeholder.svg"} alt="Full view" className="max-h-[90vh] max-w-full object-contain" draggable={false} />
             </div>
 
             {imgCount > 1 && (
@@ -330,6 +293,11 @@ export default function ItemDetailsPage() {
           </div>
         </div>
       )}
+
+      {/* Mobile Bottom Navigation */}
+      <div className="md:hidden">
+        <MobileBottomNav />
+      </div>
     </div>
   );
 }

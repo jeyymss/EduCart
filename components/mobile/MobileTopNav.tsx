@@ -112,32 +112,35 @@ export default function MobileTopNav() {
     };
   }, []);
 
+  const isProductPage = pathname.includes("/product/");
+
   return (
     <>
       {/* Chips + search (mobile) */}
       <div className="md:hidden sticky top-14 z-[55] bg-white">
         <div className="h-[env(safe-area-inset-top)]" />
         <nav className="px-3" aria-label="Secondary">
-          {/* CHIPS ROW */}
-          <div className="flex items-center gap-2 overflow-x-auto scrollbar-none py-2">
-            <Chip href="/browse" active={isActive("/browse")}>
-              <Grid2X2 className="h-4 w-4" />
-              <span>Browse</span>
-            </Chip>
-            <Chip href="/businesses" active={isActive("/businesses")}>
-              <Building2 className="h-4 w-4" />
-              <span>Businesses</span>
-            </Chip>
-            <Chip href="/organizations" active={isActive("/organizations")}>
-              <Landmark className="h-4 w-4" />
-              <span>Organizations</span>
-            </Chip>
-            <Circle href="/credits" label="Credits" active={isActive("/credits")} badge="29">
-              <TimerReset className="h-4 w-4" />
-            </Circle>
-          </div>
+          {!isProductPage && (
+            <div className="flex items-center gap-2 overflow-x-auto scrollbar-none py-2">
+              <Chip href="/browse" active={isActive("/browse")}>
+                <Grid2X2 className="h-4 w-4" />
+                <span>Browse</span>
+              </Chip>
+              <Chip href="/businesses" active={isActive("/businesses")}>
+                <Building2 className="h-4 w-4" />
+                <span>Businesses</span>
+              </Chip>
+              <Chip href="/organizations" active={isActive("/organizations")}>
+                <Landmark className="h-4 w-4" />
+                <span>Organizations</span>
+              </Chip>
+              <Circle href="/credits" label="Credits" active={isActive("/credits")} badge="29">
+                <TimerReset className="h-4 w-4" />
+              </Circle>
+            </div>
+          )}
 
-          <div id="mobile-search-slot" className="-mx-3 mt-1 pb-1" />
+          <div id="mobile-search-slot" className="mt-1" />
         </nav>
       </div>
 
@@ -190,7 +193,7 @@ export default function MobileTopNav() {
   );
 }
 
-/* ------------------ UI helpers ------------------ */
+/*  UI helpers */
 
 function Chip({
   href,
@@ -247,7 +250,7 @@ function Circle({
   );
 }
 
-/* ------------------ Bottom App Bar ------------------ */
+/* Bottom App Bar */
 
 function BottomBar({
   homeActive,
@@ -319,7 +322,7 @@ function NavIcon({
   );
 }
 
-/* ------------------ Profile menu in bottom bar ------------------ */
+/*  Profile menu  */
 
 function ProfileBottomItem({ active }: { active?: boolean }) {
   const router = useRouter();
