@@ -201,7 +201,7 @@ export default function BrowsePage() {
   const ItemsGrid = () => (
     <>
       {isLoading ? (
-        <div className="grid gap-5 grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid gap-5 grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {Array.from({ length: 8 }).map((_, i) => (
             <div
               key={i}
@@ -214,7 +214,16 @@ export default function BrowsePage() {
           <p className="text-lg font-medium">No items found</p>
         </div>
       ) : (
-        <div className="grid gap-5 grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div
+          className="
+            grid gap-5 
+            grid-cols-2     /* UPDATED HERE: WAS 1 */
+            sm:grid-cols-2
+            md:grid-cols-2
+            lg:grid-cols-3
+            xl:grid-cols-4
+          "
+        >
           {filtered.map((item) => (
             <div
               key={item.post_id}
@@ -243,19 +252,15 @@ export default function BrowsePage() {
     <div className="bg-white min-h-screen">
       {/* MOBILE LAYOUT */}
       <div className="md:hidden">
-        {/* Mobile Top Nav */}
         <MobileTopNav />
 
-        {/* Mobile Search Bar + Categories Dropdown */}
         <div id="home-top-search-origin" className="w-full">
           <div id="home-top-search" className="w-full bg-[#102E4A]">
             <div className="mx-auto max-w-[1600px] px-4 py-3 pb-4">
-              {/* Search Bar */}
               <div className="flex justify-center mb-3">
                 <SearchBar />
               </div>
 
-              {/* Category Dropdown */}
               <div className="flex justify-center">
                 <div className="w-full max-w-4xl">
                   <DropdownMenu>
@@ -290,8 +295,7 @@ export default function BrowsePage() {
           </div>
         </div>
 
-        {/* Mobile Main Content */}
-        <main className="px-4 -mt-15">
+        <main className="px-4 -mt-15 pb-28">
           <h1 className="font-extrabold text-2xl text-[#102E4A] mb-4">
             Featured Listings
           </h1>
@@ -301,7 +305,6 @@ export default function BrowsePage() {
 
       {/* DESKTOP LAYOUT */}
       <div className="hidden md:block">
-        {/* Desktop Search Bar */}
         <div id="home-top-search-origin" className="w-full">
           <div id="home-top-search" className="w-full bg-[#102E4A]">
             <div className="mx-auto max-w-[1600px] px-6 md:px-8 py-6 md:py-8">
@@ -312,14 +315,14 @@ export default function BrowsePage() {
           </div>
         </div>
 
-        {/* Desktop Layout with Sidebar */}
         <div className="flex">
-          {/* Desktop Sidebar */}
           <aside className="
             w-64 bg-white border-r p-6 
             sticky top-[90px] h-[calc(100vh-90px)] overflow-y-auto shadow-sm
           ">
-            <h2 className="font-semibold text-[#102E4A] mb-4">Filter Categories</h2>
+            <h2 className="font-semibold text-[#102E4A] mb-4">
+              Filter Categories
+            </h2>
 
             <nav className="space-y-2 text-sm">
               {CATEGORIES.map((cat) => {
@@ -348,7 +351,6 @@ export default function BrowsePage() {
             </nav>
           </aside>
 
-          {/* Desktop Main Content */}
           <main className="flex-1 px-10 lg:px-12 xl:px-16 pt-4">
             <h1 className="font-extrabold text-3xl text-[#102E4A] mb-4">
               Featured Listings

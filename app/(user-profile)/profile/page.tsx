@@ -27,7 +27,7 @@ import Transactions from "@/components/profile/Transactions";
 import { UserPosts } from "@/components/profile/UserPosts";
 import UserReviews from "@/components/profile/UserReviews";
 
-const AVATAR_DIM = 128;
+const AVATAR_DIM = 96; // cozier on mobile; md+ will upscale via classes
 
 /* ---------------------- Animation (typed) ---------------------- */
 const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
@@ -140,7 +140,7 @@ export default function ProfilePage() {
         animate="animate"
         exit="exit"
       >
-        <div className="p-4">
+        <div className="p-3 md:p-4">
           <UserPosts
             userId={displayUser.id}
             status={status}
@@ -167,14 +167,12 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen flex flex-col relative">
-      <div className="pb-8">
+      <div className="pb-6 md:pb-8">
         {isEditing ? (
           <EditProfile
             userId={displayUser.id}
             role={
-              displayUser.role === "Organization"
-                ? "organization"
-                : "individual"
+              displayUser.role === "Organization" ? "organization" : "individual"
             }
             currentAvatar={displayUser.avatar_url}
             currentBackground={displayUser.background_url}
@@ -199,7 +197,7 @@ export default function ProfilePage() {
             animate={{ opacity: 1, transition: { duration: 0.25, ease: EASE } }}
           >
             {/* Cover */}
-            <div className="relative w-full h-60 md:h-80 lg:h-96 overflow-hidden">
+            <div className="relative w-full h-52 md:h-80 lg:h-96 overflow-hidden">
               <motion.div
                 initial={{ scale: 1.04 }}
                 animate={{
@@ -220,7 +218,7 @@ export default function ProfilePage() {
 
               {/* Edit Profile button */}
               <motion.div
-                className="absolute top-10 right-4"
+                className="absolute top-4 right-4 md:top-10"
                 initial={{ opacity: 0, y: -8 }}
                 animate={{
                   opacity: 1,
@@ -240,17 +238,16 @@ export default function ProfilePage() {
 
             {/* Header strip */}
             <motion.div
-              className="bg-white shadow-sm px-6 pb-4"
+              className="bg-white shadow-sm px-4 md:px-6 pb-4"
               variants={fadeUp}
               initial="initial"
               animate="animate"
             >
-              <div className="flex items-start justify-between gap-4 pl-6">
+              <div className="flex flex-col md:flex-row items-start md:items-start justify-start md:justify-between gap-4 md:pl-6">
                 {/* Left: avatar + name/bio */}
-                <div className="flex items-start gap-4">
+                <div className="flex items-start gap-3 md:gap-4 w-full">
                   <motion.div
-                    className="relative -mt-16 rounded-full ring-4 ring-white shadow-md overflow-hidden"
-                    style={{ width: AVATAR_DIM, height: AVATAR_DIM }}
+                    className="relative -mt-12 md:-mt-16 rounded-full ring-4 ring-white shadow-md overflow-hidden w-24 h-24 md:w-[128px] md:h-[128px]"
                     initial={{ scale: 0.9, opacity: 0 }}
                     animate={{
                       scale: 1,
@@ -263,7 +260,9 @@ export default function ProfilePage() {
                     }}
                   >
                     <Image
-                      src={displayUser?.avatar_url ?? "/avatarplaceholder.png"}
+                      src={
+                        displayUser?.avatar_url ?? "/avatarplaceholder.png"
+                      }
                       alt="Avatar"
                       width={AVATAR_DIM}
                       height={AVATAR_DIM}
@@ -273,14 +272,14 @@ export default function ProfilePage() {
                     />
                   </motion.div>
 
-                  <div className="flex-1 mt-2">
-                    <h1 className="text-2xl font-bold">
+                  <div className="flex-1 mt-1 md:mt-2">
+                    <h1 className="text-xl md:text-2xl font-bold">
                       {displayUser.full_name ?? "Unnamed User"}
                     </h1>
-                    <p className="text-base text-muted-foreground">
+                    <p className="text-sm md:text-base text-muted-foreground">
                       {displayUser.bio ?? "This user has no bio yet."}
                     </p>
-                    <div className="flex gap-2 mt-2">
+                    <div className="flex flex-wrap gap-2 mt-2">
                       {displayUser.role && (
                         <span className="px-3 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">
                           {displayUser.role}
@@ -297,14 +296,14 @@ export default function ProfilePage() {
 
                 {/* Add Business Account */}
                 <motion.div
-                  className="mt-2"
+                  className="mt-3 md:mt-2 w-full md:w-auto"
                   variants={fadeIn}
                   initial="initial"
                   animate="animate"
                 >
                   <Button
                     variant="outline"
-                    className="border-[#F3AD4B] text-[#F3AD4B] hover:bg-[#FFF7E9]"
+                    className="w-full md:w-auto border-[#F3AD4B] text-[#F3AD4B] hover:bg-[#FFF7E9]"
                     onClick={() => {
                       console.log("Add Business Account clicked");
                     }}
@@ -319,7 +318,7 @@ export default function ProfilePage() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 px-6">
+      <div className="flex-1 px-4 md:px-6 pb-4">
         <Tabs
           value={activeTab}
           onValueChange={handleTabChange}
@@ -334,29 +333,32 @@ export default function ProfilePage() {
                 : "opacity-100",
             ].join(" ")}
           >
-            <TabsList className="relative flex w-full p-0 bg-transparent h-auto">
-              {[
-                "listings",
-                "favorites",
-                "transactions",
-                "reviews",
-                "settings",
-              ].map((tab) => (
-                <TabsTrigger
-                  key={tab}
-                  value={tab}
-                  className="tab-trigger px-4 py-3 rounded-none hover:cursor-pointer relative"
-                >
-                  {tab.charAt(0).toUpperCase() + tab.slice(1)}
-                  {!isEditing && activeTab === tab && (
-                    <motion.span
-                      layoutId="profile-tab-underline"
-                      className="absolute bottom-0 left-0 right-0 h-[2px] bg-black/80"
-                    />
-                  )}
-                </TabsTrigger>
-              ))}
-            </TabsList>
+            {/* SCROLLABLE ONE-ROW WRAPPER */}
+            <div className="overflow-x-auto whitespace-nowrap [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <TabsList className="inline-flex min-w-max p-0 bg-transparent h-auto">
+                {[
+                  "listings",
+                  "favorites",
+                  "transactions",
+                  "reviews",
+                  "settings",
+                ].map((tab) => (
+                  <TabsTrigger
+                    key={tab}
+                    value={tab}
+                    className="tab-trigger px-4 py-3 rounded-none hover:cursor-pointer relative flex-shrink-0 text-sm md:text-base"
+                  >
+                    {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                    {!isEditing && activeTab === tab && (
+                      <motion.span
+                        layoutId="profile-tab-underline"
+                        className="absolute bottom-0 left-0 right-0 h-[2px] bg-black/80"
+                      />
+                    )}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </div>
           </div>
 
           {/* CONTENT WRAPPER */}
@@ -382,72 +384,77 @@ export default function ProfilePage() {
                 >
                   {/* sticky filters bar */}
                   <motion.div
-                    className="sticky top-0 z-20 bg-white/90 backdrop-blur border-b flex justify-between items-center gap-4 px-2 py-2"
+                    className="sticky top-0 z-20 bg-white/90 backdrop-blur border-b flex flex-col gap-2 px-3 py-2 md:flex-row md:justify-between md:items-center md:gap-4 md:px-4"
                     variants={fadeIn}
                     initial="initial"
                     animate="animate"
                   >
-                    <TabsList className="flex bg-transparent h-auto">
-                      <TabsTrigger
-                        value="all"
-                        className="tab-trigger hover:cursor-pointer"
-                      >
-                        All (
-                        <UserPosts.Count
-                          userId={displayUser.id}
-                          postType={filtersByTab.all.postType}
-                          search={filtersByTab.all.search}
-                          filters={filtersByTab.all.adv}
-                        />
-                        )
-                      </TabsTrigger>
-                      <TabsTrigger
-                        value="listed"
-                        className="tab-trigger hover:cursor-pointer"
-                      >
-                        Listed (
-                        <UserPosts.Count
-                          userId={displayUser.id}
-                          status="Listed"
-                          postType={filtersByTab.listed.postType}
-                          search={filtersByTab.listed.search}
-                          filters={filtersByTab.listed.adv}
-                        />
-                        )
-                      </TabsTrigger>
-                      <TabsTrigger
-                        value="sold"
-                        className="tab-trigger hover:cursor-pointer"
-                      >
-                        Sold (
-                        <UserPosts.Count
-                          userId={displayUser.id}
-                          status="Sold"
-                          postType={filtersByTab.sold.postType}
-                          search={filtersByTab.sold.search}
-                          filters={filtersByTab.sold.adv}
-                        />
-                        )
-                      </TabsTrigger>
-                      <TabsTrigger
-                        value="unlisted"
-                        className="tab-trigger hover:cursor-pointer"
-                      >
-                        Unlisted (
-                        <UserPosts.Count
-                          userId={displayUser.id}
-                          status="Unlisted"
-                          postType={filtersByTab.unlisted.postType}
-                          search={filtersByTab.unlisted.search}
-                          filters={filtersByTab.unlisted.adv}
-                        />
-                        )
-                      </TabsTrigger>
-                    </TabsList>
+                    {/* Sub-tabs */}
+                    <div className="w-full md:w-auto overflow-x-auto whitespace-nowrap [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                      <TabsList className="flex bg-transparent h-auto">
+                        <TabsTrigger
+                          value="all"
+                          className="tab-trigger hover:cursor-pointer flex-shrink-0 text-sm md:text-base"
+                        >
+                          All (
+                          <UserPosts.Count
+                            userId={displayUser.id}
+                            postType={filtersByTab.all.postType}
+                            search={filtersByTab.all.search}
+                            filters={filtersByTab.all.adv}
+                          />
+                          )
+                        </TabsTrigger>
+                        <TabsTrigger
+                          value="listed"
+                          className="tab-trigger hover:cursor-pointer flex-shrink-0 text-sm md:text-base"
+                        >
+                          Listed (
+                          <UserPosts.Count
+                            userId={displayUser.id}
+                            status="Listed"
+                            postType={filtersByTab.listed.postType}
+                            search={filtersByTab.listed.search}
+                            filters={filtersByTab.listed.adv}
+                          />
+                          )
+                        </TabsTrigger>
+                        <TabsTrigger
+                          value="sold"
+                          className="tab-trigger hover:cursor-pointer flex-shrink-0 text-sm md:text-base"
+                        >
+                          Sold (
+                          <UserPosts.Count
+                            userId={displayUser.id}
+                            status="Sold"
+                            postType={filtersByTab.sold.postType}
+                            search={filtersByTab.sold.search}
+                            filters={filtersByTab.sold.adv}
+                          />
+                          )
+                        </TabsTrigger>
+                        <TabsTrigger
+                          value="unlisted"
+                          className="tab-trigger hover:cursor-pointer flex-shrink-0 text-sm md:text-base"
+                        >
+                          Unlisted (
+                          <UserPosts.Count
+                            userId={displayUser.id}
+                            status="Unlisted"
+                            postType={filtersByTab.unlisted.postType}
+                            search={filtersByTab.unlisted.search}
+                            filters={filtersByTab.unlisted.adv}
+                          />
+                          )
+                        </TabsTrigger>
+                      </TabsList>
+                    </div>
 
-                    <div className="flex items-center gap-3">
+                    {/* Filters */}
+                    <div className="flex flex-col gap-2 w-full md:w-auto md:flex-row md:items-center md:gap-3">
+                      {/* Post type selector */}
                       <DropdownMenu>
-                        <DropdownMenuTrigger className="flex items-center gap-1 px-3 py-2 border rounded-lg bg-white shadow-sm text-sm font-medium hover:bg-gray-50">
+                        <DropdownMenuTrigger className="flex items-center justify-between gap-1 px-3 py-2 border rounded-lg bg-white shadow-sm text-sm font-medium hover:bg-gray-50 w-full md:w-auto">
                           {filtersByTab[activeSubTab]?.postType ?? "Post Type"}
                           <ChevronDown className="w-4 h-4" />
                         </DropdownMenuTrigger>
@@ -476,26 +483,31 @@ export default function ProfilePage() {
                         </DropdownMenuContent>
                       </DropdownMenu>
 
-                      <Input
-                        type="text"
-                        placeholder="Search items"
-                        className="h-9 w-[200px] text-sm"
-                        value={filtersByTab[activeSubTab]?.search ?? ""}
-                        onChange={(e) =>
-                          updateFilters(activeSubTab, {
-                            search: e.target.value,
-                          })
-                        }
-                      />
+                      {/* Search + advanced filters in a single row on mobile */}
+                      <div className="flex items-center gap-2 w-full md:w-auto">
+                        <Input
+                          type="text"
+                          placeholder="Search items"
+                          className="h-9 w-full md:w-[200px] text-sm"
+                          value={filtersByTab[activeSubTab]?.search ?? ""}
+                          onChange={(e) =>
+                            updateFilters(activeSubTab, {
+                              search: e.target.value,
+                            })
+                          }
+                        />
 
-                      <AdvancedFilters
-                        value={filtersByTab[activeSubTab]?.adv}
-                        onApply={(adv) =>
-                          updateFilters(activeSubTab, {
-                            adv: { ...adv, posts: [...(adv.posts ?? [])] },
-                          })
-                        }
-                      />
+                        <div className="flex-shrink-0 flex justify-end md:justify-start">
+                          <AdvancedFilters
+                            value={filtersByTab[activeSubTab]?.adv}
+                            onApply={(adv) =>
+                              updateFilters(activeSubTab, {
+                                adv: { ...adv, posts: [...(adv.posts ?? [])] },
+                              })
+                            }
+                          />
+                        </div>
+                      </div>
                     </div>
                   </motion.div>
 
@@ -560,8 +572,6 @@ export default function ProfilePage() {
                 exit="exit"
               >
                 <h2 className="text-lg font-semibold mb-4">My Favorites</h2>
-                {/* If FavoritesList maps a grid, it can reuse the same hover pattern
-                   by giving each wrapper the same classes as in UserPosts */}
                 {displayUser?.id && <FavoritesList userId={displayUser.id} />}
               </motion.section>
             </TabsContent>
@@ -580,17 +590,17 @@ export default function ProfilePage() {
 
             {/* REVIEWS */}
             <TabsContent value="reviews">
-            <motion.section
-              className="border rounded-2xl bg-white shadow-sm p-4"
-              variants={fadeUp}
-              initial="initial"
-              animate="animate"
-              exit="exit"
-            >
-              <h2 className="text-lg font-semibold mb-4">My Reviews</h2>
-              <UserReviews userId={displayUser.id} />
-            </motion.section>
-          </TabsContent>
+              <motion.section
+                className="border rounded-2xl bg-white shadow-sm p-4"
+                variants={fadeUp}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+              >
+                <h2 className="text-lg font-semibold mb-4">My Reviews</h2>
+                <UserReviews userId={displayUser.id} />
+              </motion.section>
+            </TabsContent>
 
             {/* SETTINGS */}
             <TabsContent value="settings">

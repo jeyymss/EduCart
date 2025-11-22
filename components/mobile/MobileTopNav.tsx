@@ -117,7 +117,7 @@ export default function MobileTopNav() {
   return (
     <>
       {/* Chips + search (mobile) */}
-      <div className="md:hidden sticky top-14 z-[55] bg-white">
+      <div className="md:hidden sticky top-14 z-[10] bg-white">
         <div className="h-[env(safe-area-inset-top)]" />
         <nav className="px-3" aria-label="Secondary">
           {!isProductPage && (

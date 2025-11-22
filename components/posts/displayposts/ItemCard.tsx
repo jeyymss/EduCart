@@ -101,16 +101,12 @@ export function ItemCard({
 
   return (
     <div className="relative rounded-md overflow-hidden border border-gray-200 shadow hover:shadow-md transition bg-white flex flex-col h-full">
-      {/* Owner menu (edit/unlist/delete) */}
+      {/* Owner menu */}
       {isOwner && (
         <div className="absolute top-2 right-2 z-10 hover:cursor-pointer">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button
-                size="icon"
-                variant="ghost"
-                className="hover:cursor-pointer"
-              >
+              <Button size="icon" variant="ghost">
                 <MoreHorizontal className="h-5 w-5" />
               </Button>
             </DropdownMenuTrigger>
@@ -141,14 +137,15 @@ export function ItemCard({
           </DropdownMenu>
         </div>
       )}
-      {/* Favorite heart – only show if it is already favorite */}
+
+      {/* Favorite heart */}
       {!isOwner && isFav && (
         <div className="absolute top-2 right-2 z-10">
           <Button
             size="icon"
             variant="ghost"
             onClick={(e) => {
-              e.preventDefault(); // ✅ prevent link navigation
+              e.preventDefault();
               onToggleFavorite?.(id, isFav);
             }}
             className="text-red-500 hover:text-red-600 transition-colors"
@@ -157,11 +154,13 @@ export function ItemCard({
           </Button>
         </div>
       )}
+
       <Link
         href={`/product/${id}`}
         className="flex flex-col h-full"
         onClick={handleCardClick}
       >
+        {/* Image */}
         <div className="relative w-full h-60">
           <Image
             src={imageSrc}
@@ -175,22 +174,40 @@ export function ItemCard({
             className="absolute top-2 left-2 shadow"
           />
         </div>
+
+        {/* Body */}
         <div className="p-3 flex flex-col flex-grow justify-between">
-          <div className="space-y-1">
-            <div className="flex items-start justify-between gap-2">
-              <h2 className="text-lg font-semibold text-[#333333] line-clamp-2 min-h-[52px]">
-                {title}
-              </h2>
-              <span className="text-xs border border-[#B8B8B8] px-2 py-0.5 rounded-full text-[#333333] flex-shrink-0">
-                {category_name}
-              </span>
-            </div>
+          <div className="space-y-0.5">
+
+            {/* Title */}
+            <h2
+              className="
+                font-semibold text-[#333333] line-clamp-2
+                text-base
+                sm:text-lg
+              "
+            >
+              {title}
+            </h2>
+
+            {/* Category */}
+            <span
+              className="
+                text-[10px] sm:text-xs
+                border border-[#B8B8B8]
+                px-2 py-0.5 rounded-full text-[#333333]
+                inline-block
+              "
+            >
+              {category_name}
+            </span>
+
           </div>
+
+          {/* Price + Time */}
           <div className="flex items-center justify-between mt-2">
             <span className="text-[#E59E2C] font-medium text-sm">
-              {price != null
-                ? `₱${price.toLocaleString()}`
-                : "Price not listed"}
+              {price != null ? `₱${price.toLocaleString()}` : "Price not listed"}
             </span>
             <div className="flex items-center text-xs text-gray-500">
               <Clock className="w-4 h-4 mr-1" />
@@ -207,24 +224,22 @@ export function ItemCardSkeleton() {
   return (
     <div className="rounded-md overflow-hidden border border-gray-200 shadow bg-white flex flex-col h-full animate-pulse">
       <div className="relative w-full h-60">
-        <div className="absolute inset-0">
-          <Skeleton className="w-full h-full bg-gray-300" />
-        </div>
-        <Skeleton className="absolute top-2 left-2 h-5 w-16 rounded-full bg-gray-400" />
+        <Skeleton className="absolute inset-0 bg-gray-300" />
+        <Skeleton className="absolute top-2 left-2 h-5 w-16 bg-gray-400 rounded-full" />
       </div>
 
       <div className="p-3 flex flex-col flex-grow justify-between">
         <div className="space-y-2">
           <div className="flex items-start justify-between gap-2">
-            <Skeleton className="h-4 w-3/4 rounded bg-gray-400" />
-            <Skeleton className="h-5 w-14 rounded-full bg-gray-400" />
+            <Skeleton className="h-4 w-3/4 bg-gray-400 rounded" />
+            <Skeleton className="h-5 w-14 bg-gray-400 rounded-full" />
           </div>
-          <Skeleton className="h-4 w-2/3 rounded bg-gray-300" />
+          <Skeleton className="h-4 w-2/3 bg-gray-300 rounded" />
         </div>
 
         <div className="flex items-center justify-between mt-4">
-          <Skeleton className="h-4 w-20 rounded bg-gray-300" />
-          <Skeleton className="h-4 w-16 rounded bg-gray-300" />
+          <Skeleton className="h-4 w-20 bg-gray-300 rounded" />
+          <Skeleton className="h-4 w-16 bg-gray-300 rounded" />
         </div>
       </div>
     </div>
