@@ -10,7 +10,7 @@ import RentDetails from "@/components/posts/itemDetails/rentDetails";
 import TradeDetails from "@/components/posts/itemDetails/tradeDetails";
 import { getRelativeTime } from "@/utils/getRelativeTime";
 import { usePublicProfile } from "@/hooks/queries/profiles";
-import { ArrowLeft, Heart, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, Heart, X, ChevronLeft, ChevronRight, Flag } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import MessageSellerButton from "@/components/messages/MessageSellerBtn";
@@ -19,6 +19,8 @@ import { createClient } from "@/utils/supabase/client";
 
 
 import dynamic from "next/dynamic";
+import ReportItemDialog from "@/components/report/reportItemDialog";
+import { submitItemReport } from "@/app/api/reports/reportItem/route";
 const MobileBottomNav = dynamic(() => import("@/components/mobile/MobileTopNav"), { ssr: false });
 
 function renderDetails(item: any) {
@@ -40,6 +42,8 @@ export default function ItemDetailsPage() {
   const params = useParams();
   const router = useRouter();
   const id = params?.id as string | undefined;
+  const [showReport, setShowReport] = useState(false);
+  const [selectedReportReason, setSelectedReportReason] = useState("");
 
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -122,6 +126,31 @@ export default function ItemDetailsPage() {
     .toUpperCase();
 
   const avatarSrc = lister?.avatar_url ?? undefined;
+
+  //submit report
+  const reportSubmit = async () => {
+    if (!selectedReportReason) {
+      alert("Please select a reason.");
+      return;
+    }
+
+    const { error } = await submitItemReport({
+      reportedItemId: item.post_id,
+      reportedUserId: item.post_user_id,          
+      reportType: selectedReportReason,
+    });
+
+    if (error) {
+      console.error(error);
+      alert("Failed to submit report.");
+      return;
+    }
+
+    alert("Report submitted successfully.");
+    setShowReport(false); // close the modal
+    setSelectedReportReason("");
+  };
+
 
   return (
     <div className="min-h-screen bg-white">
@@ -210,6 +239,22 @@ export default function ItemDetailsPage() {
                   />
                 </Button>
               )}
+              <Button
+                variant="ghost"
+                  size="sm"
+                  onClick={() => setShowReport(true)}
+                  className={"text-gray-400 hover:text-red-600 hover:cursor-pointer transition-colors"}
+                >
+                <Flag />
+              </Button>
+
+              <ReportItemDialog 
+                open={showReport}
+                onOpenChange={setShowReport}
+                selectedReportReason={selectedReportReason}
+                setSelectedReportReason={setSelectedReportReason}
+                onSubmit={reportSubmit}
+              />
             </div>
 
             {item.created_at && (

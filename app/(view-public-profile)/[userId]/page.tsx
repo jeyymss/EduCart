@@ -41,8 +41,8 @@ import {
 } from "@/components/ui/popover";
 import { getRelativeTime } from "@/utils/getRelativeTime";
 import UserReviews from "@/components/profile/UserReviews";
-import ReportDialog from "@/components/report/reportDialog";
-import { submitUserReport } from "./action";
+import ReportUserDialog from "@/components/report/reportUserDialog";
+import { submitUserReport } from "@/app/api/reports/reportUser/route";
 
 // ---- Types ----
 type PublicListing = {
@@ -250,7 +250,7 @@ export default function PublicProfilePage() {
         </Popover>
 
         {/* REPORT DIALOG */}
-        <ReportDialog 
+        <ReportUserDialog 
           open={showReport}
           onOpenChange={setShowReport}
           selectedReportReason={selectedReportReason}

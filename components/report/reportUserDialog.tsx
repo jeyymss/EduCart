@@ -27,7 +27,7 @@ type ReportDialogProps = {
   onSubmit: () => void;
 };
 
-export default function ReportDialog({
+export default function ReportUserDialog({
   open,
   onOpenChange,
   selectedReportReason,
