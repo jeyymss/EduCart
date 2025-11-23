@@ -42,9 +42,9 @@ export function EmergencyCard({
       {/* Soft background accent */}
       <div
         className={[
-          "pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full opacity-60",
+          "pointer-events-none absolute -right-12 -top-12 h-32 w-32 rounded-full opacity-20",
           softBlob,
-          "blur",
+          "blur-xl",
         ].join(" ")}
       />
 

@@ -18,6 +18,7 @@ export type PostWithUser = {
 };
 
 type BasePost = {
+  category_name: string;
   post_id: string;
   post_user_id: string;
   full_name: string;

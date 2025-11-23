@@ -26,7 +26,7 @@ export function PasabuyCard({
       {/* Left accent ribbon (PasaBuy) */}
       <div className="pointer-events-none absolute left-0 top-0 h-full w-1.5 bg-gradient-to-b from-[#9FC9FF] to-[#6EAEEA]" />
 
-      <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-[#E8F3FF] opacity-60 blur" />
+      <div className="pointer-events-none absolute -right-12 -top-12 h-32 w-32 rounded-full bg-[#E8F3FF] opacity-20 blur-xl" />
 
       {/* Header: title + pill */}
       <div className="flex items-start justify-between gap-3">

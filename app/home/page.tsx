@@ -72,11 +72,9 @@ const POST_TYPE_OPTIONS: ToolbarPost[] = [
 
 function SectionHeader({
   title,
-  count,
   href = "#",
 }: {
   title: string;
-  count?: number;
   href?: string;
 }) {
   return (
@@ -85,11 +83,6 @@ function SectionHeader({
         <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight text-[#102E4A]">
           {title}
         </h2>
-        {typeof count === "number" && (
-          <span className="inline-flex items-center rounded-full bg-[#102E4A]/5 border border-[#102E4A]/10 px-2.5 py-0.5 text-xs font-medium text-[#577C8E]">
-            {count}
-          </span>
-        )}
       </div>
       <Link href={href} className="shrink-0">
         <Button
@@ -161,7 +154,7 @@ export default function HomePage() {
       params.set("type", postType);
     }
 
-    // pass advanced filters to browse (all optional)
+    // pass advanced filters to browse 
     if (adv.category) params.set("category", adv.category);
     if (adv.time) params.set("time", adv.time);
     if (adv.price) params.set("priceSort", adv.price);
@@ -171,7 +164,7 @@ export default function HomePage() {
     if (adv.maxPrice != null) params.set("maxPrice", String(adv.maxPrice));
 
     const qs = params.toString();
-    if (!qs) return; 
+    if (!qs) return;
 
     router.push(`/browse?${qs}`);
   }
@@ -251,7 +244,7 @@ export default function HomePage() {
       </div>
 
       {/* PAGE CONTENT */}
-      <div className="px-4 sm:px-6 md:px-8 pt-1 pb-8 md:pt-8 space-y-10 max-w-[1600px] mx-auto">
+      <div className="px-4 sm:px-6 md:px-8 pt-1 pb-8 md:pt-6 lg:pt-8 space-y-8 lg:space-y-10 max-w-[1600px] mx-auto">
         {/* CATEGORY GRID */}
         <section
           className="-mt-18 md:mt-0 rounded-2xl border bg-white p-4 sm:p-5 shadow-sm md:hover:shadow-md transition-all"
@@ -301,8 +294,8 @@ export default function HomePage() {
         </section>
 
         {/* MAIN CONTENT SECTIONS */}
-        <div className="-mx-4 sm:-mx-6 md:-mx-8 px-4 sm:px-6 md:px-8 py-8 bg-white">
-          <div className="mx-auto max-w-[1600px] space-y-12">
+        <div className="-mx-4 sm:-mx-6 md:-mx-8 px-4 sm:px-6 md:px-8 py-4 md:py-6 lg:py-8 bg-white">
+          <div className="mx-auto max-w-[1600px] space-y-8 lg:space-y-10">
             {/* Emergency Lending */}
             <section
               id="emergency"
@@ -311,8 +304,7 @@ export default function HomePage() {
             >
               <SectionHeader
                 title="Emergency Lending"
-                count={emergency?.length ?? 0}
-                href="#"
+                href="/browse/emergency"
               />
               {emergencyLoading ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -395,8 +387,7 @@ export default function HomePage() {
             >
               <SectionHeader
                 title="Featured Listing"
-                count={items?.length ?? 0}
-                href="#"
+                href="/browse/featured"
               />
               {itemLoading ? (
                 <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-thin scrollbar-thumb-gray-300 py-1">
@@ -446,8 +437,7 @@ export default function HomePage() {
             >
               <SectionHeader
                 title="PasaBuy Posts"
-                count={pasabuy?.length ?? 0}
-                href="#"
+                href="/browse/pasabuy"
               />
               {pasabuyLoading ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -466,7 +456,7 @@ export default function HomePage() {
                       key={post.post_id}
                       type="button"
                       onClick={() => setSelectedPasaBuy(post)}
-                      className={`${hoverCard} text-left focus:outline-none`}
+                      className="transition-all duration-300 rounded-2xl bg-white text-left focus:outline-none"
                     >
                       <PasabuyCard
                         id={post.post_id}
@@ -529,8 +519,7 @@ export default function HomePage() {
             >
               <SectionHeader
                 title="Donation & Giveaways"
-                count={giveaways?.length ?? 0}
-                href="#"
+                href="/browse/giveaways"
               />
               <div className="space-y-4">
                 {giveawaysLoading && <p>Loading…</p>}
@@ -543,7 +532,10 @@ export default function HomePage() {
                   </div>
                 ) : (
                   giveaways.map((post) => (
-                    <div key={post.id} className={hoverCard}>
+                    <div
+                      key={post.id}
+                      className="transition-all duration-300 rounded-2xl bg-white"
+                    >
                       <GiveawayPostCard post={post} />
                     </div>
                   ))
