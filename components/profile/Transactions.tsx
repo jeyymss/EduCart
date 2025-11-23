@@ -184,6 +184,7 @@ export default function Transactions({ userId }: { userId: string }) {
           selectedTx
             ? {
                 id: selectedTx.id,
+                transaction_id: selectedTx.transaction_id,
                 reference_code: selectedTx.reference_code,
                 title: selectedTx.title,
                 price: selectedTx.price,
@@ -192,8 +193,11 @@ export default function Transactions({ userId }: { userId: string }) {
                 type: selectedTx.type,
                 status: selectedTx.status,
                 created_at: (selectedTx as any).created_at,
-                buyer: (selectedTx as any).buyer_name,
-                seller: (selectedTx as any).seller_name,
+                post_id: selectedTx.post_id,
+                buyer: selectedTx.buyer,
+                seller: selectedTx.seller,
+                buyer_id: selectedTx.buyer_id,
+                seller_id: selectedTx.seller_id!,
                 address: (selectedTx as any).address,
               }
             : undefined

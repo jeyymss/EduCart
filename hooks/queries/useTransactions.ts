@@ -17,6 +17,11 @@ export interface Tx {
   title: string;
   price: number;
   total?: number;
+  post_id: string;
+  buyer: string;
+  seller: string;
+  buyer_id: string;
+  seller_id: string;
   created_at: string;
   post_type?: string;
   image_url?: string;

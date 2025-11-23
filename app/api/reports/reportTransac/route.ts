@@ -7,7 +7,6 @@ export async function submitTransacReport(data: {
   reportedItemId: string;
   reportedUserId: string;
   reportType: string;
-  description?: string | null;
 }) {
   const supabase = await createClient();
 
@@ -26,9 +25,8 @@ export async function submitTransacReport(data: {
     reported_transaction_id: data.reportedTransacId,
     reported_item_id: data.reportedItemId,
     reported_user_id: data.reportedUserId,
-    report_target_type: "User",
+    report_target_type: "Transaction",
     report_type: data.reportType,
-    description: data.description ?? null,
   });
 
   if (error) {

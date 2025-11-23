@@ -31,25 +31,37 @@ export async function GET(req: Request) {
     .from("transaction_records")
     .select(
       `
-      id,
-      transaction_id,
-      reference_code,
-      buyer_id,
-      seller_id,
-      snapshot,
-      transaction:transaction_id (
         id,
-        status,
-        fulfillment_method,
-        price,
-        post:post_id (
+        transaction_id,
+        reference_code,
+        buyer_id,
+        seller_id,
+        snapshot,
+
+        transaction:transaction_id (
           id,
-          item_title,
-          image_urls,
-          post_type:post_type_id ( name )
+          status,
+          fulfillment_method,
+          price,
+
+          buyer:buyer_id (
+            id,
+            name
+          ),
+
+          seller:seller_id (
+            id,
+            name
+          ),
+
+          post:post_id (
+            id,
+            item_title,
+            image_urls,
+            post_type:post_type_id (name)
+          )
         )
-      )
-    `
+      `
     )
     .or(`buyer_id.eq.${userId},seller_id.eq.${userId}`)
     .order("created_at", { ascending: false });
@@ -59,18 +71,27 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  // Flatten results
   const transactions = (data || [])
     .map((row) => {
       const snap = row.snapshot || {};
+
+      // Extract transaction
       const txn = Array.isArray(row.transaction)
         ? row.transaction[0]
         : row.transaction || {};
+
+      // Extract post
       const post = Array.isArray(txn.post) ? txn.post[0] : txn.post || {};
+
+      // Extract post type
       const postType =
         post.post_type && !Array.isArray(post.post_type)
           ? post.post_type
           : post.post_type?.[0] || {};
+
+      // Buyer / seller extracted from inside "transaction"
+      const buyerObj = Array.isArray(txn.buyer) ? txn.buyer[0] : txn.buyer;
+      const sellerObj = Array.isArray(txn.seller) ? txn.seller[0] : txn.seller;
 
       const imageUrl =
         Array.isArray(post.image_urls) && post.image_urls.length > 0
@@ -78,10 +99,10 @@ export async function GET(req: Request) {
           : "/bluecart.png";
 
       const status = mapDbStatusToTab(txn.status || snap.status);
-      const isBuyer = row.buyer_id === userId;
-      const isSeller = row.seller_id === userId;
 
-      //Cancelled items should only show to buyer, not seller
+      const isBuyer = row.buyer_id === userId;
+
+      // Cancelled items should not show for seller
       if (status === "cancelled" && !isBuyer) return null;
 
       return {
@@ -97,9 +118,19 @@ export async function GET(req: Request) {
         created_at: snap.created_at,
         post_type: postType.name || snap.post_type || "Buy",
         image_url: imageUrl,
+
+        // Fixed buyer/seller
+        buyer: buyerObj?.name || "",
+        seller: sellerObj?.name || "",
+
+        buyer_id: row.buyer_id,
+        seller_id: row.seller_id,
+
+        post_id: post.id,
+        
       };
     })
-    .filter((t): t is NonNullable<typeof t> => !!t); // remove nulls (cancelled sellers)
+    .filter(Boolean);
 
   console.log("✅ Final transactions count:", transactions.length);
 

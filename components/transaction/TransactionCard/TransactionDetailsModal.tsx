@@ -1,5 +1,7 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -14,14 +16,18 @@ import {
   Calendar,
   MapPin,
   X,
+  Flag,
 } from "lucide-react";
 import * as React from "react";
+import ReportTransacDialog from "@/components/report/reportTransacDialog";
+import { submitTransacReport } from "@/app/api/reports/reportTransac/route";
 
 type TransactionDetailsModalProps = {
   open: boolean;
   onClose: () => void;
   data?: {
     id: string;
+    transaction_id: string;
     reference_code: string | undefined;
     title: string;
     price: number;
@@ -30,8 +36,11 @@ type TransactionDetailsModalProps = {
     type: string;
     status: string;
     created_at?: string;
+    post_id: string;
     buyer?: string;
+    buyer_id: string;   
     seller?: string;
+    seller_id: string;  
     address?: string;
   };
 };
@@ -63,6 +72,9 @@ export default function TransactionDetailsModal({
   onClose,
   data,
 }: TransactionDetailsModalProps) {
+  const [showReport, setShowReport] = useState(false);
+  const [selectedReportReason, setSelectedReportReason] = useState("");
+
   if (!data) return null;
 
   const created =
@@ -74,6 +86,33 @@ export default function TransactionDetailsModal({
       : data.status?.toLowerCase() === "pending"
       ? "bg-amber-50 text-amber-700 ring-1 ring-amber-200"
       : "bg-slate-100 text-slate-700 ring-1 ring-slate-200";
+
+
+    const reportSubmit = async () => {
+      if (!selectedReportReason) {
+        alert("Please select a reason.");
+        return;
+      }
+
+      const { error } = await submitTransacReport({
+        reportedTransacId: data.transaction_id,
+        reportedItemId: data.post_id,
+        reportedUserId: data.seller_id!,   
+        reportType: selectedReportReason,
+      });
+
+
+      if (error) {
+        console.error(error);
+        alert("Failed to submit report.");
+        return;
+      }
+
+      alert("Report submitted successfully.");
+      setShowReport(false);
+      setSelectedReportReason("");
+    };
+
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -123,16 +162,35 @@ export default function TransactionDetailsModal({
 
         {/* Body */}
         <div className="px-6 py-5">
-          <div className="mb-4 flex items-start gap-3">
-            <div className="grid h-9 w-9 place-items-center rounded-lg bg-slate-100 ring-1 ring-slate-200">
-              <Package className="h-4.5 w-4.5 text-slate-700" />
+          <div className="mb-4 flex justify-between gap-3">
+            <div className="mb-4 flex items-start gap-3">
+              <div className="grid h-9 w-9 place-items-center rounded-lg bg-slate-100 ring-1 ring-slate-200">
+                <Package className="h-4.5 w-4.5 text-slate-700" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-medium text-slate-500">Item</p>
+                <p className="truncate text-sm font-semibold text-slate-900">
+                  {data.title}
+                </p>
+              </div>
             </div>
-            <div className="min-w-0">
-              <p className="text-xs font-medium text-slate-500">Item</p>
-              <p className="truncate text-sm font-semibold text-slate-900">
-                {data.title}
-              </p>
-            </div>
+            
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowReport(true)}
+              className={"text-gray-400 hover:text-red-600 hover:cursor-pointer transition-colors"}
+              >
+              <Flag className="h-4.5 w-4.5"/>
+            </Button>
+
+            <ReportTransacDialog
+              open={showReport}
+              onOpenChange={setShowReport}
+              selectedReportReason={selectedReportReason}
+              setSelectedReportReason={setSelectedReportReason}
+              onSubmit={reportSubmit}
+            />
           </div>
 
           <div className="mb-4 grid grid-cols-2 gap-3">
