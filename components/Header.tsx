@@ -58,7 +58,7 @@ export function Header() {
   const isLoginPage = pathname === "/login";
   const isSignupPage =
     pathname === "/signup" || pathname === "/organization-account";
-  const isLandingPage = pathname === "/"; 
+  const isLandingPage = pathname === "/";
 
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
@@ -97,6 +97,10 @@ export function Header() {
     { label: "Organizations", href: "/organizations" },
   ];
 
+  // 🔹 NEW: helper so Browse is active on /browse and /browse/*
+  const isBrowseActive =
+    pathname === "/browse" || pathname?.startsWith("/browse/");
+
   // Palette
   const primary = "#2F4157";
   const accent = "#E59E2C";
@@ -131,7 +135,11 @@ export function Header() {
                 <NavigationMenu>
                   <NavigationMenuList className="gap-6">
                     {navItems.map((item) => {
-                      const isActive = pathname === item.href;
+                      const isActive =
+                        item.href === "/browse"
+                          ? isBrowseActive
+                          : pathname === item.href;
+
                       return (
                         <NavigationMenuItem key={item.href}>
                           <NavigationMenuLink
@@ -292,50 +300,53 @@ export function Header() {
               )}
 
               {/* Logged-out actions (Sign Up / Log In) */}
-              {!isLandingPage && !isLoginPage && !isSignupPage && isLoggedIn === false && (
-                <>
-                  <Link href="/signup">
-                    <Button
-                      className="shadow-none border-0 hover:cursor-pointer"
-                      style={{
-                        backgroundColor: "transparent",
-                        color: primary,
-                        fontWeight: 600,
-                      }}
-                      onMouseEnter={(e) => {
-                        (e.currentTarget as HTMLButtonElement).style.color = accent;
-                      }}
-                      onMouseLeave={(e) => {
-                        (e.currentTarget as HTMLButtonElement).style.color = primary;
-                      }}
-                    >
-                      Sign Up
-                    </Button>
-                  </Link>
-                  <Link href="/login">
-                    <Button
-                      className="w-[175px] hover:cursor-pointer border-0"
-                      style={{
-                        backgroundColor: "#C7D9E5",
-                        color: primary,
-                        fontWeight: 600,
-                      }}
-                      onMouseEnter={(e) => {
-                        (e.currentTarget as HTMLButtonElement).style.backgroundColor =
-                          "#122C4F";
-                        (e.currentTarget as HTMLButtonElement).style.color = "#FFFFFF";
-                      }}
-                      onMouseLeave={(e) => {
-                        (e.currentTarget as HTMLButtonElement).style.backgroundColor =
-                          "#C7D9E5";
-                        (e.currentTarget as HTMLButtonElement).style.color = primary;
-                      }}
-                    >
-                      Log In
-                    </Button>
-                  </Link>
-                </>
-              )}
+              {!isLandingPage &&
+                !isLoginPage &&
+                !isSignupPage &&
+                isLoggedIn === false && (
+                  <>
+                    <Link href="/signup">
+                      <Button
+                        className="shadow-none border-0 hover:cursor-pointer"
+                        style={{
+                          backgroundColor: "transparent",
+                          color: primary,
+                          fontWeight: 600,
+                        }}
+                        onMouseEnter={(e) => {
+                          (e.currentTarget as HTMLButtonElement).style.color = accent;
+                        }}
+                        onMouseLeave={(e) => {
+                          (e.currentTarget as HTMLButtonElement).style.color = primary;
+                        }}
+                      >
+                        Sign Up
+                      </Button>
+                    </Link>
+                    <Link href="/login">
+                      <Button
+                        className="w-[175px] hover:cursor-pointer border-0"
+                        style={{
+                          backgroundColor: "#C7D9E5",
+                          color: primary,
+                          fontWeight: 600,
+                        }}
+                        onMouseEnter={(e) => {
+                          (e.currentTarget as HTMLButtonElement).style.backgroundColor =
+                            "#122C4F";
+                          (e.currentTarget as HTMLButtonElement).style.color = "#FFFFFF";
+                        }}
+                        onMouseLeave={(e) => {
+                          (e.currentTarget as HTMLButtonElement).style.backgroundColor =
+                            "#C7D9E5";
+                          (e.currentTarget as HTMLButtonElement).style.color = primary;
+                        }}
+                      >
+                        Log In
+                      </Button>
+                    </Link>
+                  </>
+                )}
             </div>
           </div>
         </div>

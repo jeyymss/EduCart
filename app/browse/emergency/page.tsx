@@ -26,6 +26,17 @@ import {
   type PostOpt,
 } from "@/components/profile/AdvancedFilters";
 
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+
+import MessageSellerButton from "@/components/messages/MessageSellerBtn";
+import { getRelativeTime } from "@/utils/getRelativeTime";
+
 /* MOBILE NAV */
 const MobileTopNav = dynamic(
   () => import("@/components/mobile/MobileTopNav"),
@@ -80,7 +91,7 @@ function getPrice(v: unknown): number | null {
 }
 
 export default function EmergencyBrowsePage() {
-  // 🔹 use emergency hook instead of browse items
+  // Emergency posts
   const {
     data: emergency = [],
     isLoading,
@@ -90,7 +101,7 @@ export default function EmergencyBrowsePage() {
   const searchParams = useSearchParams();
   const initialSearch = (searchParams.get("search") ?? "").toString();
 
-  // 🔹 default to Emergency Lending
+  // default to Emergency Lending
   const [postType, setPostType] =
     useState<ToolbarPost | null>("Emergency Lending");
   const [search, setSearch] = useState(initialSearch);
@@ -104,6 +115,10 @@ export default function EmergencyBrowsePage() {
     maxPrice: null,
   });
 
+  // modal state 
+  const [selectedEmergency, setSelectedEmergency] =
+    useState<EmergencyPost | null>(null);
+
   /* FILTERED RESULTS */
   const filtered = useMemo(() => {
     if (!emergency) return [];
@@ -113,7 +128,7 @@ export default function EmergencyBrowsePage() {
 
     return withIndex
       .filter(({ it }) => {
-        // filter by postType toolbar (defaults to Emergency Lending)
+        // toolbar postType filter
         if (postType && postType !== "All") {
           const current = asPostOpt(String(it.post_type_name));
           if (current !== postType) return false;
@@ -138,7 +153,7 @@ export default function EmergencyBrowsePage() {
           if (String(it.category_name) !== adv.category) return false;
         }
 
-        // advanced filter: price range (if price exists on emergency posts)
+        // advanced filter: price range
         const priceNum = getPrice((it as any).item_price);
         if (adv.minPrice != null && priceNum != null && priceNum < adv.minPrice)
           return false;
@@ -219,7 +234,16 @@ export default function EmergencyBrowsePage() {
   const ItemsGrid = () => (
     <>
       {isLoading ? (
-        <div className="grid gap-5 grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div
+          className="
+            grid gap-5 
+            grid-cols-1
+            sm:grid-cols-2
+            md:grid-cols-2
+            lg:grid-cols-2
+            xl:grid-cols-2
+          "
+        >
           {Array.from({ length: 8 }).map((_, i) => (
             <div
               key={i}
@@ -235,17 +259,19 @@ export default function EmergencyBrowsePage() {
         <div
           className="
             grid gap-5 
-            grid-cols-2
+            grid-cols-1
             sm:grid-cols-2
             md:grid-cols-2
-            lg:grid-cols-3
-            xl:grid-cols-4
+            lg:grid-cols-2
+            xl:grid-cols-2
           "
         >
           {filtered.map((emg) => (
-            <div
+            <button
               key={emg.post_id}
-              className="rounded-2xl bg-white overflow-hidden shadow-sm transition-all duration-300 md:hover:-translate-y-1 md:hover:shadow-lg"
+              type="button"
+              onClick={() => setSelectedEmergency(emg)}
+              className="text-left rounded-2xl bg-white overflow-hidden shadow-sm transition-all duration-300 md:hover:-translate-y-1 md:hover:shadow-lg focus:outline-none"
             >
               <EmergencyCard
                 id={emg.post_id}
@@ -254,7 +280,7 @@ export default function EmergencyBrowsePage() {
                 isUrgent={emg.post_type_name === "Emergency Lending"}
                 created_at={emg.created_at}
               />
-            </div>
+            </button>
           ))}
         </div>
       )}
@@ -378,6 +404,48 @@ export default function EmergencyBrowsePage() {
           </main>
         </div>
       </div>
+
+      {/* MODAL  */}
+      {selectedEmergency && (
+        <Dialog
+          open
+          onOpenChange={(open) => !open && setSelectedEmergency(null)}
+        >
+          <DialogContent className="sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle>{selectedEmergency.item_title}</DialogTitle>
+            </DialogHeader>
+            <div className="mt-2 space-y-2 text-sm text-gray-600">
+              <p>
+                <strong>Description:</strong>{" "}
+                {selectedEmergency.item_description ?? ""}
+              </p>
+              <p>
+                <strong>Name:</strong>{" "}
+                {selectedEmergency.full_name ?? ""}
+              </p>
+              <p>
+                <strong>University:</strong>{" "}
+                {selectedEmergency.university_abbreviation ?? ""}
+              </p>
+              <p>
+                <strong>Role:</strong>{" "}
+                {selectedEmergency.role ?? ""}
+              </p>
+              <p>
+                <strong>Posted:</strong>{" "}
+                {getRelativeTime(selectedEmergency.created_at)}
+              </p>
+            </div>
+            <DialogFooter>
+              <MessageSellerButton
+                postId={selectedEmergency.post_id}
+                sellerId={selectedEmergency.post_user_id}
+              />
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
