@@ -293,8 +293,12 @@ export default function EmergencyBrowsePage() {
       <div className="md:hidden">
         <MobileTopNav />
 
+        {/* 🔵 FULL WIDTH BLUE BACKGROUND FIX */}
         <div id="home-top-search-origin" className="w-full">
-          <div id="home-top-search" className="w-full bg-[#102E4A]">
+          <div
+            id="home-top-search"
+            className="relative left-1/2 right-1/2 -mx-[50vw] w-screen bg-[#102E4A]"
+          >
             <div className="mx-auto max-w-[1600px] px-4 py-3 pb-4">
               <div className="flex justify-center mb-3">
                 <SearchBar />

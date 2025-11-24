@@ -117,8 +117,8 @@ export default function MobileTopNav() {
   return (
     <>
       {/* Chips + search (mobile) */}
-      <div className="md:hidden sticky top-14 z-[10] bg-white">
-        <div className="h-[env(safe-area-inset-top)]" />
+      <div className="md:hidden sticky top-[56px] z-[40] bg-white shadow-sm">
+
         <nav className="px-3" aria-label="Secondary">
           {!isProductPage && (
             <div className="flex items-center gap-2 overflow-x-auto scrollbar-none py-2">

@@ -140,14 +140,15 @@ export default function BrowsePage() {
 
   // Shared search bar component
   const SearchBar = () => (
-    <div className="
+    <div
+      className="
       flex w-full max-w-4xl items-center
       gap-2 sm:gap-3
       rounded-full bg-white shadow-md
       ring-1 ring-black/10
       px-3 sm:px-4 py-1 sm:py-2
-    ">
-      {/* Post Type Dropdown */}
+    "
+    >
       <DropdownMenu>
         <DropdownMenuTrigger
           className="flex items-center gap-1 px-3 py-1.5 rounded-full 
@@ -162,9 +163,7 @@ export default function BrowsePage() {
           {POST_TYPE_OPTIONS.map((label) => (
             <DropdownMenuItem
               key={label}
-              onClick={() =>
-                setPostType(label === "All" ? null : label)
-              }
+              onClick={() => setPostType(label === "All" ? null : label)}
             >
               {label}
             </DropdownMenuItem>
@@ -172,7 +171,6 @@ export default function BrowsePage() {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {/* Search Input */}
       <div className="flex-1 flex items-center gap-2">
         <Search className="w-4 h-4 text-gray-400 hidden sm:block" />
 
@@ -187,12 +185,8 @@ export default function BrowsePage() {
         />
       </div>
 
-      {/* Advanced Filters */}
       <div className="flex-shrink-0">
-        <AdvancedFilters
-          value={adv}
-          onApply={(next) => setAdv({ ...next })}
-        />
+        <AdvancedFilters value={adv} onApply={(next) => setAdv({ ...next })} />
       </div>
     </div>
   );
@@ -217,7 +211,7 @@ export default function BrowsePage() {
         <div
           className="
             grid gap-5 
-            grid-cols-2     /* UPDATED HERE: WAS 1 */
+            grid-cols-2
             sm:grid-cols-2
             md:grid-cols-2
             lg:grid-cols-3
@@ -255,7 +249,10 @@ export default function BrowsePage() {
         <MobileTopNav />
 
         <div id="home-top-search-origin" className="w-full">
-          <div id="home-top-search" className="w-full bg-[#102E4A]">
+          <div
+            id="home-top-search"
+            className="relative left-1/2 right-1/2 -mx-[50vw] w-screen bg-[#102E4A]"
+          >
             <div className="mx-auto max-w-[1600px] px-4 py-3 pb-4">
               <div className="flex justify-center mb-3">
                 <SearchBar />
@@ -264,11 +261,13 @@ export default function BrowsePage() {
               <div className="flex justify-center">
                 <div className="w-full max-w-4xl">
                   <DropdownMenu>
-                    <DropdownMenuTrigger className="
+                    <DropdownMenuTrigger
+                      className="
                       w-full flex items-center justify-between px-4 py-2 
                       bg-white rounded-xl shadow ring-1 ring-black/10 
                       text-[#102E4A] text-sm font-medium
-                    ">
+                    "
+                    >
                       {adv.category ?? "All Categories"}
                       <ChevronDown className="w-4 h-4" />
                     </DropdownMenuTrigger>
@@ -280,7 +279,8 @@ export default function BrowsePage() {
                           onClick={() =>
                             setAdv((prev) => ({
                               ...prev,
-                              category: cat === "All Categories" ? undefined : cat,
+                              category:
+                                cat === "All Categories" ? undefined : cat,
                             }))
                           }
                         >
@@ -305,7 +305,7 @@ export default function BrowsePage() {
 
       {/* DESKTOP LAYOUT */}
       <div className="hidden md:block">
-        <div id="home-top-search-origin" className="w-full">
+        <div id="home-top-search-origin" className="w-fluid">
           <div id="home-top-search" className="w-full bg-[#102E4A]">
             <div className="mx-auto max-w-[1600px] px-6 md:px-8 py-6 md:py-8">
               <div className="flex justify-center">
@@ -316,10 +316,12 @@ export default function BrowsePage() {
         </div>
 
         <div className="flex">
-          <aside className="
+          <aside
+            className="
             w-64 bg-white border-r p-6 
             sticky top-[90px] h-[calc(100vh-90px)] overflow-y-auto shadow-sm
-          ">
+          "
+          >
             <h2 className="font-semibold text-[#102E4A] mb-4">
               Filter Categories
             </h2>

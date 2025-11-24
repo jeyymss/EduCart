@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { ChevronDown, Search } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 
 import { PasabuyCard } from "@/components/posts/displayposts/pasabuyCard";
 import {
@@ -25,6 +26,16 @@ import {
   type AdvancedFilterValue,
   type PostOpt,
 } from "@/components/profile/AdvancedFilters";
+
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+
+import MessageSellerButton from "@/components/messages/MessageSellerBtn";
 
 /* MOBILE NAV */
 const MobileTopNav = dynamic(
@@ -79,7 +90,6 @@ function getPrice(v: unknown): number | null {
 }
 
 export default function PasaBuyBrowsePage() {
-  // 🔹 use PasaBuy hook instead of browse items
   const {
     data: pasabuy = [],
     isLoading,
@@ -91,6 +101,7 @@ export default function PasaBuyBrowsePage() {
 
   const [postType, setPostType] = useState<ToolbarPost | null>("PasaBuy");
   const [search, setSearch] = useState(initialSearch);
+  const [selectedPasaBuy, setSelectedPasaBuy] = useState<PasaBuyPost | null>(null);
 
   const [adv, setAdv] = useState<AdvancedFilterValue>({
     time: null,
@@ -109,13 +120,11 @@ export default function PasaBuyBrowsePage() {
 
     return withIndex
       .filter(({ it }) => {
-        // toolbar post type filter (defaults to PasaBuy)
         if (postType && postType !== "All") {
           const current = asPostOpt(String(it.post_type_name));
           if (current !== postType) return false;
         }
 
-        // search text
         if (q) {
           const hay = `${it.item_title ?? ""} ${it.category_name ?? ""} ${
             it.full_name ?? ""
@@ -123,18 +132,15 @@ export default function PasaBuyBrowsePage() {
           if (!hay.includes(q)) return false;
         }
 
-        // advanced filter: post types
         if (adv.posts.length > 0) {
           const current = asPostOpt(String(it.post_type_name));
           if (!current || !adv.posts.includes(current)) return false;
         }
 
-        // advanced filter: category
         if (adv.category && adv.category !== "All Categories") {
           if (String(it.category_name) !== adv.category) return false;
         }
 
-        // advanced filter: price range (if you ever add price to PasaBuy)
         const priceNum = getPrice((it as any).item_price);
         if (adv.minPrice != null && priceNum != null && priceNum < adv.minPrice)
           return false;
@@ -147,18 +153,17 @@ export default function PasaBuyBrowsePage() {
       .map(({ it }) => it);
   }, [pasabuy, postType, search, adv]);
 
-  if (error)
-    return <div className="p-10">Error: {(error as Error).message}</div>;
+  if (error) return <div className="p-10">Error: {(error as Error).message}</div>;
 
   const SearchBar = () => (
     <div
       className="
-      flex w-full max-w-4xl items-center
-      gap-2 sm:gap-3
-      rounded-full bg-white shadow-md
-      ring-1 ring-black/10
-      px-3 sm:px-4 py-1 sm:py-2
-    "
+        flex w-full max-w-4xl items-center
+        gap-2 sm:gap-3
+        rounded-full bg-white shadow-md
+        ring-1 ring-black/10
+        px-3 sm:px-4 py-1 sm:py-2
+      "
     >
       <DropdownMenu>
         <DropdownMenuTrigger
@@ -174,9 +179,7 @@ export default function PasaBuyBrowsePage() {
           {POST_TYPE_OPTIONS.map((label) => (
             <DropdownMenuItem
               key={label}
-              onClick={() =>
-                setPostType(label === "All" ? null : label)
-              }
+              onClick={() => setPostType(label === "All" ? null : label)}
             >
               {label}
             </DropdownMenuItem>
@@ -233,9 +236,11 @@ export default function PasaBuyBrowsePage() {
           "
         >
           {filtered.map((post) => (
-            <div
+            <button
               key={post.post_id}
-              className="rounded-2xl bg-white overflow-hidden shadow-sm transition-all duration-300 md:hover:-translate-y-1 md:hover:shadow-lg"
+              type="button"
+              onClick={() => setSelectedPasaBuy(post)}
+              className="rounded-2xl bg-white overflow-hidden shadow-sm transition-all duration-300 md:hover:-translate-y-1 md:hover:shadow-lg text-left"
             >
               <PasabuyCard
                 id={post.post_id}
@@ -244,9 +249,53 @@ export default function PasaBuyBrowsePage() {
                 serviceFee={post.item_service_fee}
                 created_at={post.created_at}
               />
-            </div>
+            </button>
           ))}
         </div>
+      )}
+
+      {/* MODAL */}
+      {selectedPasaBuy && (
+        <Dialog
+          open
+          onOpenChange={(open) => !open && setSelectedPasaBuy(null)}
+        >
+          <DialogContent className="sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle>{selectedPasaBuy.item_title}</DialogTitle>
+            </DialogHeader>
+
+            <div className="mt-2 space-y-2 text-sm text-gray-600">
+              <p>
+                <strong>Description:</strong>{" "}
+                {selectedPasaBuy.item_description ?? ""}
+              </p>
+              <p>
+                <strong>Name:</strong>{" "}
+                {selectedPasaBuy.full_name ?? ""}
+              </p>
+              <p>
+                <strong>University:</strong>{" "}
+                {selectedPasaBuy.university_abbreviation ?? ""}
+              </p>
+              <p>
+                <strong>Role:</strong>{" "}
+                {selectedPasaBuy.role ?? ""}
+              </p>
+              <p>
+                <strong>Posted:</strong>{" "}
+                {selectedPasaBuy.created_at}
+              </p>
+            </div>
+
+            <DialogFooter>
+              <MessageSellerButton
+                postId={selectedPasaBuy.post_id}
+                sellerId={selectedPasaBuy.post_user_id}
+              />
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       )}
     </>
   );
@@ -257,38 +306,46 @@ export default function PasaBuyBrowsePage() {
       <div className="md:hidden">
         <MobileTopNav />
 
-        <div className="w-full bg-[#102E4A]">
-          <div className="mx-auto max-w-[1600px] px-4 py-3 pb-4">
-            <div className="flex justify-center mb-3">
-              <SearchBar />
-            </div>
+        {/* FULL WIDTH BLUE HEADER */}
+        <div id="home-top-search-origin" className="w-full">
+          <div
+            id="home-top-search"
+            className="relative left-1/2 right-1/2 -mx-[50vw] w-screen bg-[#102E4A]"
+          >
+            <div className="mx-auto max-w-[1600px] px-4 py-3 pb-4">
 
-            <div className="flex justify-center">
-              <div className="w-full max-w-4xl">
-                <DropdownMenu>
-                  <DropdownMenuTrigger className="w-full flex items-center justify-between px-4 py-2 bg-white rounded-xl shadow ring-1 ring-black/10 text-[#102E4A] text-sm font-medium">
-                    {adv.category ?? "All Categories"}
-                    <ChevronDown className="w-4 h-4" />
-                  </DropdownMenuTrigger>
-
-                  <DropdownMenuContent className="w-full max-w-4xl">
-                    {CATEGORIES.map((cat) => (
-                      <DropdownMenuItem
-                        key={cat}
-                        onClick={() =>
-                          setAdv((prev) => ({
-                            ...prev,
-                            category:
-                              cat === "All Categories" ? undefined : cat,
-                          }))
-                        }
-                      >
-                        {cat}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+              <div className="flex justify-center mb-3">
+                <SearchBar />
               </div>
+
+              <div className="flex justify-center">
+                <div className="w-full max-w-4xl">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger className="w-full flex items-center justify-between px-4 py-2 bg-white rounded-xl shadow ring-1 ring-black/10 text-[#102E4A] text-sm font-medium">
+                      {adv.category ?? "All Categories"}
+                      <ChevronDown className="w-4 h-4" />
+                    </DropdownMenuTrigger>
+
+                    <DropdownMenuContent className="w-full max-w-4xl">
+                      {CATEGORIES.map((cat) => (
+                        <DropdownMenuItem
+                          key={cat}
+                          onClick={() =>
+                            setAdv((prev) => ({
+                              ...prev,
+                              category:
+                                cat === "All Categories" ? undefined : cat,
+                            }))
+                          }
+                        >
+                          {cat}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </div>
+
             </div>
           </div>
         </div>

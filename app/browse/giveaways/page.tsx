@@ -75,7 +75,6 @@ function getPrice(v: unknown): number | null {
 }
 
 export default function GiveawaysBrowsePage() {
-  // 🔹 use giveaways hook instead of browse items
   const {
     data: giveaways = [],
     isLoading,
@@ -106,7 +105,6 @@ export default function GiveawaysBrowsePage() {
 
     return withIndex
       .filter(({ it }) => {
-        // Toolbar post type filter – only apply if post_type_name exists
         if (postType && postType !== "All") {
           const rawType = (it as any).post_type_name;
           if (rawType) {
@@ -115,7 +113,6 @@ export default function GiveawaysBrowsePage() {
           }
         }
 
-        // Text search
         if (q) {
           const hay = `${(it as any).item_title ?? ""} ${(it as any).category_name ?? ""} ${
             (it as any).full_name ?? ""
@@ -123,7 +120,6 @@ export default function GiveawaysBrowsePage() {
           if (!hay.includes(q)) return false;
         }
 
-        // Advanced filter: post types – only if post_type_name exists
         if (adv.posts.length > 0) {
           const rawType = (it as any).post_type_name;
           if (rawType) {
@@ -132,12 +128,10 @@ export default function GiveawaysBrowsePage() {
           }
         }
 
-        // Advanced filter: category
         if (adv.category && adv.category !== "All Categories") {
           if (String((it as any).category_name) !== adv.category) return false;
         }
 
-        // Advanced filter: price – safe even if giveaways don't really use price
         const priceNum = getPrice((it as any).item_price);
         if (adv.minPrice != null && priceNum != null && priceNum < adv.minPrice)
           return false;
@@ -156,12 +150,12 @@ export default function GiveawaysBrowsePage() {
   const SearchBar = () => (
     <div
       className="
-      flex w-full max-w-4xl items-center
-      gap-2 sm:gap-3
-      rounded-full bg-white shadow-md
-      ring-1 ring-black/10
-      px-3 sm:px-4 py-1 sm:py-2
-    "
+        flex w-full max-w-4xl items-center
+        gap-2 sm:gap-3
+        rounded-full bg-white shadow-md
+        ring-1 ring-black/10
+        px-3 sm:px-4 py-1 sm:py-2
+      "
     >
       <DropdownMenu>
         <DropdownMenuTrigger
@@ -177,9 +171,7 @@ export default function GiveawaysBrowsePage() {
           {POST_TYPE_OPTIONS.map((label) => (
             <DropdownMenuItem
               key={label}
-              onClick={() =>
-                setPostType(label === "All" ? null : label)
-              }
+              onClick={() => setPostType(label === "All" ? null : label)}
             >
               {label}
             </DropdownMenuItem>
@@ -209,10 +201,11 @@ export default function GiveawaysBrowsePage() {
     </div>
   );
 
+  // 🔥🔥🔥 ALL POSTS NOW 1 PER ROW 🔥🔥🔥
   const ItemsGrid = () => (
     <>
       {isLoading ? (
-        <div className="grid gap-5 grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid gap-5 grid-cols-1">
           {Array.from({ length: 8 }).map((_, i) => (
             <div
               key={i}
@@ -225,16 +218,7 @@ export default function GiveawaysBrowsePage() {
           <p className="text-lg font-medium">No items found</p>
         </div>
       ) : (
-        <div
-          className="
-            grid gap-5 
-            grid-cols-2
-            sm:grid-cols-2
-            md:grid-cols-2
-            lg:grid-cols-3
-            xl:grid-cols-4
-          "
-        >
+        <div className="grid gap-5 grid-cols-1">
           {filtered.map((post: any) => (
             <div
               key={post.id ?? post.post_id}
@@ -250,42 +234,49 @@ export default function GiveawaysBrowsePage() {
 
   return (
     <div className="bg-white min-h-screen">
+
       {/* MOBILE */}
       <div className="md:hidden">
         <MobileTopNav />
 
-        <div className="w-full bg-[#102E4A]">
-          <div className="mx-auto max-w-[1600px] px-4 py-3 pb-4">
-            <div className="flex justify-center mb-3">
-              <SearchBar />
-            </div>
-
-            <div className="flex justify-center">
-              <div className="w-full max-w-4xl">
-                <DropdownMenu>
-                  <DropdownMenuTrigger className="w-full flex items-center justify-between px-4 py-2 bg_WHITE rounded-xl shadow ring-1 ring-black/10 text-[#102E4A] text-sm font-medium">
-                    {adv.category ?? "All Categories"}
-                    <ChevronDown className="w-4 h-4" />
-                  </DropdownMenuTrigger>
-
-                  <DropdownMenuContent className="w-full max-w-4xl">
-                    {CATEGORIES.map((cat) => (
-                      <DropdownMenuItem
-                        key={cat}
-                        onClick={() =>
-                          setAdv((prev) => ({
-                            ...prev,
-                            category:
-                              cat === "All Categories" ? undefined : cat,
-                          }))
-                        }
-                      >
-                        {cat}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+        <div id="home-top-search-origin" className="w-full">
+          <div
+            id="home-top-search"
+            className="relative left-1/2 right-1/2 -mx-[50vw] w-screen bg-[#102E4A]"
+          >
+            <div className="mx-auto max-w-[1600px] px-4 py-3 pb-4">
+              <div className="flex justify-center mb-3">
+                <SearchBar />
               </div>
+
+              <div className="flex justify-center">
+                <div className="w-full max-w-4xl">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger className="w-full flex items-center justify-between px-4 py-2 bg-white rounded-xl shadow ring-1 ring-black/10 text-[#102E4A] text-sm font-medium">
+                      {adv.category ?? "All Categories"}
+                      <ChevronDown className="w-4 h-4" />
+                    </DropdownMenuTrigger>
+
+                    <DropdownMenuContent className="w-full max-w-4xl">
+                      {CATEGORIES.map((cat) => (
+                        <DropdownMenuItem
+                          key={cat}
+                          onClick={() =>
+                            setAdv((prev) => ({
+                              ...prev,
+                              category:
+                                cat === "All Categories" ? undefined : cat,
+                            }))
+                          }
+                        >
+                          {cat}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </div>
+
             </div>
           </div>
         </div>
@@ -350,6 +341,7 @@ export default function GiveawaysBrowsePage() {
           </main>
         </div>
       </div>
+
     </div>
   );
 }
