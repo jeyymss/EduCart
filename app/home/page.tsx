@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronDown, Search } from "lucide-react";
+import { ChevronDown, Search, X } from "lucide-react";
 
 import { ItemCard } from "@/components/posts/displayposts/ItemCard";
 import { EmergencyCard } from "@/components/posts/displayposts/emergencyCard";
@@ -163,19 +163,11 @@ export default function HomePage() {
     const params = new URLSearchParams();
 
     if (term) params.set("search", term);
-
-    if (postType && postType !== "All") {
-      params.set("type", postType);
-    }
-
+    if (postType && postType !== "All") params.set("type", postType);
     if (adv.category) params.set("category", adv.category);
     if (adv.time) params.set("time", adv.time);
     if (adv.price) params.set("priceSort", adv.price);
-
-    if (adv.posts && adv.posts.length > 0) {
-      params.set("posts", adv.posts.join(","));
-    }
-
+    if (adv.posts && adv.posts.length > 0) params.set("posts", adv.posts.join(","));
     if (adv.minPrice != null) params.set("minPrice", String(adv.minPrice));
     if (adv.maxPrice != null) params.set("maxPrice", String(adv.maxPrice));
 
@@ -225,9 +217,7 @@ export default function HomePage() {
                     {POST_TYPE_OPTIONS.map((label) => (
                       <DropdownMenuItem
                         key={label}
-                        onClick={() =>
-                          setPostType(label === "All" ? null : label)
-                        }
+                        onClick={() => setPostType(label === "All" ? null : label)}
                       >
                         {label}
                       </DropdownMenuItem>
@@ -252,10 +242,7 @@ export default function HomePage() {
 
                 {/* Advanced Filters */}
                 <div className="flex-shrink-0">
-                  <AdvancedFilters
-                    value={adv}
-                    onApply={(next) => setAdv({ ...next })}
-                  />
+                  <AdvancedFilters value={adv} onApply={(next) => setAdv({ ...next })} />
                 </div>
 
                 <button type="submit" className="hidden" aria-hidden="true" />
@@ -267,7 +254,7 @@ export default function HomePage() {
 
       {/* PAGE CONTENT */}
       <div className="px-4 sm:px-6 md:px-8 pt-1 pb-20 md:pb-8 lg:pb-8 space-y-8 lg:space-y-10 max-w-[1600px] mx-auto">
-        
+
         {/* CATEGORY GRID */}
         <section
           className="-mt-18 md:mt-0 rounded-2xl border bg-white p-4 sm:p-5 shadow-sm md:hover:shadow-md transition-all"
@@ -333,10 +320,7 @@ export default function HomePage() {
               {emergencyLoading ? (
                 <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-thin scrollbar-thumb-gray-300 py-1 md:grid md:grid-cols-3 md:gap-4">
                   {Array.from({ length: 3 }).map((_, i) => (
-                    <div
-                      key={i}
-                      className="min-w-[280px] md:min-w-0 snap-start"
-                    >
+                    <div key={i} className="min-w-[280px] md:min-w-0 snap-start">
                       <PostCardSkeleton />
                     </div>
                   ))}
@@ -389,50 +373,74 @@ export default function HomePage() {
                 </>
               )}
 
-              {/* MODAL */}
+              {/* --- EMERGENCY MODAL --- */}
               {selectedEmergency && (
                 <Dialog
                   open
                   onOpenChange={(open) => !open && setSelectedEmergency(null)}
                 >
-                  <DialogContent className="sm:max-w-lg">
+                  <DialogContent className="sm:max-w-lg rounded-2xl p-6">
+
+                    {/* CLOSE BUTTON */}
+                    <button
+                      onClick={() => setSelectedEmergency(null)}
+                      className="absolute right-4 top-4 text-gray-500 hover:text-gray-700"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+
                     <DialogHeader>
-                      <DialogTitle>
+                      <DialogTitle className="text-xl font-bold text-[#102E4A]">
                         {selectedEmergency.item_title}
                       </DialogTitle>
                     </DialogHeader>
 
-                    <div className="mt-2 space-y-2 text-sm text-gray-600">
+                    {/* BODY */}
+                    <div className="mt-4 space-y-3 text-sm text-gray-700">
                       <p>
-                        <strong>Description:</strong>{" "}
-                        {selectedEmergency.item_description ?? ""}
+                        <span className="font-semibold text-[#102E4A]">Description:</span>{" "}
+                        {selectedEmergency.item_description}
                       </p>
 
                       <p>
-                        <strong>Name:</strong>{" "}
-                        {selectedEmergency.full_name ?? ""}
+                        <span className="font-semibold text-[#102E4A]">Name:</span>{" "}
+                        {selectedEmergency.full_name}
                       </p>
 
                       <p>
-                        <strong>University:</strong>{" "}
-                        {selectedEmergency.university_abbreviation ?? ""}
+                        <span className="font-semibold text-[#102E4A]">University:</span>{" "}
+                        {selectedEmergency.university_abbreviation}
                       </p>
 
                       <p>
-                        <strong>Role:</strong>{" "}
-                        {selectedEmergency.role ?? ""}
+                        <span className="font-semibold text-[#102E4A]">Role:</span>{" "}
+                        {selectedEmergency.role}
                       </p>
 
                       <p>
-                        <strong>Posted:</strong>{" "}
+                        <span className="font-semibold text-[#102E4A]">Posted:</span>{" "}
                         {getRelativeTime(selectedEmergency.created_at)}
                       </p>
                     </div>
 
-                    <DialogFooter>
+                    {/* FOOTER BUTTONS */}
+                    <DialogFooter className="flex flex-col sm:flex-row sm:justify-end gap-3 pt-4">
+
+                      {/* VIEW LISTER */}
+                      <Link href={`/${selectedEmergency.post_user_id}`} className="w-full sm:w-auto">
+                        <Button
+                          variant="outline"
+                          className="w-full py-2 font-medium rounded-lg border-[#102E4A] text-[#102E4A] hover:bg-[#102E4A] hover:text-white transition"
+                        >
+                          View Lister
+                        </Button>
+                      </Link>
+
+                      {/* MESSAGE SELLER */}
                       <MessageSellerButton
                         postId={selectedEmergency.post_id}
                         sellerId={selectedEmergency.post_user_id}
+                        className="w-full sm:w-auto bg-[#F3D58D] hover:bg-[#e8c880] text-black font-medium py-2 rounded-lg"
                       />
                     </DialogFooter>
                   </DialogContent>
@@ -499,10 +507,7 @@ export default function HomePage() {
               {pasabuyLoading ? (
                 <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-thin scrollbar-thumb-gray-300 py-1 md:grid md:grid-cols-3 md:gap-4">
                   {Array.from({ length: 3 }).map((_, i) => (
-                    <div
-                      key={i}
-                      className="min-w-[280px] md:min-w-0 snap-start"
-                    >
+                    <div key={i} className="min-w-[280px] md:min-w-0 snap-start">
                       <PostCardSkeleton />
                     </div>
                   ))}
@@ -555,47 +560,80 @@ export default function HomePage() {
                 </>
               )}
 
-              {/* MODAL */}
+              {/* --- PASABUY MODAL --- */}
               {selectedPasaBuy && (
                 <Dialog
                   open
                   onOpenChange={(open) => !open && setSelectedPasaBuy(null)}
                 >
-                  <DialogContent className="sm:max-w-lg">
+                  <DialogContent className="sm:max-w-lg rounded-2xl p-6">
+
+                    {/* CLOSE BUTTON */}
+                    <button
+                      onClick={() => setSelectedPasaBuy(null)}
+                      className="absolute right-4 top-4 text-gray-500 hover:text-gray-700"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+
                     <DialogHeader>
-                      <DialogTitle>{selectedPasaBuy.item_title}</DialogTitle>
+                      <DialogTitle className="text-xl font-bold text-[#102E4A]">
+                        {selectedPasaBuy.item_title}
+                      </DialogTitle>
                     </DialogHeader>
 
-                    <div className="mt-2 space-y-2 text-sm text-gray-600">
+                    {/* BODY */}
+                    <div className="mt-4 space-y-3 text-sm text-gray-700">
+
                       <p>
-                        <strong>Description:</strong>{" "}
-                        {selectedPasaBuy.item_description ?? ""}
+                        <span className="font-semibold text-[#102E4A]">Description:</span>{" "}
+                        {selectedPasaBuy.item_description}
                       </p>
 
                       <p>
-                        <strong>Name:</strong>{" "}
-                        {selectedPasaBuy.full_name ?? ""}
+                        <span className="font-semibold text-[#102E4A]">Service Fee:</span>{" "}
+                        ₱{selectedPasaBuy.item_service_fee}
                       </p>
 
                       <p>
-                        <strong>University:</strong>{" "}
-                        {selectedPasaBuy.university_abbreviation ?? ""}
+                        <span className="font-semibold text-[#102E4A]">Name:</span>{" "}
+                        {selectedPasaBuy.full_name}
                       </p>
 
                       <p>
-                        <strong>Role:</strong> {selectedPasaBuy.role ?? ""}
+                        <span className="font-semibold text-[#102E4A]">University:</span>{" "}
+                        {selectedPasaBuy.university_abbreviation}
                       </p>
 
                       <p>
-                        <strong>Posted:</strong>{" "}
+                        <span className="font-semibold text-[#102E4A]">Role:</span>{" "}
+                        {selectedPasaBuy.role}
+                      </p>
+
+                      <p>
+                        <span className="font-semibold text-[#102E4A]">Posted:</span>{" "}
                         {getRelativeTime(selectedPasaBuy.created_at)}
                       </p>
                     </div>
 
-                    <DialogFooter>
+                    {/* FOOTER BUTTONS */}
+                    <DialogFooter className="flex flex-col sm:flex-row sm:justify-end gap-3 pt-4">
+
+                      {/* VIEW LISTER BUTTON */}
+                      <Link href={`/${selectedPasaBuy.post_user_id}`} className="w-full sm:w-auto">
+                        <Button
+                          variant="outline"
+                          className="w-full py-2 font-medium rounded-lg border-[#102E4A] text-[#102E4A] hover:bg-[#102E4A] hover:text-white transition"
+                        >
+                          View Lister
+                        </Button>
+                      </Link>
+
+                      {/* MESSAGE SELLER BUTTON */}
                       <MessageSellerButton
                         postId={selectedPasaBuy.post_id}
                         sellerId={selectedPasaBuy.post_user_id}
+                        className="w-full sm:w-auto bg-[#F3D58D] hover:bg-[#e8c880] text-black font-medium py-2 rounded-lg"
                       />
                     </DialogFooter>
                   </DialogContent>
@@ -609,10 +647,7 @@ export default function HomePage() {
               className="scroll-mt-28 sm:scroll-mt-32 md:scroll-mt-36 lg:scroll-mt-40"
               style={cv}
             >
-              <SectionHeader
-                title="Donation & Giveaways"
-                href="/browse/giveaways"
-              />
+              <SectionHeader title="Donation & Giveaways" href="/browse/giveaways" />
 
               <div className="space-y-4">
                 {giveawaysLoading && <p>Loading…</p>}
@@ -637,6 +672,7 @@ export default function HomePage() {
                 )}
               </div>
             </section>
+
           </div>
         </div>
       </div>
