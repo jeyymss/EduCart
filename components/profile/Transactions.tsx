@@ -31,7 +31,7 @@ const EMPTY_ADV: AdvancedFilterValue = {
 export default function Transactions({ userId }: { userId: string }) {
   const [statusTab, setStatusTab] = React.useState<TxStatus>("active");
   const [typeFilter, setTypeFilter] = React.useState<TxType>("All");
-  const [search, setSearch] = React.useState<string>("");
+  const [search, setSearch] = React.useState("");
   const [adv, setAdv] = React.useState<AdvancedFilterValue>({ ...EMPTY_ADV });
 
   const [isModalOpen, setIsModalOpen] = React.useState(false);
@@ -65,7 +65,9 @@ export default function Transactions({ userId }: { userId: string }) {
 
   const Header = (
     <div className="sticky top-0 z-20 bg-white border-b flex justify-between items-center gap-4 px-4 py-3">
-      <TabsList className="flex bg-transparent h-auto">
+
+      {/* MOBILE: Center tabs */}
+      <TabsList className="flex bg-transparent h-auto w-full justify-center md:justify-start">
         {(["active", "completed", "cancelled"] as TxStatus[]).map((tab) => (
           <TabsTrigger key={tab} value={tab} className="tab-trigger capitalize">
             {tab} ({transactions.filter((t) => t.status === tab).length})
@@ -73,18 +75,16 @@ export default function Transactions({ userId }: { userId: string }) {
         ))}
       </TabsList>
 
-      <div className="flex items-center gap-3">
+      <div className="hidden md:flex items-center gap-3">
         <DropdownMenu>
           <DropdownMenuTrigger className="flex items-center gap-1 px-3 py-2 border rounded-lg bg-white shadow-sm text-sm font-medium hover:bg-gray-50">
             {typeFilter}
             <ChevronDown className="w-4 h-4" />
           </DropdownMenuTrigger>
+
           <DropdownMenuContent align="end">
             {(["All", "Sales", "Purchases"] as TxType[]).map((label) => (
-              <DropdownMenuItem
-                key={label}
-                onClick={() => setTypeFilter(label)}
-              >
+              <DropdownMenuItem key={label} onClick={() => setTypeFilter(label)}>
                 {label}
               </DropdownMenuItem>
             ))}
@@ -118,28 +118,28 @@ export default function Transactions({ userId }: { userId: string }) {
       ) : filtered.length === 0 ? (
         <div className="text-sm text-gray-500">No transactions found.</div>
       ) : (
-        <div className="overflow-x-auto rounded-xl border bg-white">
-          <table className="w-full table-fixed text-sm">
-            {/* Even column spread */}
+        /* UPDATED TABLE WRAPPER (MOBILE-FRIENDLY) */
+        <div className="overflow-x-auto rounded-xl border bg-white max-w-full">
+          <table className="w-full text-sm border-collapse">
             <colgroup>
-              <col style={{ width: "40%" }} />
-              <col style={{ width: "15%" }} />
-              <col style={{ width: "15%" }} />
-              <col style={{ width: "15%" }} />
-              <col style={{ width: "15%" }} />
+              <col className="w-[45%] md:w-[40%]" />
+              <col className="w-[18%]" />
+              <col className="w-[15%]" />
+              <col className="w-[15%]" />
+              <col className="w-[12%]" />
             </colgroup>
 
-            <thead className="bg-gray-50 text-gray-700 text-[13px] uppercase font-semibold">
+            <thead className="bg-gray-50 text-gray-700 text-[12px] uppercase font-semibold">
               <tr>
-                <th className="px-6 py-3 text-left">Name</th>
-                <th className="px-6 py-3 text-left">Total Price</th>
-                <th className="px-6 py-3 text-left">Listing Type</th>
-                <th className="px-6 py-3 text-left">Transaction Type</th>
-                <th className="px-6 py-3 text-right">Action</th>
+                <th className="px-3 py-2 whitespace-nowrap text-center md:text-left">Name</th>
+                <th className="px-3 py-2 whitespace-nowrap text-center md:text-left">Total Price</th>
+                <th className="px-3 py-2 whitespace-nowrap text-center md:text-left">Listing Type</th>
+                <th className="px-3 py-2 whitespace-nowrap text-center md:text-left">Transaction Type</th>
+                <th className="px-3 py-2 whitespace-nowrap text-center md:text-left">Action</th>
               </tr>
             </thead>
 
-            <tbody className="divide-y">
+            <tbody className="divide-y text-[13px]">
               {filtered.map((tx) => (
                 <TransactionCard
                   key={tx.id}

@@ -106,43 +106,52 @@ export default function MobileTopNav() {
     mq.addEventListener?.("change", moveIfNeeded);
     return () => {
       try {
-        if (origin && search && search.parentElement !== origin) origin.appendChild(search);
+        if (origin && search && search.parentElement !== origin)
+          origin.appendChild(search);
         mq.removeEventListener?.("change", moveIfNeeded);
       } catch {}
     };
   }, []);
 
+  /* Product + Profile hide chips */
   const isProductPage = pathname.includes("/product/");
+  const hideTopChips = isProductPage || pathname.startsWith("/profile");
 
   return (
     <>
       {/* Chips + search (mobile) */}
-      <div className="md:hidden sticky top-[56px] z-[40] bg-white shadow-sm">
+      {!hideTopChips && (
+        <div className="md:hidden sticky top-[56px] z-[40] bg-white shadow-sm">
+          <nav className="px-3" aria-label="Secondary">
+            {!isProductPage && (
+              <div className="flex items-center gap-2 overflow-x-auto scrollbar-none py-2">
+                <Chip href="/browse" active={isActive("/browse")}>
+                  <Grid2X2 className="h-4 w-4" />
+                  <span>Browse</span>
+                </Chip>
+                <Chip href="/businesses" active={isActive("/businesses")}>
+                  <Building2 className="h-4 w-4" />
+                  <span>Businesses</span>
+                </Chip>
+                <Chip href="/organizations" active={isActive("/organizations")}>
+                  <Landmark className="h-4 w-4" />
+                  <span>Organizations</span>
+                </Chip>
+                <Circle
+                  href="/credits"
+                  label="Credits"
+                  active={isActive("/credits")}
+                  badge="29"
+                >
+                  <TimerReset className="h-4 w-4" />
+                </Circle>
+              </div>
+            )}
 
-        <nav className="px-3" aria-label="Secondary">
-          {!isProductPage && (
-            <div className="flex items-center gap-2 overflow-x-auto scrollbar-none py-2">
-              <Chip href="/browse" active={isActive("/browse")}>
-                <Grid2X2 className="h-4 w-4" />
-                <span>Browse</span>
-              </Chip>
-              <Chip href="/businesses" active={isActive("/businesses")}>
-                <Building2 className="h-4 w-4" />
-                <span>Businesses</span>
-              </Chip>
-              <Chip href="/organizations" active={isActive("/organizations")}>
-                <Landmark className="h-4 w-4" />
-                <span>Organizations</span>
-              </Chip>
-              <Circle href="/credits" label="Credits" active={isActive("/credits")} badge="29">
-                <TimerReset className="h-4 w-4" />
-              </Circle>
-            </div>
-          )}
-
-          <div id="mobile-search-slot" className="mt-1" />
-        </nav>
-      </div>
+            <div id="mobile-search-slot" className="mt-1" />
+          </nav>
+        </div>
+      )}
 
       {/* Bottom app bar */}
       <BottomBar
@@ -182,9 +191,15 @@ export default function MobileTopNav() {
             </div>
 
             <div className="max-h-[60vh] overflow-auto pr-1">
-              {choice === "sale" && <ForSaleForm selectedType={TYPE_LABEL.sale} />}
-              {choice === "rent" && <RentForm selectedType={TYPE_LABEL.rent} />}
-              {choice === "trade" && <TradeForm selectedType={TYPE_LABEL.trade} />}
+              {choice === "sale" && (
+                <ForSaleForm selectedType={TYPE_LABEL.sale} />
+              )}
+              {choice === "rent" && (
+                <RentForm selectedType={TYPE_LABEL.rent} />
+              )}
+              {choice === "trade" && (
+                <TradeForm selectedType={TYPE_LABEL.trade} />
+              )}
             </div>
           </div>
         </DialogContent>
@@ -266,15 +281,17 @@ function BottomBar({
   onOpenList: () => void;
 }) {
   return (
-    <div
-      className="md:hidden fixed inset-x-0 bottom-0 z-30 bg-white border-t border-black/10 h-16 pb-[env(safe-area-inset-bottom)]"
-    >
+    <div className="md:hidden fixed inset-x-0 bottom-0 z-30 bg-white border-t border-black/10 h-16 pb-[env(safe-area-inset-bottom)]">
       <div className="relative mx-auto max-w-screen-sm px-6 h-full flex items-center justify-between">
         <NavIcon href="/" label="Home" active={homeActive}>
           <Home className="h-5 w-5" />
         </NavIcon>
 
-        <NavIcon href="/notifications" label="Notifications" active={notifActive}>
+        <NavIcon
+          href="/notifications"
+          label="Notifications"
+          active={notifActive}
+        >
           <Bell className="h-5 w-5" />
         </NavIcon>
 

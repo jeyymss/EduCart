@@ -38,9 +38,9 @@ type TransactionDetailsModalProps = {
     created_at?: string;
     post_id: string;
     buyer?: string;
-    buyer_id: string;   
+    buyer_id: string;
     seller?: string;
-    seller_id: string;  
+    seller_id: string;
     address?: string;
   };
 };
@@ -87,42 +87,45 @@ export default function TransactionDetailsModal({
       ? "bg-amber-50 text-amber-700 ring-1 ring-amber-200"
       : "bg-slate-100 text-slate-700 ring-1 ring-slate-200";
 
+  const reportSubmit = async () => {
+    if (!selectedReportReason) {
+      alert("Please select a reason.");
+      return;
+    }
 
-    const reportSubmit = async () => {
-      if (!selectedReportReason) {
-        alert("Please select a reason.");
-        return;
-      }
+    const { error } = await submitTransacReport({
+      reportedTransacId: data.transaction_id,
+      reportedItemId: data.post_id,
+      reportedUserId: data.seller_id!,
+      reportType: selectedReportReason,
+    });
 
-      const { error } = await submitTransacReport({
-        reportedTransacId: data.transaction_id,
-        reportedItemId: data.post_id,
-        reportedUserId: data.seller_id!,   
-        reportType: selectedReportReason,
-      });
+    if (error) {
+      console.error(error);
+      alert("Failed to submit report.");
+      return;
+    }
 
-
-      if (error) {
-        console.error(error);
-        alert("Failed to submit report.");
-        return;
-      }
-
-      alert("Report submitted successfully.");
-      setShowReport(false);
-      setSelectedReportReason("");
-    };
-
+    alert("Report submitted successfully.");
+    setShowReport(false);
+    setSelectedReportReason("");
+  };
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent
         onInteractOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
-        className="max-w-lg overflow-hidden rounded-2xl p-0 shadow-xl"
+        className="
+          w-full max-w-lg 
+          p-0 rounded-2xl shadow-xl 
+          overflow-hidden 
+          max-h-[95vh] 
+          flex flex-col
+        "
         aria-describedby={undefined}
       >
-        {/* Header */}
+        {/* HEADER */}
         <div className="relative">
           <div className="absolute inset-0 rounded-t-2xl bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800" />
 
@@ -130,27 +133,30 @@ export default function TransactionDetailsModal({
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="absolute right-3.5 top-2.5 z-10 text-white transition-colors hover:text-gray-300 hover:cursor-pointer"
+            className="absolute right-3 top-3 z-10 text-white hover:text-gray-300"
           >
             <X className="h-5 w-5" />
           </button>
 
           <div className="relative flex items-center gap-3 px-6 py-5 text-white">
+            {/* Icon */}
             <div className="grid h-10 w-10 place-items-center rounded-xl bg-white/10 ring-1 ring-white/20">
               <ReceiptText className="h-5 w-5" />
             </div>
 
-            <div className="flex-1">
+            {/* Title */}
+            <div className="flex-1 min-w-0">
               <DialogHeader className="p-0">
-                <DialogTitle className="text-base font-semibold">
+                <DialogTitle className="text-base font-semibold truncate">
                   Order Summary
                 </DialogTitle>
               </DialogHeader>
-              <p className="text-xs text-white/70">
+              <p className="text-xs text-white/70 truncate">
                 Ref: <span className="font-mono">{data.reference_code}</span>
               </p>
             </div>
 
+            {/* Status */}
             <span
               className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${statusTone}`}
             >
@@ -160,28 +166,29 @@ export default function TransactionDetailsModal({
           </div>
         </div>
 
-        {/* Body */}
-        <div className="px-6 py-5">
+        {/* BODY  */}
+        <div className="px-6 py-5 overflow-y-auto">
+          {/* ITEM + REPORT BUTTON */}
           <div className="mb-4 flex justify-between gap-3">
-            <div className="mb-4 flex items-start gap-3">
+            <div className="flex items-start gap-3 min-w-0">
               <div className="grid h-9 w-9 place-items-center rounded-lg bg-slate-100 ring-1 ring-slate-200">
                 <Package className="h-4.5 w-4.5 text-slate-700" />
               </div>
               <div className="min-w-0">
                 <p className="text-xs font-medium text-slate-500">Item</p>
-                <p className="truncate text-sm font-semibold text-slate-900">
+                <p className="truncate text-sm font-semibold text-slate-900 max-w-[200px] sm:max-w-[260px]">
                   {data.title}
                 </p>
               </div>
             </div>
-            
+
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setShowReport(true)}
-              className={"text-gray-400 hover:text-red-600 hover:cursor-pointer transition-colors"}
-              >
-              <Flag className="h-4.5 w-4.5"/>
+              className="text-gray-400 hover:text-red-600"
+            >
+              <Flag className="h-4.5 w-4.5" />
             </Button>
 
             <ReportTransacDialog
@@ -193,7 +200,8 @@ export default function TransactionDetailsModal({
             />
           </div>
 
-          <div className="mb-4 grid grid-cols-2 gap-3">
+          {/* PRICE BOXES */}
+          <div className="grid grid-cols-2 gap-3 mb-4">
             <div className="rounded-xl border border-slate-200 bg-white p-3">
               <p className="text-xs font-medium text-slate-500">Price</p>
               <p className="text-sm font-semibold text-slate-900">
@@ -210,15 +218,17 @@ export default function TransactionDetailsModal({
 
           <Separator className="my-4" />
 
-          <div className="space-y-2 text-sm text-slate-700">
-            <div className="flex items-center gap-2">
+          {/* DETAILS */}
+          <div className="space-y-3 text-sm text-slate-700">
+            {/* Tags */}
+            <div className="flex flex-wrap items-center gap-2">
               <Tag>{data.type}</Tag>
-
               <span className="inline-flex items-center text-xs px-3 py-1 rounded-full border bg-gray-50 text-gray-700">
                 {data.method}
               </span>
             </div>
 
+            {/* Date */}
             {created && (
               <div className="flex items-center gap-2 text-slate-600">
                 <Calendar className="h-4 w-4" />
@@ -226,6 +236,7 @@ export default function TransactionDetailsModal({
               </div>
             )}
 
+            {/* Address */}
             {data.address && (
               <div className="flex items-start gap-2 text-slate-600">
                 <MapPin className="mt-0.5 h-4 w-4 flex-none" />
@@ -233,6 +244,7 @@ export default function TransactionDetailsModal({
               </div>
             )}
 
+            {/* Buyer / Seller */}
             <div className="grid grid-cols-2 gap-3 pt-2 text-xs text-slate-500">
               {data.buyer && (
                 <div>

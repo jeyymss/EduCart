@@ -26,6 +26,7 @@ import { FavoritesList } from "@/components/profile/FavoriteList";
 import Transactions from "@/components/profile/Transactions";
 import { UserPosts } from "@/components/profile/UserPosts";
 import UserReviews from "@/components/profile/UserReviews";
+import MobileTopNav from "@/components/mobile/MobileTopNav";
 
 const AVATAR_DIM = 96; // cozier on mobile; md+ will upscale via classes
 
@@ -616,6 +617,10 @@ export default function ProfilePage() {
             </TabsContent>
           </div>
         </Tabs>
+      </div>
+      {/* Mobile Bottom Navigation */}
+      <div className="md:hidden">
+        <MobileTopNav />
       </div>
     </div>
   );
