@@ -106,11 +106,14 @@ export default function ChatClient({
   const [showSuccess, setShowSuccess] = useState(false);
 
   useEffect(() => {
-    scrollContainerRef.current?.scrollTo({
-      top: scrollContainerRef.current.scrollHeight,
-      behavior: "smooth",
-    });
-  }, [messages.length]);
+  const el = scrollContainerRef.current;
+  if (!el) return;
+
+  el.scrollTo({
+    top: el.scrollHeight,
+    behavior: "smooth",
+  });
+}, [messages]);
 
   // Realtime subscription
   useEffect(() => {
@@ -273,101 +276,95 @@ export default function ChatClient({
 
   return (
     <>
-      <div className="flex flex-col flex-1 min-h-0">
-        {/* Header */}
-        <div className="flex items-center justify-between gap-3 p-4 border-b rounded-t-2xl bg-white shrink-0">
-          <div className="flex items-center gap-3">
-            {otherUserAvatarUrl ? (
-              <Image
-                src={otherUserAvatarUrl}
-                alt="avatar"
-                width={40}
-                height={40}
-                className="h-10 w-10 rounded-full object-cover"
-              />
-            ) : (
-              <div className="h-10 w-10 rounded-full bg-slate-200" />
+     <div className="flex flex-col flex-1 min-h-0">
+  {/* Sticky Wrapper */}
+  <div className="sticky top-0 z-20 bg-white">
+    {/* Header */}
+    <div className="flex items-center justify-between gap-3 p-4">
+      <div className="flex items-center gap-3">
+        {otherUserAvatarUrl ? (
+          <Image
+            src={otherUserAvatarUrl}
+            alt="avatar"
+            width={40}
+            height={40}
+            className="h-10 w-10 rounded-full object-cover"
+          />
+        ) : (
+          <div className="h-10 w-10 rounded-full bg-slate-200" />
+        )}
+        <div className="font-medium">{otherUserName}</div>
+      </div>
+
+      <Link href={`/${otherUserId}`}>
+        <button className="px-3 py-1 border rounded-full text-sm hover:bg-gray-100 hover:cursor-pointer">
+          Visit
+        </button>
+      </Link>
+    </div>
+
+    {/* Item Preview */}
+    <Link
+      href={`/product/${postId}`}
+      className="flex items-center gap-3 p-4 border-t bg-white"
+    >
+      {itemImage && (
+        <Image
+          src={itemImage}
+          alt={itemTitle ?? "Item"}
+          width={56}
+          height={56}
+          className="h-20 w-20 rounded-md object-fill"
+        />
+      )}
+
+      <div className="space-y-2">
+        <PostTypeBadge
+          type={postType as any}
+          className="text-xs text-slate-500"
+        />
+
+        {postType === "Sale" && (
+          <>
+            <p className="text-sm font-medium truncate">{itemTitle}</p>
+            {itemPrice && (
+              <p className="text-xs text-[#E59E2C]">
+                ₱{itemPrice.toLocaleString()}
+              </p>
             )}
-            <div className="font-medium">{otherUserName}</div>
-          </div>
-          <Link href={`/${otherUserId}`}>
-            <button className="px-3 py-1 border rounded-full text-sm hover:bg-gray-100 hover:cursor-pointer">
-              Visit
-            </button>
-          </Link>
-        </div>
+          </>
+        )}
 
-        {/* Item Preview */}
-        <Link
-          href={`/product/${postId}`}
-          className="flex items-center gap-3 p-4 border-b bg-white shrink-0"
-        >
-          {itemImage && (
-            <Image
-              src={itemImage}
-              alt={itemTitle ?? "Item"}
-              width={56}
-              height={56}
-              className="h-20 w-20 rounded-md object-fill"
-            />
-          )}
-
-          <div className="space-y-2">
-            <PostTypeBadge
-              type={postType as any}
-              className="text-xs text-slate-500"
-            />
-            {/* DISPLAY PRICE FOR SALE */}
-            {postType === "Sale" && (
-              <>
-                <p className="text-sm font-medium truncate">{itemTitle}</p>
-                {itemPrice && (
-                  <p className="text-xs text-[#E59E2C]">
-                    ₱{itemPrice.toLocaleString()}
-                  </p>
-                )}
-              </>
+        {postType === "Rent" && (
+          <>
+            <p className="text-sm font-medium truncate">{itemTitle}</p>
+            {itemPrice && (
+              <p className="text-xs text-[#E59E2C]">
+                ₱{itemPrice.toLocaleString()} / Day
+              </p>
             )}
+          </>
+        )}
 
-            {/* DISPLAY PRICE PER DAY FOR RENT */}
-            {postType === "Rent" && (
-              <>
-                <p className="text-sm font-medium truncate">{itemTitle}</p>
-                {itemPrice && (
-                  <p className="text-xs text-[#E59E2C]">
-                    ₱{itemPrice.toLocaleString()} / Day
-                  </p>
-                )}
-              </>
+        {postType === "Trade" && (
+          <>
+            <p className="text-sm font-medium truncate">{itemTitle}</p>
+            {itemPrice && (
+              <p className="text-xs text-[#E59E2C]">
+                ₱{itemPrice.toLocaleString()} + Trade for{" "}
+                <b>{itemTrade}</b>
+              </p>
             )}
+          </>
+        )}
 
-            {/* DISPLAY OFFERED ITEM + PRICE FOR RENT */}
-            {postType === "Trade" && (
-              <>
-                <p className="text-sm font-medium truncate">{itemTitle}</p>
-
-                {itemPrice && (
-                  <p className="text-xs text-[#E59E2C]">
-                    ₱{itemPrice.toLocaleString()} + Trade for <b>{itemTrade}</b>
-                  </p>
-                )}
-              </>
-            )}
-
-            {postType === "PasaBuy" && (
-              <>
-                <p className="text-sm font-medium truncate">{itemTitle}</p>
-              </>
-            )}
-
-            {postType === "Emergency Lending" && (
-              <>
-                <p className="text-sm font-medium truncate">{itemTitle}</p>
-              </>
-            )}
-          </div>
-        </Link>
-
+        {(postType === "PasaBuy" ||
+          postType === "Emergency Lending") && (
+          <p className="text-sm font-medium truncate">{itemTitle}</p>
+        )}
+      </div>
+    </Link>
+  </div>
         {/* Messages */}
         <div
           ref={scrollContainerRef}
@@ -554,7 +551,7 @@ export default function ChatClient({
         )}
 
         {/* Input */}
-        <div className="border-t p-3 flex gap-2 bg-white rounded-b-2xl shrink-0">
+        <div className="sticky bottom-0 left-0 right-0 border-t p-3 flex gap-2 bg-white z-30">
           <div className="flex">
             <Tooltip>
               <TooltipTrigger asChild>

@@ -4,6 +4,7 @@ import MessagesRealtimeRefresher from "@/components/messages/MessagesRealtimeRef
 import SidebarList from "@/components/messages/SideBarList";
 import Image from "next/image";
 import Footer from "@/components/Footer";
+import MobileMessagesClient from "@/components/messages/MobileMessagesClient";
 
 type Row = {
   conversation_id: number;
@@ -35,7 +36,9 @@ export default async function MessagesLayout({
     // not logged in, no access
     return (
       <div className="flex items-center justify-center h-full bg-gray-50">
-        <p className="text-slate-500 text-lg">Please log in to view your messages.</p>
+        <p className="text-slate-500 text-lg">
+          Please log in to view your messages.
+        </p>
       </div>
     );
   }
@@ -47,18 +50,18 @@ export default async function MessagesLayout({
     .from("my_convo")
     .select(
       `
-    conversation_id,
-    other_user_id,              
-    other_user_name,
-    other_user_avatar_url,
-    item_title,
-    item_price,
-    image_urls,
-    post_type,
-    last_message_body,
-    last_message_created_at,
-    has_unread  
-  `
+      conversation_id,
+      other_user_id,              
+      other_user_name,
+      other_user_avatar_url,
+      item_title,
+      item_price,
+      image_urls,
+      post_type,
+      last_message_body,
+      last_message_created_at,
+      has_unread  
+    `
     )
     .eq("current_user_id", userID)
     .order("last_message_created_at", { ascending: false });
@@ -72,7 +75,13 @@ export default async function MessagesLayout({
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
-      <div className="grid grid-cols-[320px_1fr] h-[calc(100vh-64px)] p-6 pt-12 gap-4 overflow-hidden">
+      {/* MOBILE: sidebar-first + full-screen chat with back button */}
+      <MobileMessagesClient conversations={conversations}>
+        {children}
+      </MobileMessagesClient>
+
+      {/* DESKTOP: original 2-column layout */}
+      <div className="hidden md:grid grid-cols-[320px_1fr] h-[calc(100vh-64px)] p-6 pt-12 gap-4 overflow-hidden">
         <MessagesRealtimeRefresher
           currentUserId={userID}
           conversationIds={convoIds}
@@ -80,7 +89,9 @@ export default async function MessagesLayout({
 
         {/* Sidebar */}
         <aside className="border border-slate-300 rounded-xl overflow-y-auto shadow-lg">
-          <div className="p-4 border-b text-xl font-semibold text-slate-700 bg-gray-100">Messages</div>
+          <div className="p-4 border-b text-xl font-semibold text-slate-700 bg-gray-100">
+            Messages
+          </div>
           <SidebarList conversations={conversations} />
         </aside>
 
@@ -89,6 +100,7 @@ export default async function MessagesLayout({
           {children}
         </main>
       </div>
+
       <Footer />
     </div>
   );

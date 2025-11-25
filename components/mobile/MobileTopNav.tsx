@@ -69,8 +69,19 @@ export default function MobileTopNav() {
     prevPath.current = pathname;
   }, [pathname, open]);
 
-  const isActive = (href: string) =>
-    href === "/" ? pathname === "/" : pathname.startsWith(href);
+  /* FIXED HOME ACTIVE LOGIC */
+  const isActive = (href: string) => {
+    if (href === "/") {
+      return (
+        pathname === "/" ||
+        pathname === "" ||
+        pathname === "/home" ||
+        pathname.startsWith("/?") ||
+        pathname === "/index"
+      );
+    }
+    return pathname.startsWith(href);
+  };
 
   const handleSelectChange = (v: string) => {
     const val = v as typeof choice;
@@ -113,13 +124,14 @@ export default function MobileTopNav() {
     };
   }, []);
 
-  /* Product + Profile hide chips */
   const isProductPage = pathname.includes("/product/");
-  const hideTopChips = isProductPage || pathname.startsWith("/profile");
+  const isMessagesPage = pathname.startsWith("/messages");
+
+  const hideTopChips =
+    isProductPage || isMessagesPage || pathname.startsWith("/profile");
 
   return (
     <>
-      {/* Chips + search (mobile) */}
       {!hideTopChips && (
         <div className="md:hidden sticky top-[56px] z-[40] bg-white shadow-sm">
           <nav className="px-3" aria-label="Secondary">
@@ -129,14 +141,17 @@ export default function MobileTopNav() {
                   <Grid2X2 className="h-4 w-4" />
                   <span>Browse</span>
                 </Chip>
+
                 <Chip href="/businesses" active={isActive("/businesses")}>
                   <Building2 className="h-4 w-4" />
                   <span>Businesses</span>
                 </Chip>
+
                 <Chip href="/organizations" active={isActive("/organizations")}>
                   <Landmark className="h-4 w-4" />
                   <span>Organizations</span>
                 </Chip>
+
                 <Circle
                   href="/credits"
                   label="Credits"
@@ -153,7 +168,7 @@ export default function MobileTopNav() {
         </div>
       )}
 
-      {/* Bottom app bar */}
+      {/* Bottom Bar */}
       <BottomBar
         homeActive={isActive("/")}
         notifActive={isActive("/notifications")}
@@ -170,6 +185,7 @@ export default function MobileTopNav() {
             <DialogHeader className="mb-2">
               <DialogTitle className="text-center">Create Listing</DialogTitle>
             </DialogHeader>
+
             <p className="text-center text-sm text-gray-600 mb-4">
               What type of listing do you want to create?
             </p>
@@ -191,15 +207,9 @@ export default function MobileTopNav() {
             </div>
 
             <div className="max-h-[60vh] overflow-auto pr-1">
-              {choice === "sale" && (
-                <ForSaleForm selectedType={TYPE_LABEL.sale} />
-              )}
-              {choice === "rent" && (
-                <RentForm selectedType={TYPE_LABEL.rent} />
-              )}
-              {choice === "trade" && (
-                <TradeForm selectedType={TYPE_LABEL.trade} />
-              )}
+              {choice === "sale" && <ForSaleForm selectedType={TYPE_LABEL.sale} />}
+              {choice === "rent" && <RentForm selectedType={TYPE_LABEL.rent} />}
+              {choice === "trade" && <TradeForm selectedType={TYPE_LABEL.trade} />}
             </div>
           </div>
         </DialogContent>
@@ -208,17 +218,9 @@ export default function MobileTopNav() {
   );
 }
 
-/*  UI helpers */
+/* UI COMPONENTS */
 
-function Chip({
-  href,
-  active,
-  children,
-}: {
-  href: string;
-  active?: boolean;
-  children: React.ReactNode;
-}) {
+function Chip({ href, active, children }: any) {
   return (
     <Link
       href={href}
@@ -232,19 +234,7 @@ function Chip({
   );
 }
 
-function Circle({
-  href,
-  active,
-  label,
-  badge,
-  children,
-}: {
-  href: string;
-  active?: boolean;
-  label: string;
-  badge?: string | number;
-  children: React.ReactNode;
-}) {
+function Circle({ href, active, label, badge, children }: any) {
   return (
     <Link
       href={href}
@@ -255,17 +245,17 @@ function Circle({
       }`}
     >
       {children}
-      {badge ? (
+
+      {badge && (
         <span className="absolute -top-1.5 -right-1.5 inline-flex items-center justify-center rounded-full bg-[#102E4A] text-white text-[10px] font-bold leading-none h-4 min-w-4 px-1">
           {badge}
         </span>
-      ) : null}
+      )}
+
       <span className="sr-only">{label}</span>
     </Link>
   );
 }
-
-/* Bottom App Bar */
 
 function BottomBar({
   homeActive,
@@ -273,25 +263,16 @@ function BottomBar({
   messagesActive,
   profileActive,
   onOpenList,
-}: {
-  homeActive?: boolean;
-  notifActive?: boolean;
-  messagesActive?: boolean;
-  profileActive?: boolean;
-  onOpenList: () => void;
-}) {
+}: any) {
   return (
     <div className="md:hidden fixed inset-x-0 bottom-0 z-30 bg-white border-t border-black/10 h-16 pb-[env(safe-area-inset-bottom)]">
       <div className="relative mx-auto max-w-screen-sm px-6 h-full flex items-center justify-between">
+
         <NavIcon href="/" label="Home" active={homeActive}>
           <Home className="h-5 w-5" />
         </NavIcon>
 
-        <NavIcon
-          href="/notifications"
-          label="Notifications"
-          active={notifActive}
-        >
+        <NavIcon href="/notifications" label="Notifications" active={notifActive}>
           <Bell className="h-5 w-5" />
         </NavIcon>
 
@@ -313,24 +294,14 @@ function BottomBar({
   );
 }
 
-function NavIcon({
-  href,
-  label,
-  active,
-  children,
-}: {
-  href: string;
-  label: string;
-  active?: boolean;
-  children: React.ReactNode;
-}) {
+function NavIcon({ href, label, active, children }: any) {
   return (
     <Link
       href={href}
       aria-label={label}
       aria-current={active ? "page" : undefined}
       className={`inline-flex flex-col items-center justify-center gap-1 px-2 py-1.5 text-xs ${
-        active ? "text-[#102E4A]" : "text-gray-600"
+        active ? "text-[#E59E2C]" : "text-gray-600"
       }`}
     >
       {children}
@@ -339,9 +310,7 @@ function NavIcon({
   );
 }
 
-/*  Profile menu  */
-
-function ProfileBottomItem({ active }: { active?: boolean }) {
+function ProfileBottomItem({ active }: any) {
   const router = useRouter();
   const supabase = React.useMemo(() => createClient(), []);
 
@@ -362,18 +331,20 @@ function ProfileBottomItem({ active }: { active?: boolean }) {
         <button
           aria-label="Profile menu"
           className={`inline-flex flex-col items-center justify-center gap-1 px-2 py-1.5 text-xs ${
-            active ? "text-[#102E4A]" : "text-gray-600"
+            active ? "text-[#E59E2C]" : "text-gray-600"
           }`}
         >
           <UserRound className="h-5 w-5" />
           <span className="text-[11px]">Profile</span>
         </button>
       </DropdownMenuTrigger>
+
       <DropdownMenuContent align="end" sideOffset={6} className="w-44">
         <DropdownMenuItem onClick={handleProfile}>
           <UserRound className="mr-2 h-4 w-4" />
           Profile
         </DropdownMenuItem>
+
         <DropdownMenuItem onClick={handleLogout}>
           <LogOut className="mr-2 h-4 w-4" />
           Logout

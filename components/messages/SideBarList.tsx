@@ -11,8 +11,8 @@ type Row = {
   other_user_name: string | null;
   other_user_avatar_url: string | null;
   last_message_body: string | null;
-  last_message_created_at?: string | null; // ✅ helpful for sorting
-  has_unread?: boolean; // ✅ from view
+  last_message_created_at?: string | null;
+  has_unread?: boolean;
 };
 
 export default function SidebarList({
@@ -28,7 +28,7 @@ export default function SidebarList({
   const [conversations, setConversations] = useState(initialConvos);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
-  // Get current user once
+  // Get current user
   useEffect(() => {
     async function getUser() {
       const {
@@ -39,7 +39,7 @@ export default function SidebarList({
     getUser();
   }, [supabase]);
 
-  // Subscribe to new messages
+  // Listen for new messages
   useEffect(() => {
     const channel = supabase
       .channel("conversation-messages")
@@ -68,17 +68,16 @@ export default function SidebarList({
                 ...existing,
                 last_message_body: newMessage.body,
                 last_message_created_at: newMessage.created_at,
-                // ✅ Only unread if message is from someone else
                 has_unread:
                   newMessage.sender_user_id !== currentUserId
                     ? true
                     : existing.has_unread,
               };
 
-              // ✅ Move convo to top if new message
               const others = prev.filter(
                 (c) => c.conversation_id !== newMessage.conversation_id
               );
+
               return [updated, ...others];
             }
 
@@ -98,14 +97,12 @@ export default function SidebarList({
   }
 
   async function handleClick(conversationId: number) {
-    // Only mark as read, don’t reorder
     setConversations((prev) =>
       prev.map((c) =>
         c.conversation_id === conversationId ? { ...c, has_unread: false } : c
       )
     );
 
-    // Update DB last_read_at
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -130,26 +127,39 @@ export default function SidebarList({
           <li key={row.conversation_id}>
             <button
               onClick={() => handleClick(row.conversation_id)}
-              className={`flex gap-3 items-center w-full text-left p-4 hover:bg-slate-50 rounded-lg transition-all duration-200 ease-in-out
+              className={`flex gap-3 items-center w-full text-left p-4 hover:bg-slate-50 rounded-lg transition-all duration-200
                 ${isActive ? "bg-slate-100" : ""}
                 ${row.has_unread && !isActive ? "bg-blue-50" : ""}`}
             >
               <Avatar url={row.other_user_avatar_url} />
+
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between">
+                  {/* MOBILE */}
                   <span
-                    className={`text-sm font-medium truncate ${row.has_unread ? "font-semibold text-slate-900" : "text-slate-700"}`}
+                    className={`text-sm max-md:text-base font-medium truncate ${
+                      row.has_unread
+                        ? "font-semibold text-slate-900"
+                        : "text-slate-700"
+                    }`}
                   >
                     {row.other_user_name ?? "User"}
                   </span>
+
                   {row.has_unread && !isActive && (
                     <span className="ml-2 bg-blue-500 text-white text-xs px-2 py-0.5 rounded-full">
                       New
                     </span>
                   )}
                 </div>
+
+                {/* MOBILE */}
                 <div
-                  className={`text-xs truncate ${row.has_unread ? "text-slate-800 font-medium" : "text-slate-500"}`}
+                  className={`text-xs max-md:text-sm truncate ${
+                    row.has_unread
+                      ? "text-slate-800 font-medium"
+                      : "text-slate-500"
+                  }`}
                 >
                   {row.last_message_body ?? "No messages yet"}
                 </div>
