@@ -12,9 +12,9 @@ export default async function MessagesIndexPage() {
     redirect("/login");
   }
 
-  const userID = session.user.id
+  const userID = session.user.id;
 
-  // ✅ query conversations
+  // query conversations
   const { data, error } = await supabase
     .from("my_convo")
     .select("conversation_id, last_message_created_at")
@@ -23,19 +23,14 @@ export default async function MessagesIndexPage() {
     .limit(1);
 
   if (error) {
-    console.error("❌ Failed to fetch conversations:", error.message);
+    console.error("Failed to fetch conversations:", error.message);
   }
 
-  // ✅ redirect only if at least one conversation exists
-  if (data && data.length > 0) {
-    redirect(`/messages/${data[0].conversation_id}`);
-  }
-
-  // ✅ fallback UI when no messages
+  // fallback UI 
   return (
     <div className="h-full flex items-center justify-center">
       <p className="text-slate-500 text-center">
-        No messages yet. Start a chat from a post.
+        Select a conversation to start chatting.
       </p>
     </div>
   );
