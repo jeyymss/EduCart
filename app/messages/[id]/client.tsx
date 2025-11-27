@@ -582,8 +582,10 @@ export default function ChatClient({
                     </DialogTrigger>
                   </TooltipTrigger>
                   <DialogContent
+                    onOpenAutoFocus={(e) => e.preventDefault()}
                     onInteractOutside={(e) => e.preventDefault()}
-                    onEscapeKeyDown={(e) => e.preventDefault()}
+                    onPointerDownOutside={(e) => e.preventDefault()}
+                    className="overflow-visible"
                   >
                     <DialogClose asChild>
                       <button
