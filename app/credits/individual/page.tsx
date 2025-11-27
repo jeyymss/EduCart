@@ -172,99 +172,109 @@ export default function IndividualCreditsPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white flex flex-col">
       {/* Header */}
-      <div className="bg-white px-6 py-4 border-b">
-        <div className="max-w-7xl mx-auto flex">
+      <header className="bg-white border-b">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex">
           <Button
             variant="ghost"
             size="sm"
-            className="flex items-center gap-2 text-[#577C8E] hover:text-[#577C8E] hover:bg-[#577C8E]/10 mt-5"
+            className="flex items-center gap-2 text-[#577C8E] hover:text-[#577C8E] hover:bg-[#577C8E]/10"
             asChild
           >
             <Link href="/profile#settings">
               <ArrowLeft className="h-4 w-4" />
-              Back
+              <span className="xs:inline">Back</span>
             </Link>
           </Button>
         </div>
-      </div>
+      </header>
 
       {/* Main */}
-      <div className="max-w-5xl mx-auto px-6 py-10">
-        <h1 className="text-2xl font-bold mb-2 text-center">
-          Buy Posting Credits
-        </h1>
-        <p className="text-muted-foreground text-center mb-8">
-          Purchase credits to list your items for sale on EduCart
-        </p>
-
-        {/* Packages */}
-        <div className="grid md:grid-cols-3 gap-6">
-          {packages.map((pkg) => (
-            <div
-              key={pkg.id}
-              className="rounded-2xl border border-gray-300 p-6 shadow-sm"
-              style={{ backgroundColor: pkg.bg }}
-            >
-              <h2 className="text-lg font-semibold mb-2">
-                {pkg.title}{" "}
-                {pkg.recommended && (
-                  <span className="text-sm font-medium text-red-500">
-                    (Recommended)
-                  </span>
-                )}
-              </h2>
-
-              <p className="text-3xl font-extrabold text-[#577C8E] mb-2">
-                ₱{pkg.price}
-              </p>
-
-              <p className="text-sm text-gray-700 mb-4">{pkg.description}</p>
-
-              <ul className="text-sm space-y-2 mb-6">
-                {pkg.features.map((f, i) => (
-                  <li key={i}>✓ {f}</li>
-                ))}
-              </ul>
-
-              <Button
-                variant="outline"
-                className="w-full bg-white hover:bg-[#E59E2C] hover:text-white transition-colors rounded-md"
-                disabled={loadingId === pkg.id}
-                onClick={() => handlePurchase(pkg)}
-              >
-                {loadingId === pkg.id ? "Processing..." : "Purchase"}
-              </Button>
-            </div>
-          ))}
-        </div>
-
-        {/* Bonus Section */}
-        <div className="mt-10 border border-gray-300 rounded-2xl bg-white p-6 shadow-sm">
-          <p className="font-medium text-red-500">❤ Earn Free Posts</p>
-          <p className="text-sm text-muted-foreground">
-            Get 1 bonus post for each transaction completed through our secure
-            escrow system – encouraging safe trading while rewarding platform
-            participation.
+      <main className="flex-1 w-full">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
+          <h1 className="text-xl sm:text-2xl font-bold mb-2 text-center">
+            Buy Posting Credits
+          </h1>
+          <p className="text-sm sm:text-base text-muted-foreground text-center mb-8">
+            Purchase credits to list your items for sale on EduCart
           </p>
-        </div>
 
-        {/* FAQ Section */}
-        <div className="max-w-6xl mx-auto px-6 pb-12">
-          <div className="bg-white rounded-xl p-6 shadow-sm border space-y-6">
-            <h2 className="text-lg font-semibold">
-              Frequently Asked Questions
-            </h2>
-            {faqs.map((item, i) => (
-              <div key={i}>
-                <h3 className="font-medium">{item.q}</h3>
-                <p className="text-sm text-gray-600">{item.a}</p>
+          {/* Packages */}
+          <div className="grid gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {packages.map((pkg) => (
+              <div
+                key={pkg.id}
+                className="flex flex-col rounded-2xl border border-gray-300 p-4 sm:p-6 shadow-sm h-full"
+                style={{ backgroundColor: pkg.bg }}
+              >
+                <h2 className="text-base sm:text-lg font-semibold mb-2">
+                  {pkg.title}{" "}
+                  {pkg.recommended && (
+                    <span className="text-xs sm:text-sm font-medium text-red-500">
+                      (Recommended)
+                    </span>
+                  )}
+                </h2>
+
+                <p className="text-2xl sm:text-3xl font-extrabold text-[#577C8E] mb-2">
+                  ₱{pkg.price}
+                </p>
+
+                <p className="text-xs sm:text-sm text-gray-700 mb-4">
+                  {pkg.description}
+                </p>
+
+                <ul className="text-xs sm:text-sm space-y-2 mb-4 sm:mb-6">
+                  {pkg.features.map((f, i) => (
+                    <li key={i}>✓ {f}</li>
+                  ))}
+                </ul>
+
+                <Button
+                  variant="outline"
+                  className="mt-auto w-full bg-white hover:bg-[#E59E2C] hover:text-white transition-colors rounded-md text-sm sm:text-base"
+                  disabled={loadingId === pkg.id}
+                  onClick={() => handlePurchase(pkg)}
+                >
+                  {loadingId === pkg.id ? "Processing..." : "Purchase"}
+                </Button>
               </div>
             ))}
           </div>
+
+          {/* Bonus Section */}
+          <div className="mt-8 sm:mt-10 border border-gray-300 rounded-2xl bg-white p-4 sm:p-6 shadow-sm">
+            <p className="font-medium text-sm sm:text-base text-red-500">
+              ❤ Earn Free Posts
+            </p>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+              Get 1 bonus post for each transaction completed through our secure
+              escrow system – encouraging safe trading while rewarding platform
+              participation.
+            </p>
+          </div>
+
+          {/* FAQ Section */}
+          <div className="mt-8 sm:mt-10 pb-10 sm:pb-12">
+            <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border space-y-4 sm:space-y-6">
+              <h2 className="text-base sm:text-lg font-semibold">
+                Frequently Asked Questions
+              </h2>
+              {faqs.map((item, i) => (
+                <div key={i}>
+                  <h3 className="font-medium text-sm sm:text-base">
+                    {item.q}
+                  </h3>
+                  <p className="text-xs sm:text-sm text-gray-600 mt-1">
+                    {item.a}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

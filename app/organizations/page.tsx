@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import { ChevronDown } from "lucide-react";
 
 import { ItemCard } from "@/components/posts/displayposts/ItemCard";
@@ -17,6 +18,12 @@ import {
   type AdvancedFilterValue,
   type PostOpt,
 } from "@/components/profile/AdvancedFilters";
+
+/* MOBILE TOP NAV */
+const MobileTopNav = dynamic(
+  () => import("@/components/mobile/MobileTopNav"),
+  { ssr: false }
+);
 
 /* ---------------------- Post Type (same as Browse) ---------------------- */
 type ToolbarPost = "All" | PostOpt;
@@ -68,13 +75,16 @@ const CATEGORY_RULES: CategoryRule[] = [
   { label: "Hobbies & Toys", match: ["Hobbies & Toys", "Toys", "Hobbies"] },
 ];
 
+const CATEGORIES: string[] = CATEGORY_RULES.map((c) => c.label);
+
 /* ------------------------------- Page ----------------------------------- */
 export default function OrganizationPage() {
   const { data: items, isLoading, error } = useOrganizationItems();
 
   const [postType, setPostType] = useState<ToolbarPost | null>(null);
   const [search, setSearch] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string>("All Categories");
+  const [selectedCategory, setSelectedCategory] =
+    useState<string>("All Categories");
   const [adv, setAdv] = useState<AdvancedFilterValue>({
     time: null,
     price: null,
@@ -98,7 +108,9 @@ export default function OrganizationPage() {
         }
 
         if (q) {
-          const hay = `${it.item_title ?? ""} ${it.category_name ?? ""} ${it.organization_name ?? ""}`.toLowerCase();
+          const hay = `${it.item_title ?? ""} ${it.category_name ?? ""} ${
+            it.organization_name ?? ""
+          }`.toLowerCase();
           if (!hay.includes(q)) return false;
         }
 
@@ -108,17 +120,31 @@ export default function OrganizationPage() {
         }
 
         if (selectedCategory && selectedCategory !== "All Categories") {
-          const rule = CATEGORY_RULES.find((c) => c.label === selectedCategory);
+          const rule = CATEGORY_RULES.find(
+            (c) => c.label === selectedCategory
+          );
           if (rule) {
             const cat = String(it.category_name ?? "");
-            const ok = rule.match.some((m) => m.toLowerCase() === cat.toLowerCase());
+            const ok = rule.match.some(
+              (m) => m.toLowerCase() === cat.toLowerCase()
+            );
             if (!ok) return false;
           }
         }
 
         const priceNum = getPrice(it.item_price);
-        if (adv.minPrice != null && priceNum != null && priceNum < adv.minPrice) return false;
-        if (adv.maxPrice != null && priceNum != null && priceNum > adv.maxPrice) return false;
+        if (
+          adv.minPrice != null &&
+          priceNum != null &&
+          priceNum < adv.minPrice
+        )
+          return false;
+        if (
+          adv.maxPrice != null &&
+          priceNum != null &&
+          priceNum > adv.maxPrice
+        )
+          return false;
 
         return true;
       })
@@ -131,8 +157,8 @@ export default function OrganizationPage() {
           const pb = getPrice(b.item_price);
           const NA_LOW = Number.POSITIVE_INFINITY;
           const NA_HIGH = Number.NEGATIVE_INFINITY;
-          const na = adv.price === "low" ? (pa ?? NA_LOW) : (pa ?? NA_HIGH);
-          const nb = adv.price === "low" ? (pb ?? NA_LOW) : (pb ?? NA_HIGH);
+          const na = adv.price === "low" ? pa ?? NA_LOW : pa ?? NA_HIGH;
+          const nb = adv.price === "low" ? pb ?? NA_LOW : pb ?? NA_HIGH;
           if (na !== nb) return adv.price === "low" ? na - nb : nb - na;
         }
 
@@ -147,113 +173,238 @@ export default function OrganizationPage() {
       .map(({ it }) => it);
   }, [items, postType, search, adv, selectedCategory]);
 
-  if (error) return <div className="p-10 text-red-500">Error: {(error as Error).message}</div>;
+  if (error)
+    return (
+      <div className="p-10 text-red-500">
+        Error: {(error as Error).message}
+      </div>
+    );
+
+  const handleSetCategory = (cat: string) => {
+    setSelectedCategory(cat);
+    setAdv((prev) => ({
+      ...prev,
+      category: cat === "All Categories" ? undefined : cat,
+    }));
+  };
+
+  const handleAdvancedApply = (next: AdvancedFilterValue) => {
+    setAdv({ ...next });
+    if (next.category) {
+      setSelectedCategory(next.category);
+    } else {
+      setSelectedCategory("All Categories");
+    }
+  };
+
+  const SearchBar = () => (
+    <div
+      className="
+        flex w-full max-w-4xl items-center
+        gap-2 sm:gap-3
+        rounded-full bg-white shadow-md
+        ring-1 ring-black/10
+        px-3 sm:px-4 py-1 sm:py-2
+      "
+    >
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          className="flex items-center gap-1 px-3 py-1.5 rounded-full 
+                     bg-[#E7F3FF] text-xs sm:text-sm font-medium text-[#102E4A] 
+                     whitespace-nowrap hover:bg-[#d7e8ff]"
+        >
+          {postType ?? "All Types"}
+          <ChevronDown className="w-4 h-4" />
+        </DropdownMenuTrigger>
+
+        <DropdownMenuContent align="start">
+          {POST_TYPE_OPTIONS.map((label) => (
+            <DropdownMenuItem
+              key={label}
+              onClick={() => setPostType(label === "All" ? null : label)}
+            >
+              {label}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <div className="flex-1 flex items-center gap-2">
+        <Input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search organization items..."
+          className="h-9 sm:h-10 w-full border-none shadow-none 
+                     px-0 sm:px-1 text-sm focus-visible:ring-0 focus-visible:ring-offset-0"
+          autoComplete="off"
+        />
+      </div>
+
+      <div className="flex-shrink-0">
+        <AdvancedFilters value={adv} onApply={handleAdvancedApply} />
+      </div>
+    </div>
+  );
+
+  const Listings = () => {
+    if (isLoading) {
+      return (
+        <div className="grid gap-6 grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div
+              key={i}
+              className="h-72 rounded-2xl bg-gray-100 animate-pulse shadow-sm"
+            />
+          ))}
+        </div>
+      );
+    }
+
+    if (filtered.length === 0) {
+      return (
+        <div className="text-center text-gray-600 mt-12">
+          <p className="text-lg font-medium">No items found</p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="grid gap-6 grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
+        {filtered.map((item) => (
+          <div
+            key={item.post_id}
+            className="transition-all duration-300 transform rounded-2xl hover:-translate-y-1 hover:shadow-lg bg-white"
+          >
+            <ItemCard
+              id={item.post_id}
+              condition={item.item_condition ?? ""}
+              title={item.item_title}
+              category_name={item.category_name ?? ""}
+              image_urls={item.image_urls ?? []}
+              price={item.item_price ?? undefined}
+              post_type={item.post_type_name ?? ""}
+              seller={item.organization_name}
+              created_at={item.created_at}
+              status={item.status}
+            />
+          </div>
+        ))}
+      </div>
+    );
+  };
 
   return (
-    <div className="flex min-h-screen bg-white">
-      {/* LEFT: Sidebar */}
-      <aside className="hidden md:block w-64 bg-white border-r shadow-sm p-6 sticky top-[calc(var(--app-header-h)+8px)] h-[calc(100vh-88px)] overflow-y-auto">
-        <h2 className="font-semibold text-[#102E4A] mb-4">Filter Categories</h2>
-        <nav className="space-y-1 text-sm" aria-label="Categories">
-          {CATEGORY_RULES.map((c) => {
-            const active = selectedCategory === c.label;
-            return (
-              <button
-                key={c.label}
-                type="button"
-                onClick={() => setSelectedCategory(c.label)}
-                className={`w-full text-left px-3 py-2 rounded-lg transition ${
-                  active
-                    ? "bg-[#ebf2ff] text-[#102E4A] font-medium"
-                    : "hover:bg-[#f3f6fa]"
-                }`}
-                aria-current={active ? "page" : undefined}
-              >
-                {c.label}
-              </button>
-            );
-          })}
-        </nav>
-      </aside>
+    <div className="bg-white min-h-screen">
+      {/* MOBILE LAYOUT */}
+      <div className="md:hidden">
+        <MobileTopNav />
 
-      {/* RIGHT: Main content */}
-      <main className="flex-1 p-6 md:p-10 space-y-8">
-        {/* Sticky toolbar */}
-        <div
-          className="sticky z-30 bg-white/95 backdrop-blur-sm border-b shadow-sm px-2 md:px-4 py-3 rounded-md"
-          style={{ top: "calc(var(--app-header-h))" }}
-        >
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-            <div className="flex items-center flex-wrap gap-3">
-              <DropdownMenu>
-                <DropdownMenuTrigger className="flex items-center gap-1 px-4 py-2 border rounded-lg bg-white shadow-sm text-sm font-medium hover:bg-gray-50 transition">
-                  {postType ?? "All Types"}
-                  <ChevronDown className="w-4 h-4" />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start">
-                  {POST_TYPE_OPTIONS.map((label) => (
-                    <DropdownMenuItem
-                      key={label}
-                      onClick={() => setPostType(label === "All" ? null : label)}
+        <div id="home-top-search-origin" className="w-full">
+          <div
+            id="home-top-search"
+            className="relative left-1/2 right-1/2 -mx-[50vw] w-screen bg-[#102E4A]"
+          >
+            <div className="mx-auto max-w-[1600px] px-4 py-3 pb-4">
+              <div className="flex justify-center mb-3">
+                <SearchBar />
+              </div>
+
+              {/* Mobile categories dropdown */}
+              <div className="flex justify-center">
+                <div className="w-full max-w-4xl">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger
+                      className="
+                        w-full flex items-center justify-between px-4 py-2 
+                        bg-white rounded-xl shadow ring-1 ring-black/10 
+                        text-[#102E4A] text-sm font-medium
+                      "
                     >
-                      {label}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
+                      {adv.category ?? "All Categories"}
+                      <ChevronDown className="w-4 h-4" />
+                    </DropdownMenuTrigger>
 
-              <Input
-                type="text"
-                placeholder="Search organization items..."
-                className="h-10 w-[260px] text-sm shadow-sm"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-
-              <AdvancedFilters value={adv} onApply={(next) => setAdv({ ...next })} />
+                    <DropdownMenuContent className="w-full max-w-4xl">
+                      {CATEGORIES.map((cat) => (
+                        <DropdownMenuItem
+                          key={cat}
+                          onClick={() => handleSetCategory(cat)}
+                        >
+                          {cat}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Listings */}
-        <section>
-          <h1 className="font-bold text-2xl text-[#102E4A] mb-6">Organization Listings</h1>
+        {/* MOBILE MAIN CONTENT */}
+        <main className="px-4 -mt-15 pb-28">
+          <h1 className="font-extrabold text-2xl text-[#102E4A] mb-4">
+            Organization Listings
+          </h1>
+          <Listings />
+        </main>
+      </div>
 
-          {isLoading ? (
-            <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className="h-72 rounded-2xl bg-gray-100 animate-pulse shadow-sm" />
-              ))}
+      {/* DESKTOP LAYOUT */}
+      <div className="hidden md:block">
+        <div id="home-top-search-origin" className="w-fluid">
+          <div id="home-top-search" className="w-full bg-[#102E4A]">
+            <div className="mx-auto max-w-[1600px] px-6 md:px-8 py-6 md:py-8">
+              <div className="flex justify-center">
+                <SearchBar />
+              </div>
             </div>
-          ) : filtered.length === 0 ? (
-            <div className="text-center text-gray-600 mt-12">
-              <p className="text-lg font-medium">No items found</p>
-            </div>
-          ) : (
-            <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {filtered.map((item) => (
-                <div
-                  key={item.post_id}
-                  className="transition-all duration-300 transform rounded-2xl hover:-translate-y-1 hover:shadow-lg bg-white"
-                >
-                  <ItemCard
-                    id={item.post_id}
-                    condition={item.item_condition ?? ""}
-                    title={item.item_title}
-                    category_name={item.category_name ?? ""}
-                    image_urls={item.image_urls ?? []}
-                    price={item.item_price ?? undefined}
-                    post_type={item.post_type_name ?? ""}
-                    seller={item.organization_name}
-                    created_at={item.created_at}
-                    status={item.status}
-                  />
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
-      </main>
+          </div>
+        </div>
+
+        <div className="flex">
+          {/* LEFT SIDEBAR */}
+          <aside
+            className="
+              w-64 bg-white border-r p-6 
+              sticky top-[90px] h-[calc(100vh-90px)] overflow-y-auto shadow-sm
+            "
+          >
+            <h2 className="font-semibold text-[#102E4A] mb-4">
+              Filter Categories
+            </h2>
+
+            <nav className="space-y-2 text-sm">
+              {CATEGORIES.map((cat) => {
+                const active = selectedCategory === cat;
+
+                return (
+                  <button
+                    key={cat}
+                    type="button"
+                    className={`w-full text-left px-3 py-2 rounded-lg ${
+                      active
+                        ? "bg-[#eaf1fb] text-[#102E4A] font-medium"
+                        : "hover:bg-[#f3f6fa]"
+                    }`}
+                    onClick={() => handleSetCategory(cat)}
+                  >
+                    {cat}
+                  </button>
+                );
+              })}
+            </nav>
+          </aside>
+
+          {/* MAIN CONTENT */}
+          <main className="flex-1 px-10 lg:px-12 xl:px-16 pt-4 pb-10">
+            <h1 className="font-extrabold text-3xl text-[#102E4A] mb-4">
+              Organization Listings
+            </h1>
+            <Listings />
+          </main>
+        </div>
+      </div>
     </div>
   );
 }
