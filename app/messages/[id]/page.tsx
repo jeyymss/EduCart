@@ -54,7 +54,8 @@ export default async function ConversationPage({
     transactions (
       id,
       item_title,
-      rent_duration,
+      rent_start_date,
+      rent_end_date,
       price,
       offered_item,
       cash_added,

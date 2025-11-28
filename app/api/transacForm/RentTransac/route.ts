@@ -12,35 +12,31 @@ export async function RentTransaction(
   selectPayment: string,
   sellerId: string,
   post_id: string,
-  postType: string
+  postType: string,
+  rentStart: string | null,   
+  rentEnd: string | null      
 ) {
   return await withErrorHandling(async () => {
     const supabase = await createClient();
 
-    //get user session
+    // Get user 
     const {
-      data: { session },
-    } = await supabase.auth.getSession();
+      data: { user },
+    } = await supabase.auth.getUser();
 
-    if (!session) throw new Error("User not authenticated");
-    if (!session.user.email) return { error: "User email is missing." };
+    if (!user) throw new Error("User not authenticated");
+    if (!user.email) return { error: "User email is missing." };
 
-    //set user id
-    const userID = session.user.id
-
+    const userID = user.id;
     if (!userID) return { error: "User ID is missing." };
 
-    // Check for existing pending transaction
-    const { data: existingPending, error: checkError } = await supabase
+    // Prevent multiple pending transactions for same conversation
+    const { data: existingPending } = await supabase
       .from("transactions")
       .select("id")
       .eq("conversation_id", conversationId)
       .eq("status", "Pending")
       .maybeSingle();
-
-    if (checkError) {
-      console.error("Check error:", checkError);
-    }
 
     if (existingPending) {
       return {
@@ -49,18 +45,12 @@ export async function RentTransaction(
       };
     }
 
-    const durationValue = formData.get("rentDurationValue");
-    const durationUnit = formData.get("rentDurationUnit");
-    // Get values from the form
-
-    const rent_duration = `${durationValue} ${durationUnit}${
-      Number(durationValue) > 1 ? "s" : ""
-    }`;
+    // Get meet-up values
     const inputDate = formData.get("inputDate") as string;
     const inputTime = formData.get("inputTime") as string;
     const location = formData.get("inputLocation") as string | null;
 
-    // Fetch post_type id
+    // Fetch post_type ID
     const { data: post_type } = await supabase
       .from("post_types")
       .select("id")
@@ -75,42 +65,46 @@ export async function RentTransaction(
       return { error: "Payment method is required." };
     }
 
-    // Insert transaction and RETURN id
+    // Insert transaction
     const { data: insertedTransaction, error: insertError } = await supabase
       .from("transactions")
       .insert([
         {
           buyer_id: userID,
-          conversation_id: conversationId,
           seller_id: sellerId,
-          post_id: post_id,
-          rent_duration: rent_duration,
+          conversation_id: conversationId,
+          post_id,
           post_type_id: post_type?.id,
           item_title: itemTitle,
           price: itemPrice,
           fulfillment_method: selectedType,
           payment_method: selectPayment,
+
+          // Meetup details
           meetup_location: location,
           meetup_date: inputDate || null,
           meetup_time: inputTime || null,
+
+          // ✅ RENT Duration (correct)
+          rent_start_date: rentStart,
+          rent_end_date: rentEnd,
+
           status: "Pending",
         },
       ])
-      .select("id") 
+      .select("id")
       .single();
 
     if (insertError) {
       console.error("Insert Failed:", insertError);
-      return {
-        error: "Database error:" + insertError.message,
-      };
+      return { error: "Database error: " + insertError.message };
     }
 
-    //  Insert system message linked to this transaction
+    // Insert linked system message
     const { error: messageError } = await supabase.from("messages").insert([
       {
         conversation_id: conversationId,
-        sender_user_id: userID, // buyer is sender
+        sender_user_id: userID,
         transaction_id: insertedTransaction.id,
         type: "system",
         body: "Transaction Created",

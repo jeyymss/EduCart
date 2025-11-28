@@ -42,7 +42,8 @@ type ChatMessage = {
     id: string;
     item_title: string;
     post_types: { id: number; name: string };
-    rent_duration: string;
+    rent_start_date: string;
+    rent_end_date: string;
     cash_added: number | null;
     offered_item: string;
     price: number | null;
@@ -136,7 +137,8 @@ export default function ChatClient({
                 id,
                 item_title,
                 price,
-                rent_duration,
+                rent_start_date,
+                rent_end_date,
                 offered_item,
                 cash_added,
                 created_at,
@@ -422,7 +424,8 @@ export default function ChatClient({
                                       createdAt={record.created_at}
                                       txn={{
                                         price: snapshot.price,
-                                        rent_duration: snapshot.rent_duration,
+                                        rent_start_date: snapshot.rent_start_date,
+                                        rent_end_date: snapshot.rent_end_date,
                                         fulfillment_method:
                                           snapshot.fulfillment_method,
                                         meetup_location:

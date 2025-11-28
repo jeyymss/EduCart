@@ -39,8 +39,9 @@ import RentDurationPicker from "@/components/forms/date-picker/rentdurationpicke
     const [selectPayment, setSelectPayment] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [rentStart, setRentStart] = useState<Date | null>(null);
-    const [rentEnd, setRentEnd] = useState<Date | null>(null);
+    const [rentStart, setRentStart] = useState<string | null>(null);
+    const [rentEnd, setRentEnd] = useState<string | null>(null);
+
     
 
     useEffect(() => {
@@ -82,7 +83,9 @@ import RentDurationPicker from "@/components/forms/date-picker/rentdurationpicke
           selectPayment,
           sellerId,
           post_id,
-          postType
+          postType,
+          rentStart,
+          rentEnd 
         );
 
         setLoading(false);
@@ -97,6 +100,11 @@ import RentDurationPicker from "@/components/forms/date-picker/rentdurationpicke
       }
     };
 
+    // Tomorrow (earliest allowed)
+    const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000)
+      .toISOString()
+      .split("T")[0];
+
     return (
       <form className="space-y-3" ref={formRef} onSubmit={handleSubmit}>
         <Label>Item</Label>
@@ -109,7 +117,10 @@ import RentDurationPicker from "@/components/forms/date-picker/rentdurationpicke
         <Label>Rent Duration</Label>
         <div className="flex gap-2">
           <RentDurationPicker
-            onChange={(start, end) => console.log(start, end)}
+            onChange={(start, end) => {
+              setRentStart(start);
+              setRentEnd(end);  
+            }}
           />
         </div>
 
@@ -130,6 +141,7 @@ import RentDurationPicker from "@/components/forms/date-picker/rentdurationpicke
                   id="date"
                   className="w-full"
                   name="inputDate"
+                  min={tomorrow}
                 />
               </div>
               <div className="space-y-3 w-1/2">
@@ -147,7 +159,7 @@ import RentDurationPicker from "@/components/forms/date-picker/rentdurationpicke
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="Cash on Hand">Cash on Hand</SelectItem>
-            <SelectItem value="GCash">GCash</SelectItem>
+            <SelectItem value="Online Payment">Online Payment</SelectItem>
           </SelectContent>
         </Select>
 

@@ -10,6 +10,27 @@ type LiveTransactionCard = {
   handleUpdateTransaction: (id: string, status: string) => void;
 };
 
+function formatDate(dateStr: string) {
+  const date = new Date(dateStr);
+  return date.toLocaleDateString("en-US", {
+    month: "short",   // "Nov"
+    day: "numeric",   // "29"
+    year: "numeric",  // "2025"
+  });
+}
+
+function formatTime(timeStr: string) {
+  // timeStr = "16:21:00"
+  const date = new Date(`1970-01-01T${timeStr}`);
+  return date.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+}
+
+
+
 export default function LiveTransactionCard({
   txn,
   post_type,
@@ -29,13 +50,25 @@ export default function LiveTransactionCard({
         <strong>Item:</strong> {txn.item_title || "--"}
       </p>
 
-      <p>
-        <strong>Price (₱):</strong> {txn.price?.toLocaleString() || "--"}
-      </p>
+      {post_type === "Rent" ? (
+        <p>
+          <strong>Price (₱):</strong> {txn.price?.toLocaleString() || "--"} / Day
+        </p>
+      ) : (
+        <p>
+          <strong>Price (₱):</strong> {txn.price?.toLocaleString() || "--"}
+        </p>
+      )}
 
       <p>
         <strong>Preferred method:</strong> {txn.fulfillment_method || "--"}
       </p>
+
+      {post_type === "Rent" && (
+        <p>
+          <strong>Rent Duration:</strong> {formatDate(txn.rent_start_date)} → {formatDate(txn.rent_end_date)}
+        </p>
+      )}
 
       {txn.meetup_location && (
         <p>
@@ -45,13 +78,13 @@ export default function LiveTransactionCard({
 
       {txn.meetup_date && (
         <p>
-          <strong>Date:</strong> {txn.meetup_date}
+          <strong>Date:</strong> {formatDate(txn.meetup_date)}
         </p>
       )}
 
       {txn.meetup_time && (
         <p>
-          <strong>Time:</strong> {txn.meetup_time}
+          <strong>Time:</strong> {formatTime(txn.meetup_time)}
         </p>
       )}
 

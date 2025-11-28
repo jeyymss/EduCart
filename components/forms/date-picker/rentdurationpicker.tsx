@@ -12,10 +12,7 @@ export default function RentDurationPicker({ onChange }: Props) {
   const [start, setStart] = useState<string | null>(null);
   const [end, setEnd] = useState<string | null>(null);
 
-  // Today
-  const today = new Date().toISOString().split("T")[0];
-
-  // Tomorrow (start date must begin here)
+  // Tomorrow (earliest allowed)
   const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000)
     .toISOString()
     .split("T")[0];
@@ -23,22 +20,22 @@ export default function RentDurationPicker({ onChange }: Props) {
   const handleStart = (value: string) => {
     setStart(value);
 
-    // If start > end → clear end date
+    // If new start date > current end date → reset end date
     if (end && value > end) {
       setEnd(null);
-      onChange?.(value, null);
+      onChange?.(value, null); // ✅ always send 2 params
       return;
     }
 
-    onChange?.(value, end);
+    onChange?.(value, end); // ✅ always send 2 params
   };
 
   const handleEnd = (value: string) => {
     setEnd(value);
-    onChange?.(start, value);
+    onChange?.(start, value); // ✅ always send 2 params
   };
 
-  // Format function (2025-11-28 -> November 28, 2025)
+  // Format function (YYYY-MM-DD → "Month DD, YYYY")
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
     return date.toLocaleDateString("en-US", {
@@ -50,30 +47,34 @@ export default function RentDurationPicker({ onChange }: Props) {
 
   return (
     <div className="flex flex-col gap-4 p-4 border rounded-lg bg-white w-full">
-      <div className="flex justify-between">
-        <div className="flex flex-col">
-        <Label className="font-medium mb-1 text-sm">Start Date</Label>
-        <Input
-          type="date"
-          className="border rounded-md px-3 py-2"
-          min={tomorrow}
-          value={start || ""}
-          onChange={(e) => handleStart(e.target.value)}
-        />
-      </div>
 
-      <div className="flex flex-col">
-        <Label className="font-medium mb-1 text-sm">End Date</Label>
-        <Input
-          type="date"
-          className="border rounded-md px-3 py-2"
-          min={start || tomorrow}
-          value={end || ""}
-          onChange={(e) => handleEnd(e.target.value)}
-        />
+      <div className="flex justify-between gap-4">
+        
+        {/* Start Date */}
+        <div className="flex flex-col w-1/2">
+          <Label className="font-medium mb-1 text-sm">Start Date</Label>
+          <Input
+            type="date"
+            className="border rounded-md px-3 py-2"
+            min={tomorrow}
+            value={start || ""}
+            onChange={(e) => handleStart(e.target.value)}
+          />
+        </div>
+
+        {/* End Date */}
+        <div className="flex flex-col w-1/2">
+          <Label className="font-medium mb-1 text-sm">End Date</Label>
+          <Input
+            type="date"
+            className="border rounded-md px-3 py-2"
+            min={start || tomorrow}
+            value={end || ""}
+            onChange={(e) => handleEnd(e.target.value)}
+          />
+        </div>
+
       </div>
-      </div>
-      
 
       {/* Display formatted date range */}
       {start && end && (

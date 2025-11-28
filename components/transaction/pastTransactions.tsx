@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { Button } from "../ui/button";
 
 interface PastTransactionDetails {
   postType: string;
@@ -8,7 +9,8 @@ interface PastTransactionDetails {
   createdAt?: string; // ✅ added this
   txn: {
     price?: number | string | null;
-    rent_duration?: string | null;
+    rent_start_date: string;
+    rent_end_date: string;
     fulfillment_method?: string | null;
     meetup_location?: string | null;
     meetup_date?: string | null;
@@ -35,6 +37,25 @@ export default function PastTransactionDetails({
     if (isNaN(num)) return "—";
     return `₱${num.toLocaleString()}`;
   };
+
+  function formatDate(dateStr: string) {
+  const date = new Date(dateStr);
+  return date.toLocaleDateString("en-US", {
+    month: "short",   // "Nov"
+    day: "numeric",   // "29"
+    year: "numeric",  // "2025"
+  });
+}
+
+function formatTime(timeStr: string) {
+  // timeStr = "16:21:00"
+  const date = new Date(`1970-01-01T${timeStr}`);
+  return date.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+}
 
   const formattedTime = createdAt
     ? new Date(createdAt).toLocaleString("en-US", {
@@ -75,7 +96,7 @@ export default function PastTransactionDetails({
       {postType === "Rent" && (
         <>
           <p>
-            <strong>Rent Duration:</strong> {txn.rent_duration ?? "—"}
+            <strong>Rent Duration:</strong> {formatDate(txn.rent_start_date)} → {formatDate(txn.rent_end_date)}
           </p>
           <p>
             <strong>Price:</strong> {formatCurrency(txn.price)}
@@ -160,6 +181,12 @@ export default function PastTransactionDetails({
             {txn.status}
           </span>
         </p>
+      )}
+
+      {txn.status === "Accepted" && txn.payment_method === "Online Payment" && (
+        <Button>
+          Pay now
+        </Button>
       )}
 
       {/* ✅ Timestamp at bottom */}
