@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import mapboxgl from "mapbox-gl";
-// @ts-expect-error
+// @ts-expect-error MapboxGeocoder has no TypeScript types
 import MapboxGeocoder from "@mapbox/mapbox-gl-geocoder";
 
 import "mapbox-gl/dist/mapbox-gl.css";
