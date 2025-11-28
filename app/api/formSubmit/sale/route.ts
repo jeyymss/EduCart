@@ -8,7 +8,9 @@ export async function ForSale(
   formData: FormData,
   selectedType: string,
   selectedCategory: string,
-  selectedCondition: string
+  selectedCondition: string,
+  pickupLat: number | null,
+  pickupLng: number | null
 ) {
   return await withErrorHandling(async () => {
     const supabase = await createClient();
@@ -74,6 +76,8 @@ export async function ForSale(
         item_price: itemPrice,
         item_description: itemDescription,
         image_urls: imageUrls,
+        pickup_lat: pickupLat,
+        pickup_lng: pickupLng
       },
     ]);
 

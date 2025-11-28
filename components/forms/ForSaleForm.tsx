@@ -14,6 +14,8 @@ import { Label } from "../ui/label";
 import { Input } from "../ui/input";
 import ImageUploader from "../posts/ImageUpload";
 import AddressPickerWithMap from "../location/AddressPickerWithMap";
+import { CircleQuestionMark } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 
 
 interface FormProps {
@@ -88,7 +90,9 @@ export function ForSaleForm({ selectedType }: FormProps) {
         formData,
         selectedType,
         selectedCategory,
-        condition
+        condition,
+        pickupLat,
+        pickupLng
       );
 
       setLoading(false);
@@ -200,7 +204,17 @@ export function ForSaleForm({ selectedType }: FormProps) {
       
       {/* Pickup Location */}
       <Label className="text-sm">
-        Pickup Location<span className="text-red-600">*</span>
+        Pickup Location<span className="text-red-600">*</span> 
+        
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <CircleQuestionMark className="w-4 h-4"/>
+          </TooltipTrigger>
+          <TooltipContent>
+            Pickup location is used to calculate <br /> delivery fee if buyer chooses delivery.
+          </TooltipContent>
+        </Tooltip>
+        
       </Label>
 
       <AddressPickerWithMap

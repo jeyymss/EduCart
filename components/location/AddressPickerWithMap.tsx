@@ -101,7 +101,7 @@ export default function AddressPickerWithMap({ onSelect }: Props) {
       <button
         type="button"
         onClick={handleUseCurrentLocation}
-        className="text-sm px-3 py-2 w-full bg-blue-100 border border-blue-400 text-blue-700 rounded-md hover:bg-blue-200"
+        className="text-sm px-3 py-2 w-full bg-blue-100 border border-blue-400 text-blue-700 rounded-md hover:bg-blue-200 hover:cursor-pointer"
       >
         📍 Use My Current Location
       </button>
