@@ -13,6 +13,8 @@ import {
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
 import ImageUploader from "../posts/ImageUpload";
+import AddressPickerWithMap from "../location/AddressPickerWithMap";
+
 
 interface FormProps {
   selectedType: string;
@@ -24,6 +26,12 @@ export function ForSaleForm({ selectedType }: FormProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [condition, setCondition] = useState<string>("");
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+
+  //map picker
+  const [pickupLat, setPickupLat] = useState<number | null>(null);
+  const [pickupLng, setPickupLng] = useState<number | null>(null);
+  const [pickupAddress, setPickupAddress] = useState<string>("");
+
 
   const formRef = useRef<HTMLFormElement | null>(null);
   const [isFormValid, setIsFormValid] = useState(false);
@@ -97,6 +105,7 @@ export function ForSaleForm({ selectedType }: FormProps) {
   };
 
   return (
+    <div className="max-h-[80vh] overflow-y-auto pr-2">
     <form ref={formRef} onSubmit={handleSubmit} className="space-y-2">
       {/* Item Name */}
       <Label className="text-sm">
@@ -188,6 +197,31 @@ export function ForSaleForm({ selectedType }: FormProps) {
         setSelectedFiles={setSelectedFiles}
       />
 
+      
+      {/* Pickup Location */}
+      <Label className="text-sm">
+        Pickup Location<span className="text-red-600">*</span>
+      </Label>
+
+      <AddressPickerWithMap
+        onSelect={(lat, lng, address) => {
+          setPickupLat(lat);
+          setPickupLng(lng);
+          setPickupAddress(address);
+        }}
+      />
+
+      <Input
+        readOnly
+        value={pickupAddress}
+        placeholder="Selected address will appear here"
+        className="bg-gray-100"
+      />
+
+      <input type="hidden" name="pickup_lat" value={pickupLat ?? ""} />
+      <input type="hidden" name="pickup_lng" value={pickupLng ?? ""} />
+      <input type="hidden" name="pickup_address" value={pickupAddress} />
+
       {/* Error Message */}
       {error && <p className="text-sm text-red-600 text-center">{error}</p>}
 
@@ -206,5 +240,7 @@ export function ForSaleForm({ selectedType }: FormProps) {
         Post
       </button>
     </form>
+    </div>
+
   );
 }
