@@ -27,7 +27,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         ${showSlider ? "pt-12 pb-20" : "pt-32 pb-10"}
       `}
       >
-        {/* ---------------- SLIDER WRAPPER ---------------- */}
+        {/* SLIDER WRAPPER*/}
         {showSlider && (
           <div className="w-full max-w-xl mx-auto mb-6">
             <div
@@ -75,7 +75,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           </div>
         )}
 
-        {/* ---------------- FORM WRAPPER (MOVABLE) ---------------- */}
+        {/* FORM WRAPPER */}
         <div
           className={`
             w-full max-w-4xl mx-auto transition-all duration-300

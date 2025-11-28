@@ -578,15 +578,20 @@ export default function SignUpForm() {
                       </button>
                     )}
                   </div>
-
                 </form>
               </CardContent>
             </Card>
+         
+          {/* MOBILE LINK */}
+          <p className="md:hidden mt-4 text-center text-slate-600 text-xs">
+            Register an Organization?{" "}
+              <Link href="/organization-signup" className="font-medium text-[#577C8E]">
+                Create
+              </Link>
+          </p>
           </div>
         </div>
-
-
-
+        
         {/* DESKTOP VERSION */}
         <div className="hidden md:block w-full max-w-4xl">
           <Card className="rounded-3xl border border-slate-200 shadow-xl bg-white animate-[fadeIn_0.5s_ease]">

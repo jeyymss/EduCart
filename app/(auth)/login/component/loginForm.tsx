@@ -75,7 +75,7 @@ export default function LoginForm() {
       {/* MAIN WRAPPER */}
       <div className="flex flex-col md:flex-row min-h-[75vh] justify-center items-center px-4 lg:px-8">
 
-        {/* ===== MOBILE VERSION (SIGNUP STYLE) ===== */}
+        {/* MOBILE VERSION */}
         <div className="md:hidden w-full flex justify-center mt-4">
           <div className="w-[92%] max-w-sm scale-[1.1] origin-top animate-[fadeIn_0.5s_ease]">
 
@@ -186,7 +186,7 @@ export default function LoginForm() {
           </div>
         </div>
 
-        {/* ===== DESKTOP VERSION (Exact layout but signup skin) ===== */}
+        {/* DESKTOP VERSION */}
         <div className="hidden md:flex w-full max-w-2xl justify-center animate-[fadeIn_0.5s_ease]">
           <div className="w-full border border-slate-200 rounded-3xl shadow-xl p-10 bg-white">
 
