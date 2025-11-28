@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import mapboxgl from "mapbox-gl";
-// @ts-ignore
+// @ts-expect-error
 import MapboxGeocoder from "@mapbox/mapbox-gl-geocoder";
 
 import "mapbox-gl/dist/mapbox-gl.css";
