@@ -1,8 +1,14 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "../ui/button";
+import { Input } from "../ui/input";
 import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "../ui/dialog";
+import { Label } from "../ui/label";
+import { calculateDistanceKm, calculateDeliveryFee } from "@/utils/deliveryFee";
+import { createClient } from "@/utils/supabase/client";
+import { getRoadDistanceKm } from "@/utils/getRoadDistance";
+
 
 interface PastTransactionDetails {
   postType: string;
@@ -11,8 +17,11 @@ interface PastTransactionDetails {
   createdAt?: string; // ✅ added this
   txn: {
     price?: number | string | null;
+    post_id: string;
     rent_start_date: string;
     rent_end_date: string;
+    delivery_lat: number | null;
+    delivery_lng: number | null;
     fulfillment_method?: string | null;
     meetup_location?: string | null;
     meetup_date?: string | null;
@@ -35,6 +44,43 @@ export default function PastTransactionDetails({
   txn,
 }: PastTransactionDetails) {
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [deliveryFee, setDeliveryFee] = useState<number | null>(null);
+  const [distanceKm, setDistanceKm] = useState<number | null>(null);
+  const [totalPayment, setTotalPayment] = useState<number | null>(null);
+
+  useEffect(() => {
+  const fetchDistanceAndFee = async () => {
+    const supabase = createClient();
+
+    // Get seller location
+    const { data: post } = await supabase
+      .from("posts")
+      .select("pickup_lat, pickup_lng")
+      .eq("id", txn.post_id)
+      .single();
+
+    if (!post || !txn.delivery_lat || !txn.delivery_lng) return;
+
+    const distanceKm = await getRoadDistanceKm(
+      post.pickup_lat,
+      post.pickup_lng,
+      txn.delivery_lat,
+      txn.delivery_lng
+    );
+
+    const fee = calculateDeliveryFee(distanceKm);
+    const total = Number(txn.price) + fee;
+
+    setDistanceKm(distanceKm);
+    setDeliveryFee(fee);
+    setTotalPayment(total);
+  };
+
+  fetchDistanceAndFee();
+}, [txn]);
+
+
+
 
   const formatCurrency = (value?: number | string | null) => {
     if (value == null || value === "") return "—";
@@ -209,8 +255,46 @@ function formatTime(timeStr: string) {
             </DialogDescription>
           </DialogHeader>
 
-          {/* You can place your payment UI here */}
+          
           <div className="space-y-3">
+            <div className="p-4 rounded-lg border bg-gray-50 space-y-4">
+
+              {/* Item name */}
+              <p className="font-semibold text-lg">{itemTitle}</p>
+
+              {/* Price breakdown */}
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-700">Item Price</span>
+                <span className="font-medium">{formatCurrency(txn.price)}</span>
+              </div>
+
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-700">Delivery Fee</span>
+                <span className="font-medium">
+                  {deliveryFee !== null ? formatCurrency(deliveryFee) : "Calculating..."}
+                </span>
+              </div>
+
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-700">Distance</span>
+                <span className="font-medium">
+                  {distanceKm !== null ? `${distanceKm.toFixed(2)} km` : "Computing..."}
+                </span>
+              </div>
+
+              <hr />
+
+              {/* Total */}
+              <div className="flex justify-between text-base font-semibold">
+                <span>Total Payment</span>
+                <span className="text-blue-700">
+                  {totalPayment !== null ? formatCurrency(totalPayment) : "—"}
+                </span>
+              </div>
+
+            </div>
+
+
             <div className="flex gap-4 justify-center">
               <Button className="w-1/2">
                 Wallet

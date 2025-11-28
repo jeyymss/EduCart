@@ -427,6 +427,9 @@ export default function ChatClient({
                                       createdAt={record.created_at}
                                       txn={{
                                         price: snapshot.price,
+                                        post_id: snapshot.post_id,
+                                        delivery_lat: snapshot.delivery_lat,
+                                        delivery_lng: snapshot.delivery_lng,
                                         rent_start_date: snapshot.rent_start_date,
                                         rent_end_date: snapshot.rent_end_date,
                                         fulfillment_method:
