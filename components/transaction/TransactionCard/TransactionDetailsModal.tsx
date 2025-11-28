@@ -32,6 +32,7 @@ type TransactionDetailsModalProps = {
     title: string;
     price: number;
     total: number;
+    payment_method: string;
     method: string;
     type: string;
     status: string;
@@ -225,6 +226,9 @@ export default function TransactionDetailsModal({
               <Tag>{data.type}</Tag>
               <span className="inline-flex items-center text-xs px-3 py-1 rounded-full border bg-gray-50 text-gray-700">
                 {data.method}
+              </span>
+              <span className="inline-flex items-center text-xs px-3 py-1 rounded-full border bg-gray-50 text-gray-700">
+                {data.payment_method}
               </span>
             </div>
 

@@ -159,7 +159,7 @@ export default function TradeTransacForm({
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="Cash on Hand">Cash on Hand</SelectItem>
-          <SelectItem value="GCash">GCash</SelectItem>
+          <SelectItem value="Online Payment">Online Payment</SelectItem>
         </SelectContent>
       </Select>
 

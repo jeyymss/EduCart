@@ -189,6 +189,7 @@ export default function Transactions({ userId }: { userId: string }) {
                 title: selectedTx.title,
                 price: selectedTx.price,
                 total: selectedTx.total ?? selectedTx.price,
+                payment_method: selectedTx.payment_method,
                 method: selectedTx.method,
                 type: selectedTx.type,
                 status: selectedTx.status,

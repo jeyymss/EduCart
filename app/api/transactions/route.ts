@@ -41,6 +41,7 @@ export async function GET(req: Request) {
         transaction:transaction_id (
           id,
           status,
+          payment_method,
           fulfillment_method,
           price,
 
@@ -112,6 +113,7 @@ export async function GET(req: Request) {
         status,
         type: isBuyer ? "Purchases" : "Sales",
         method: txn.fulfillment_method || snap.fulfillment_method || "Meetup",
+        payment_method: txn.payment_method || snap.payment_method,
         title: post.item_title || snap.item_title || "Untitled Item",
         price: txn.price || snap.price || 0,
         total: snap.total_amount || snap.price || 0,

@@ -14,6 +14,7 @@ export interface Tx {
   status: "active" | "completed" | "cancelled";
   type: "Sales" | "Purchases";
   method: "Meetup" | "Delivery";
+  payment_method: "Cash on Hand" | "Online Payment";
   title: string;
   price: number;
   total?: number;

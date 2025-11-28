@@ -1,11 +1,13 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "../ui/button";
+import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "../ui/dialog";
 
 interface PastTransactionDetails {
   postType: string;
   itemTitle?: string;
+  currentUserRole: string;
   createdAt?: string; // ✅ added this
   txn: {
     price?: number | string | null;
@@ -28,9 +30,12 @@ interface PastTransactionDetails {
 export default function PastTransactionDetails({
   postType,
   itemTitle,
+  currentUserRole,
   createdAt,
   txn,
 }: PastTransactionDetails) {
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+
   const formatCurrency = (value?: number | string | null) => {
     if (value == null || value === "") return "—";
     const num = typeof value === "string" ? parseFloat(value) : value;
@@ -68,6 +73,8 @@ function formatTime(timeStr: string) {
     : null;
 
   return (
+
+
     <div className="space-y-2 text-sm border rounded-md p-4 bg-white shadow-sm">
       <p className="font-semibold mb-2">Transaction Form Completed</p>
 
@@ -183,11 +190,47 @@ function formatTime(timeStr: string) {
         </p>
       )}
 
-      {txn.status === "Accepted" && txn.payment_method === "Online Payment" && (
-        <Button>
-          Pay now
-        </Button>
+      {txn.status === "Accepted" &&
+        txn.payment_method === "Online Payment" &&
+        currentUserRole === "buyer" && (
+          <Button onClick={() => setShowPaymentDialog(true)}>
+            Pay now
+          </Button>
       )}
+
+      <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
+        <DialogContent className="space-y-4"
+          onOpenAutoFocus={(e) => e.preventDefault()}
+          onInteractOutside={(e) => e.preventDefault()}>
+          <DialogHeader>
+            <DialogTitle>Online Payment</DialogTitle>
+            <DialogDescription>
+              Proceed with your payment. Choose your preferred method.
+            </DialogDescription>
+          </DialogHeader>
+
+          {/* You can place your payment UI here */}
+          <div className="space-y-3">
+            <div className="flex gap-4 justify-center">
+              <Button className="w-1/2">
+                Wallet
+              </Button>
+              <Button className="w-1/2">
+                Gcash
+              </Button>
+            </div>
+            
+          </div>
+
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="secondary">Close</Button>
+            </DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+
 
       {/* ✅ Timestamp at bottom */}
       {formattedTime && (

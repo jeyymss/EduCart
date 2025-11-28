@@ -237,7 +237,7 @@ export default function ChatClient({
     transactionId: string,
     newStatus: string
   ) {
-    // ✅ Update transaction status
+    // Update transaction status
     const { error: updateError } = await supabase
       .from("transactions")
       .update({ status: newStatus })
@@ -248,7 +248,7 @@ export default function ChatClient({
       return;
     }
 
-    // ✅ Check if a system message already exists for this transaction
+    // Check if a system message already exists for this transaction
     const { data: existingMessage } = await supabase
       .from("messages")
       .select("id")
@@ -257,7 +257,7 @@ export default function ChatClient({
       .single();
 
     if (existingMessage) {
-      // ✅ Update the existing system message
+      // Update the existing system message
       await supabase
         .from("messages")
         .update({
@@ -265,7 +265,7 @@ export default function ChatClient({
         })
         .eq("id", existingMessage.id);
     } else {
-      // ✅ If no system message yet, insert a new one
+      // If no system message yet, insert a new one
       await supabase.from("messages").insert({
         conversation_id: conversationId,
         sender_user_id: currentUserId,
@@ -274,6 +274,8 @@ export default function ChatClient({
         body: `Transaction ${newStatus}`,
       });
     }
+
+    window.location.reload();
   }
 
   return (
@@ -421,6 +423,7 @@ export default function ChatClient({
                                       key={record.id}
                                       postType={record.post_type || "Unknown"}
                                       itemTitle={snapshot.item_title}
+                                      currentUserRole={currentUserRole}
                                       createdAt={record.created_at}
                                       txn={{
                                         price: snapshot.price,
