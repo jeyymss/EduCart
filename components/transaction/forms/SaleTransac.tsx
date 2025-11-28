@@ -12,6 +12,10 @@ import { useState, useRef, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { SaleTransaction } from "@/app/api/transacForm/SaleTransac/route";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { CircleQuestionMark } from "lucide-react";
+import AddressPickerWithMap from "@/components/location/AddressPickerWithMap";
+
 
 interface FormProps {
   conversationId: number;
@@ -38,6 +42,11 @@ export default function SaleTransacForm({
   const [selectPayment, setSelectPayment] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  //map picker
+  const [deliveryLat, setDeliveryLat] = useState<number | null>(null);
+  const [deliveryLng, setDeliveryLng] = useState<number | null>(null);
+  const [deliveryAddress, setDeliveryAddress] = useState<string>("");
 
   useEffect(() => {
     const form = formRef.current;
@@ -78,7 +87,10 @@ export default function SaleTransacForm({
         selectPayment,
         sellerId,
         post_id,
-        postType
+        postType,
+        deliveryLat,
+        deliveryLng,
+        deliveryAddress
       );
 
       setLoading(false);
@@ -136,6 +148,34 @@ export default function SaleTransacForm({
             </div>
           </div>
         </div>
+      )}
+
+      {selectedType === "Delivery" && (
+        <>
+          {/* Delivery Location */}
+          <Label className="text-sm">
+            Delivery Location<span className="text-red-600">*</span>  
+          </Label>
+
+          <AddressPickerWithMap
+            onSelect={(lat, lng, address) => {
+              setDeliveryLat(lat);
+              setDeliveryLng(lng);
+              setDeliveryAddress(address);
+            }}
+          />
+
+          <Input
+            readOnly
+            value={deliveryAddress}
+            placeholder="Selected address will appear here"
+            className="bg-gray-100"
+          />
+
+          <input type="hidden" name="delivery_lat" value={deliveryLat ?? ""} />
+          <input type="hidden" name="delivery_lng" value={deliveryLng ?? ""} />
+          <input type="hidden" name="delivery_address" value={deliveryAddress} />
+        </>
       )}
 
       <Label>Payment Method</Label>

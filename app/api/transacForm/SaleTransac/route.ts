@@ -12,7 +12,10 @@ export async function SaleTransaction(
   selectPayment: string,
   sellerId: string,
   post_id: string,
-  postType: string
+  postType: string,
+  deliveryLat: number | null,
+  deliveryLng: number | null,
+  deliveryAddress: string
 ) {
   return await withErrorHandling(async () => {
     const supabase = await createClient();
@@ -86,6 +89,9 @@ export async function SaleTransaction(
           meetup_location: location,
           meetup_date: inputDate || null,
           meetup_time: inputTime || null,
+          delivery_lat: deliveryLat,
+          delivery_lng: deliveryLng,
+          delivery_location: deliveryAddress,
           status: "Pending",
         },
       ])

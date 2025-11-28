@@ -10,7 +10,8 @@ export async function ForSale(
   selectedCategory: string,
   selectedCondition: string,
   pickupLat: number | null,
-  pickupLng: number | null
+  pickupLng: number | null,
+  pickupAddress: string
 ) {
   return await withErrorHandling(async () => {
     const supabase = await createClient();
@@ -77,7 +78,8 @@ export async function ForSale(
         item_description: itemDescription,
         image_urls: imageUrls,
         pickup_lat: pickupLat,
-        pickup_lng: pickupLng
+        pickup_lng: pickupLng,
+        pickup_location: pickupAddress
       },
     ]);
 

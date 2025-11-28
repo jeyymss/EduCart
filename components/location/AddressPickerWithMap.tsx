@@ -32,7 +32,10 @@ export default function AddressPickerWithMap({ onSelect }: Props) {
     // Remove existing marker
     if (marker.current) marker.current.remove();
 
-    marker.current = new mapboxgl.Marker({ color: "red" })
+    marker.current = new mapboxgl.Marker({
+      color: "red",
+      draggable: true,
+    })
       .setLngLat([lng, lat])
       .addTo(map.current!);
 
@@ -41,9 +44,18 @@ export default function AddressPickerWithMap({ onSelect }: Props) {
       zoom: 15,
     });
 
+    // Update when user drags marker
+    marker.current.on("dragend", async () => {
+      const { lat: newLat, lng: newLng } = marker.current!.getLngLat();
+      const address = await reverseGeocode(newLat, newLng);
+      onSelect(newLat, newLng, address);
+    });
+
+    // Initial reverse geocode
     const address = await reverseGeocode(lat, lng);
     onSelect(lat, lng, address);
   };
+
 
   const handleUseCurrentLocation = () => {
     if (!navigator.geolocation) {

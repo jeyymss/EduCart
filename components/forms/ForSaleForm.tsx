@@ -92,7 +92,8 @@ export function ForSaleForm({ selectedType }: FormProps) {
         selectedCategory,
         condition,
         pickupLat,
-        pickupLng
+        pickupLng,
+        pickupAddress
       );
 
       setLoading(false);
