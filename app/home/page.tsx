@@ -257,7 +257,7 @@ export default function HomePage() {
 
         {/* CATEGORY GRID */}
         <section
-          className="-mt-18 md:mt-0 rounded-2xl border bg-white p-4 sm:p-5 shadow-sm md:hover:shadow-md transition-all"
+          className="-mt-18 md:mt-4 lg:mt-6 rounded-2xl border bg-white p-4 sm:p-5 shadow-sm md:hover:shadow-md transition-all"
           style={cv}
         >
           <div className="flex items-center justify-between">
@@ -306,7 +306,7 @@ export default function HomePage() {
         </section>
 
         {/* MAIN CONTENT SECTIONS WRAPPER */}
-        <div className="-mx-4 sm:-mx-6 md:-mx-8 px-4 sm:px-6 md:px-8 py-4 md:py-6 lg:py-8 bg-white">
+        <div className="-mx-4 sm:-mx-6 md:-mx-8 px-4 sm:px-6 md:px-8 py-4 md:py-6 lg:py-8 bg-white -mt-4 md:-mt-6 lg:-mt-10">
           <div className="mx-auto max-w-[1600px] space-y-8 lg:space-y-10">
 
             {/* --- EMERGENCY LENDING --- */}

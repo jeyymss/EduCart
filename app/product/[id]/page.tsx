@@ -8,6 +8,7 @@ import { useParams, useRouter } from "next/navigation";
 import SaleDetails from "@/components/posts/itemDetails/saleDetails";
 import RentDetails from "@/components/posts/itemDetails/rentDetails";
 import TradeDetails from "@/components/posts/itemDetails/tradeDetails";
+import GiveawayDetails from "@/components/posts/itemDetails/giveawayDetails";
 import { getRelativeTime } from "@/utils/getRelativeTime";
 import { usePublicProfile } from "@/hooks/queries/profiles";
 import { ArrowLeft, Heart, X, ChevronLeft, ChevronRight, Flag } from "lucide-react";
@@ -31,6 +32,8 @@ function renderDetails(item: any) {
       return <RentDetails item={item} />;
     case "Trade":
       return <TradeDetails item={item} />;
+    case "Giveaway":
+      return <GiveawayDetails item={item} />;
     default:
       return <p>Unsupported post type</p>;
   }
