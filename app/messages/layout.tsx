@@ -2,7 +2,6 @@ import { ReactNode } from "react";
 import { createClient } from "@/utils/supabase/server";
 import MessagesRealtimeRefresher from "@/components/messages/MessagesRealtimeRefresher";
 import SidebarList from "@/components/messages/SideBarList";
-import Image from "next/image";
 import Footer from "@/components/Footer";
 import MobileMessagesClient from "@/components/messages/MobileMessagesClient";
 
@@ -75,12 +74,12 @@ export default async function MessagesLayout({
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
-      {/* MOBILE: sidebar-first + full-screen chat with back button */}
+      {/* MOBILE */}
       <MobileMessagesClient conversations={conversations}>
         {children}
       </MobileMessagesClient>
 
-      {/* DESKTOP: original 2-column layout */}
+      {/* DESKTOP */}
       <div className="hidden md:grid grid-cols-[320px_1fr] h-[calc(100vh-64px)] p-6 pt-12 gap-4 overflow-hidden">
         <MessagesRealtimeRefresher
           currentUserId={userID}

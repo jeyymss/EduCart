@@ -2,19 +2,23 @@
 
 import React, { useState, useEffect } from "react";
 import { Button } from "../ui/button";
-import { Input } from "../ui/input";
-import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "../ui/dialog";
-import { Label } from "../ui/label";
-import { calculateDistanceKm, calculateDeliveryFee } from "@/utils/deliveryFee";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "../ui/dialog";
+import { calculateDeliveryFee } from "@/utils/deliveryFee";
 import { createClient } from "@/utils/supabase/client";
 import { getRoadDistanceKm } from "@/utils/getRoadDistance";
-
+import { X } from "lucide-react";
 
 interface PastTransactionDetails {
   postType: string;
   itemTitle?: string;
   currentUserRole: string;
-  createdAt?: string; // ✅ added this
+  createdAt?: string;
   txn: {
     price?: number | string | null;
     post_id: string;
@@ -49,64 +53,39 @@ export default function PastTransactionDetails({
   const [totalPayment, setTotalPayment] = useState<number | null>(null);
 
   useEffect(() => {
-  const fetchDistanceAndFee = async () => {
-    const supabase = createClient();
+    const fetchDistanceAndFee = async () => {
+      const supabase = createClient();
+      const { data: post } = await supabase
+        .from("posts")
+        .select("pickup_lat, pickup_lng")
+        .eq("id", txn.post_id)
+        .single();
 
-    // Get seller location
-    const { data: post } = await supabase
-      .from("posts")
-      .select("pickup_lat, pickup_lng")
-      .eq("id", txn.post_id)
-      .single();
+      if (!post || !txn.delivery_lat || !txn.delivery_lng) return;
 
-    if (!post || !txn.delivery_lat || !txn.delivery_lng) return;
+      const distanceKm = await getRoadDistanceKm(
+        post.pickup_lat,
+        post.pickup_lng,
+        txn.delivery_lat,
+        txn.delivery_lng
+      );
 
-    const distanceKm = await getRoadDistanceKm(
-      post.pickup_lat,
-      post.pickup_lng,
-      txn.delivery_lat,
-      txn.delivery_lng
-    );
+      const fee = calculateDeliveryFee(distanceKm);
+      const total = Number(txn.price) + fee;
 
-    const fee = calculateDeliveryFee(distanceKm);
-    const total = Number(txn.price) + fee;
+      setDistanceKm(distanceKm);
+      setDeliveryFee(fee);
+      setTotalPayment(total);
+    };
 
-    setDistanceKm(distanceKm);
-    setDeliveryFee(fee);
-    setTotalPayment(total);
-  };
-
-  fetchDistanceAndFee();
-}, [txn]);
-
-
-
+    fetchDistanceAndFee();
+  }, [txn]);
 
   const formatCurrency = (value?: number | string | null) => {
-    if (value == null || value === "") return "—";
+    if (!value) return "—";
     const num = typeof value === "string" ? parseFloat(value) : value;
-    if (isNaN(num)) return "—";
     return `₱${num.toLocaleString()}`;
   };
-
-  function formatDate(dateStr: string) {
-  const date = new Date(dateStr);
-  return date.toLocaleDateString("en-US", {
-    month: "short",   // "Nov"
-    day: "numeric",   // "29"
-    year: "numeric",  // "2025"
-  });
-}
-
-function formatTime(timeStr: string) {
-  // timeStr = "16:21:00"
-  const date = new Date(`1970-01-01T${timeStr}`);
-  return date.toLocaleTimeString("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  });
-}
 
   const formattedTime = createdAt
     ? new Date(createdAt).toLocaleString("en-US", {
@@ -119,206 +98,214 @@ function formatTime(timeStr: string) {
     : null;
 
   return (
-
-
-    <div className="space-y-2 text-sm border rounded-md p-4 bg-white shadow-sm">
-      <p className="font-semibold mb-2">Transaction Form Completed</p>
-
-      <p>
-        <strong>Transaction type:</strong> {postType ?? "Unknown"}
+    <div className="border rounded-xl p-5 bg-white shadow-md transition-all">
+      <p className="font-semibold text-base mb-4 text-[#102E4A]">
+        Transaction Form Completed
       </p>
-      {itemTitle && (
+
+      <div className="space-y-2 text-[15px] leading-relaxed text-gray-800">
         <p>
-          <strong>Item:</strong> {itemTitle}
+          <strong>Transaction type:</strong> {postType}
         </p>
-      )}
 
-      {/* --- SALE --- */}
-      {postType === "Sale" && (
-        <>
+        {itemTitle && (
           <p>
-            <strong>Price:</strong> {formatCurrency(txn.price)}
+            <strong>Item:</strong> {itemTitle}
           </p>
-          <p>
-            <strong>Preferred method:</strong> {txn.fulfillment_method ?? "—"}
-          </p>
-        </>
-      )}
+        )}
 
-      {/* --- RENT --- */}
-      {postType === "Rent" && (
-        <>
-          <p>
-            <strong>Rent Duration:</strong> {formatDate(txn.rent_start_date)} → {formatDate(txn.rent_end_date)}
-          </p>
-          <p>
-            <strong>Price:</strong> {formatCurrency(txn.price)}
-          </p>
-        </>
-      )}
-
-      {/* --- TRADE --- */}
-      {postType === "Trade" && (
-        <>
-          <p>
-            <strong>Offered Item:</strong> {txn.offered_item ?? "N/A"}
-          </p>
-          <p>
-            <strong>Cash Added:</strong> {formatCurrency(txn.cash_added)}
-          </p>
-        </>
-      )}
-
-      {/* --- PASABUY --- */}
-      {postType === "Pasabuy" && (
-        <>
-          <p>
-            <strong>Pasabuy Location:</strong> {txn.pasabuy_location ?? "N/A"}
-          </p>
-          <p>
-            <strong>Cutoff Date:</strong> {txn.pasabuy_cutoff ?? "N/A"}
-          </p>
-          {txn.service_fee && (
+        {postType === "Sale" && (
+          <>
             <p>
-              <strong>Service Fee:</strong> {formatCurrency(txn.service_fee)}
+              <strong>Price:</strong> {formatCurrency(txn.price)}
             </p>
-          )}
-        </>
-      )}
+            <p>
+              <strong>Preferred method:</strong>{" "}
+              {txn.fulfillment_method ?? "—"}
+            </p>
+          </>
+        )}
 
-      {/* --- EMERGENCY LENDING --- */}
-      {postType === "Emergency Lending" && txn.price && (
-        <p>
-          <strong>Estimated Value:</strong> {formatCurrency(txn.price)}
-        </p>
-      )}
+        {postType === "Rent" && (
+          <>
+            <p>
+              <strong>Rent Duration:</strong>{" "}
+              {txn.rent_start_date} → {txn.rent_end_date}
+            </p>
+            <p>
+              <strong>Price:</strong> {formatCurrency(txn.price)}
+            </p>
+          </>
+        )}
 
-      {/* --- COMMON FIELDS --- */}
-      {txn.meetup_location && (
-        <p>
-          <strong>Location:</strong> {txn.meetup_location}
-        </p>
-      )}
-      {txn.meetup_date && (
-        <p>
-          <strong>Date:</strong> {txn.meetup_date}
-        </p>
-      )}
-      {txn.meetup_time && (
-        <p>
-          <strong>Time:</strong>{" "}
-          {new Date(`1970-01-01T${txn.meetup_time}`).toLocaleTimeString([], {
-            hour: "numeric",
-            minute: "2-digit",
-            hour12: true,
-          })}
-        </p>
-      )}
-      {txn.payment_method && (
-        <p>
-          <strong>Payment method:</strong> {txn.payment_method}
-        </p>
-      )}
-      {txn.status && (
-        <p>
-          <strong>Status:</strong>{" "}
-          <span
-            className={
-              txn.status === "Accepted"
-                ? "text-green-600 font-medium"
-                : txn.status === "Cancelled"
-                ? "text-red-500 font-medium"
-                : "text-gray-700"
-            }
-          >
-            {txn.status}
-          </span>
-        </p>
-      )}
+        {postType === "Trade" && (
+          <>
+            <p>
+              <strong>Offered Item:</strong> {txn.offered_item ?? "N/A"}
+            </p>
+            <p>
+              <strong>Cash Added:</strong>{" "}
+              {formatCurrency(txn.cash_added)}
+            </p>
+          </>
+        )}
+
+        {postType === "Pasabuy" && (
+          <>
+            <p>
+              <strong>Pasabuy Location:</strong>{" "}
+              {txn.pasabuy_location ?? "N/A"}
+            </p>
+            <p>
+              <strong>Cutoff:</strong> {txn.pasabuy_cutoff ?? "N/A"}
+            </p>
+            {txn.service_fee && (
+              <p>
+                <strong>Service Fee:</strong>{" "}
+                {formatCurrency(txn.service_fee)}
+              </p>
+            )}
+          </>
+        )}
+
+        {txn.meetup_location && (
+          <p>
+            <strong>Location:</strong> {txn.meetup_location}
+          </p>
+        )}
+        {txn.meetup_date && (
+          <p>
+            <strong>Date:</strong> {txn.meetup_date}
+          </p>
+        )}
+        {txn.meetup_time && (
+          <p>
+            <strong>Time:</strong> {txn.meetup_time}
+          </p>
+        )}
+        {txn.payment_method && (
+          <p>
+            <strong>Payment method:</strong> {txn.payment_method}
+          </p>
+        )}
+
+        {txn.status && (
+          <p>
+            <strong>Status:</strong>{" "}
+            <span
+              className={
+                txn.status === "Accepted"
+                  ? "text-green-600 font-semibold"
+                  : txn.status === "Cancelled"
+                  ? "text-red-500 font-semibold"
+                  : "text-gray-600"
+              }
+            >
+              {txn.status}
+            </span>
+          </p>
+        )}
+      </div>
 
       {txn.status === "Accepted" &&
         txn.payment_method === "Online Payment" &&
         currentUserRole === "buyer" && (
-          <Button onClick={() => setShowPaymentDialog(true)}>
+          <Button
+            className="mt-4 w-full rounded-lg py-2 text-black"
+            style={{ backgroundColor: "#C7D9E5" }}
+            onClick={() => setShowPaymentDialog(true)}
+          >
             Pay now
           </Button>
-      )}
+        )}
 
+      {/* PAYMENT MODAL */}
       <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
-        <DialogContent className="space-y-4"
+        <DialogContent
+          className="
+            space-y-4 p-4 sm:p-6 relative
+            fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2
+            w-full max-w-[90%] sm:max-w-md
+            rounded-lg sm:rounded-xl
+          "
           onOpenAutoFocus={(e) => e.preventDefault()}
-          onInteractOutside={(e) => e.preventDefault()}>
+        >
+
+          <button
+            className="absolute right-4 top-4 text-gray-500 hover:text-gray-700 transition"
+            onClick={() => setShowPaymentDialog(false)}
+          >
+            <X className="w-5 h-5" />
+          </button>
+
           <DialogHeader>
-            <DialogTitle>Online Payment</DialogTitle>
+            <DialogTitle className="text-[#102E4A]">
+              Online Payment
+            </DialogTitle>
             <DialogDescription>
-              Proceed with your payment. Choose your preferred method.
+              Review fees and choose a payment method.
             </DialogDescription>
           </DialogHeader>
 
-          
-          <div className="space-y-3">
-            <div className="p-4 rounded-lg border bg-gray-50 space-y-4">
+          {/* PAYMENT SUMMARY */}
+          <div className="p-4 border rounded-lg bg-gray-50 space-y-3">
+            <p className="font-semibold text-lg">{itemTitle}</p>
 
-              {/* Item name */}
-              <p className="font-semibold text-lg">{itemTitle}</p>
-
-              {/* Price breakdown */}
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-700">Item Price</span>
-                <span className="font-medium">{formatCurrency(txn.price)}</span>
-              </div>
-
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-700">Delivery Fee</span>
-                <span className="font-medium">
-                  {deliveryFee !== null ? formatCurrency(deliveryFee) : "Calculating..."}
-                </span>
-              </div>
-
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-700">Distance</span>
-                <span className="font-medium">
-                  {distanceKm !== null ? `${distanceKm.toFixed(2)} km` : "Computing..."}
-                </span>
-              </div>
-
-              <hr />
-
-              {/* Total */}
-              <div className="flex justify-between text-base font-semibold">
-                <span>Total Payment</span>
-                <span className="text-blue-700">
-                  {totalPayment !== null ? formatCurrency(totalPayment) : "—"}
-                </span>
-              </div>
-
+            <div className="flex justify-between text-sm">
+              <span>Item Price</span>
+              <span>{formatCurrency(txn.price)}</span>
             </div>
 
-
-            <div className="flex gap-4 justify-center">
-              <Button className="w-1/2">
-                Wallet
-              </Button>
-              <Button className="w-1/2">
-                Gcash
-              </Button>
+            <div className="flex justify-between text-sm">
+              <span>Delivery Fee</span>
+              <span>
+                {deliveryFee !== null
+                  ? formatCurrency(deliveryFee)
+                  : "Calculating..."}
+              </span>
             </div>
-            
+
+            <div className="flex justify-between text-sm">
+              <span>Distance</span>
+              <span>
+                {distanceKm !== null
+                  ? `${distanceKm.toFixed(2)} km`
+                  : "Computing..."}
+              </span>
+            </div>
+
+            <hr />
+
+            <div className="flex justify-between text-base font-semibold">
+              <span>Total</span>
+              <span className="text-blue-900">
+                {totalPayment !== null
+                  ? formatCurrency(totalPayment)
+                  : "—"}
+              </span>
+            </div>
           </div>
 
-          <DialogFooter>
-            <DialogClose asChild>
-              <Button variant="secondary">Close</Button>
-            </DialogClose>
-          </DialogFooter>
+          {/* PAYMENT BUTTONS */}
+          <div className="flex items-center justify-center gap-4 pt-1">
+            <Button
+              className="w-1/2 text-black transition hover:brightness-95"
+              style={{ backgroundColor: "#FFF1D0" }}
+            >
+              Wallet
+            </Button>
+
+            <Button className="w-1/2 bg-[#0F8EE9] hover:bg-[#0d7ac5] text-white">
+              GCash
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
 
-
-
-      {/* ✅ Timestamp at bottom */}
       {formattedTime && (
-        <p className="text-xs text-gray-500 text-right mt-2">{formattedTime}</p>
+        <p className="text-xs text-gray-500 text-right mt-3">
+          {formattedTime}
+        </p>
       )}
     </div>
   );

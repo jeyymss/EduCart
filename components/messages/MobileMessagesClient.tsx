@@ -1,7 +1,6 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useEffect, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import SidebarList from "@/components/messages/SideBarList";
@@ -18,27 +17,20 @@ type Props = {
   children: ReactNode; // ChatClient
 };
 
-export default function MobileMessagesClient({ conversations, children }: Props) {
+export default function MobileMessagesClient({
+  conversations,
+  children,
+}: Props) {
   const pathname = usePathname();
   const router = useRouter();
 
   // Detect if user is inside a specific chat
   const isChatOpen = /^\/messages\/\d+/.test(pathname ?? "");
 
-  // children = [messagesSection, inputSection]
+  // children = [messagesSection, inputSection] (for future use)
   const [messagesSection, inputSection] = Array.isArray(children)
     ? children
     : [children, null];
-
-  const messagesRef = useRef<HTMLDivElement>(null);
-
-  // Auto scroll to bottom when chat opens or message content changes
-  useEffect(() => {
-    if (isChatOpen && messagesRef.current) {
-      const el = messagesRef.current;
-      el.scrollTop = el.scrollHeight;
-    }
-  }, [isChatOpen, messagesSection]);
 
   return (
     <div className="md:hidden fixed inset-0 bg-white z-50">
@@ -69,15 +61,17 @@ export default function MobileMessagesClient({ conversations, children }: Props)
             </button>
           </div>
 
-          {/* Messages section */}
-          <div className="flex-1 overflow-y-auto" ref={messagesRef}>
+          {/* Chat client fills the rest of the height */}
+          <div className="flex-1 min-h-0 flex flex-col">
             {messagesSection}
           </div>
 
-          {/* Input area */}
-          <div className="sticky bottom-0 z-50 bg-white border-t shadow-lg">
-            {inputSection}
-          </div>
+          {/* If you ever split inputSection out separately, it will appear here */}
+          {inputSection && (
+            <div className="sticky bottom-0 z-50 bg-white border-t shadow-lg">
+              {inputSection}
+            </div>
+          )}
         </div>
       )}
 

@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 
 type LiveTransactionCard = {
-  txn: any; // You can replace 'any' with your transaction type later
+  txn: any;
   post_type: string;
   formattedTime: string;
   currentUserRole: "buyer" | "seller";
@@ -13,14 +13,13 @@ type LiveTransactionCard = {
 function formatDate(dateStr: string) {
   const date = new Date(dateStr);
   return date.toLocaleDateString("en-US", {
-    month: "short",   // "Nov"
-    day: "numeric",   // "29"
-    year: "numeric",  // "2025"
+    month: "short",
+    day: "numeric",
+    year: "numeric",
   });
 }
 
 function formatTime(timeStr: string) {
-  // timeStr = "16:21:00"
   const date = new Date(`1970-01-01T${timeStr}`);
   return date.toLocaleTimeString("en-US", {
     hour: "numeric",
@@ -28,8 +27,6 @@ function formatTime(timeStr: string) {
     hour12: true,
   });
 }
-
-
 
 export default function LiveTransactionCard({
   txn,
@@ -39,85 +36,118 @@ export default function LiveTransactionCard({
   handleUpdateTransaction,
 }: LiveTransactionCard) {
   return (
-    <div className="bg-slate-100 border rounded-lg p-4 text-sm max-w-md">
-      <p className="font-semibold mb-2">Transaction Form Completed</p>
-
-      <p>
-        <strong>Transaction type:</strong> {post_type}
+    <div className="border rounded-xl p-5 bg-white shadow-md transition-all max-w-md">
+      {/* TITLE */}
+      <p className="font-semibold text-base mb-4 text-[#102E4A]">
+        Transaction Form Completed
       </p>
 
-      <p>
-        <strong>Item:</strong> {txn.item_title || "--"}
-      </p>
-
-      {post_type === "Rent" ? (
+      {/* DETAILS */}
+      <div className="space-y-2 text-[15px] leading-relaxed text-gray-800">
         <p>
-          <strong>Price (₱):</strong> {txn.price?.toLocaleString() || "--"} / Day
+          <strong>Transaction type:</strong> {post_type}
         </p>
-      ) : (
+
         <p>
-          <strong>Price (₱):</strong> {txn.price?.toLocaleString() || "--"}
+          <strong>Item:</strong> {txn.item_title || "—"}
         </p>
-      )}
 
-      <p>
-        <strong>Preferred method:</strong> {txn.fulfillment_method || "--"}
-      </p>
+        {/* PRICE */}
+        {post_type === "Rent" ? (
+          <p>
+            <strong>Price:</strong> ₱
+            {txn.price?.toLocaleString() || "—"} / day
+          </p>
+        ) : (
+          <p>
+            <strong>Price:</strong> ₱
+            {txn.price?.toLocaleString() || "—"}
+          </p>
+        )}
 
-      {post_type === "Rent" && (
         <p>
-          <strong>Rent Duration:</strong> {formatDate(txn.rent_start_date)} → {formatDate(txn.rent_end_date)}
+          <strong>Preferred method:</strong>{" "}
+          {txn.fulfillment_method || "—"}
         </p>
-      )}
 
-      {txn.meetup_location && (
+        {/* RENT DURATION */}
+        {post_type === "Rent" && (
+          <p>
+            <strong>Rent Duration:</strong>{" "}
+            {formatDate(txn.rent_start_date)} →{" "}
+            {formatDate(txn.rent_end_date)}
+          </p>
+        )}
+
+        {/* LOCATION */}
+        {txn.meetup_location && (
+          <p>
+            <strong>Location:</strong> {txn.meetup_location}
+          </p>
+        )}
+
+        {txn.meetup_date && (
+          <p>
+            <strong>Date:</strong> {formatDate(txn.meetup_date)}
+          </p>
+        )}
+
+        {txn.meetup_time && (
+          <p>
+            <strong>Time:</strong> {formatTime(txn.meetup_time)}
+          </p>
+        )}
+
         <p>
-          <strong>Location:</strong> {txn.meetup_location}
+          <strong>Payment method:</strong> {txn.payment_method || "—"}
         </p>
-      )}
 
-      {txn.meetup_date && (
+        {/* STATUS WITH COLORS */}
         <p>
-          <strong>Date:</strong> {formatDate(txn.meetup_date)}
+          <strong>Status:</strong>{" "}
+          <span
+            className={
+              txn.status === "Accepted"
+                ? "text-green-600 font-semibold"
+                : txn.status === "Cancelled"
+                ? "text-red-500 font-semibold"
+                : "text-gray-600"
+            }
+          >
+            {txn.status}
+          </span>
         </p>
-      )}
+      </div>
 
-      {txn.meetup_time && (
-        <p>
-          <strong>Time:</strong> {formatTime(txn.meetup_time)}
-        </p>
-      )}
-
-      <p>
-        <strong>Payment method:</strong> {txn.payment_method || "--"}
-      </p>
-
-      <p>
-        <strong>Status:</strong> {txn.status || "--"}
-      </p>
-
-      {/* ✅ Action buttons */}
+      {/* BUTTONS */}
       {txn.status === "Pending" && (
-        <div className="mt-3 flex gap-2">
+        <div className="mt-4 flex gap-3">
           {currentUserRole === "seller" ? (
             <>
               <Button
-                onClick={() => handleUpdateTransaction(txn.id, "Accepted")}
-                className="bg-green-600 text-white"
+                onClick={() =>
+                  handleUpdateTransaction(txn.id, "Accepted")
+                }
+                className="bg-green-600 text-white hover:bg-green-700 w-full"
               >
                 Accept
               </Button>
+
               <Button
-                onClick={() => handleUpdateTransaction(txn.id, "Cancelled")}
-                className="bg-red-600 text-white"
+                onClick={() =>
+                  handleUpdateTransaction(txn.id, "Cancelled")
+                }
+                className="bg-red-600 text-white hover:bg-red-700 w-full"
               >
                 Cancel
               </Button>
             </>
           ) : (
             <Button
-              onClick={() => handleUpdateTransaction(txn.id, "Cancelled")}
-              className="bg-red-600 text-white"
+              onClick={() =>
+                handleUpdateTransaction(txn.id, "Cancelled")
+              }
+              className="bg-red-600 text-white hover:bg-red-700 w-full"
             >
               Cancel
             </Button>
@@ -125,8 +155,10 @@ export default function LiveTransactionCard({
         </div>
       )}
 
-      {/* 🕒 Timestamp */}
-      <p className="text-xs text-gray-500 text-right mt-2">{formattedTime}</p>
+      {/* TIMESTAMP */}
+      <p className="text-xs text-gray-500 text-right mt-3">
+        {formattedTime}
+      </p>
     </div>
   );
 }

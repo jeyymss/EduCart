@@ -106,15 +106,16 @@ export default function ChatClient({
   const [open, setOpen] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
+  // Auto scroll to bottom when messages change
   useEffect(() => {
-  const el = scrollContainerRef.current;
-  if (!el) return;
+    const el = scrollContainerRef.current;
+    if (!el) return;
 
-  el.scrollTo({
-    top: el.scrollHeight,
-    behavior: "smooth",
-  });
-}, [messages]);
+    el.scrollTo({
+      top: el.scrollHeight,
+      behavior: "smooth",
+    });
+  }, [messages]);
 
   // Realtime subscription
   useEffect(() => {
@@ -261,7 +262,7 @@ export default function ChatClient({
       await supabase
         .from("messages")
         .update({
-          body: `Transaction ${newStatus}`, // optional: keep status text here
+          body: `Transaction ${newStatus}`,
         })
         .eq("id", existingMessage.id);
     } else {
@@ -280,95 +281,96 @@ export default function ChatClient({
 
   return (
     <>
-     <div className="flex flex-col flex-1 min-h-0">
-  {/* Sticky Wrapper */}
-  <div className="sticky top-0 z-20 bg-white">
-    {/* Header */}
-    <div className="flex items-center justify-between gap-3 p-4">
-      <div className="flex items-center gap-3">
-        {otherUserAvatarUrl ? (
-          <Image
-            src={otherUserAvatarUrl}
-            alt="avatar"
-            width={40}
-            height={40}
-            className="h-10 w-10 rounded-full object-cover"
-          />
-        ) : (
-          <div className="h-10 w-10 rounded-full bg-slate-200" />
-        )}
-        <div className="font-medium">{otherUserName}</div>
-      </div>
+      <div className="flex flex-col flex-1 min-h-0">
+        {/* Sticky Wrapper for header + item preview */}
+        <div className="sticky top-0 z-20 bg-white">
+          {/* Header */}
+          <div className="flex items-center justify-between gap-3 p-4">
+            <div className="flex items-center gap-3">
+              {otherUserAvatarUrl ? (
+                <Image
+                  src={otherUserAvatarUrl}
+                  alt="avatar"
+                  width={40}
+                  height={40}
+                  className="h-10 w-10 rounded-full object-cover"
+                />
+              ) : (
+                <div className="h-10 w-10 rounded-full bg-slate-200" />
+              )}
+              <div className="font-medium">{otherUserName}</div>
+            </div>
 
-      <Link href={`/${otherUserId}`}>
-        <button className="px-3 py-1 border rounded-full text-sm hover:bg-gray-100 hover:cursor-pointer">
-          Visit
-        </button>
-      </Link>
-    </div>
+            <Link href={`/${otherUserId}`}>
+              <button className="px-3 py-1 border rounded-full text-sm hover:bg-gray-100 hover:cursor-pointer">
+                Visit
+              </button>
+            </Link>
+          </div>
 
-    {/* Item Preview */}
-    <Link
-      href={`/product/${postId}`}
-      className="flex items-center gap-3 p-4 border-t bg-white"
-    >
-      {itemImage && (
-        <Image
-          src={itemImage}
-          alt={itemTitle ?? "Item"}
-          width={56}
-          height={56}
-          className="h-20 w-20 rounded-md object-fill"
-        />
-      )}
-
-      <div className="space-y-2">
-        <PostTypeBadge
-          type={postType as any}
-          className="text-xs text-slate-500"
-        />
-
-        {postType === "Sale" && (
-          <>
-            <p className="text-sm font-medium truncate">{itemTitle}</p>
-            {itemPrice && (
-              <p className="text-xs text-[#E59E2C]">
-                ₱{itemPrice.toLocaleString()}
-              </p>
+          {/* Item Preview */}
+          <Link
+            href={`/product/${postId}`}
+            className="flex items-center gap-3 p-4 border-t bg-white"
+          >
+            {itemImage && (
+              <Image
+                src={itemImage}
+                alt={itemTitle ?? "Item"}
+                width={56}
+                height={56}
+                className="h-20 w-20 rounded-md object-fill"
+              />
             )}
-          </>
-        )}
 
-        {postType === "Rent" && (
-          <>
-            <p className="text-sm font-medium truncate">{itemTitle}</p>
-            {itemPrice && (
-              <p className="text-xs text-[#E59E2C]">
-                ₱{itemPrice.toLocaleString()} / Day
-              </p>
-            )}
-          </>
-        )}
+            <div className="space-y-2">
+              <PostTypeBadge
+                type={postType as any}
+                className="text-xs text-slate-500"
+              />
 
-        {postType === "Trade" && (
-          <>
-            <p className="text-sm font-medium truncate">{itemTitle}</p>
-            {itemPrice && (
-              <p className="text-xs text-[#E59E2C]">
-                ₱{itemPrice.toLocaleString()} + Trade for{" "}
-                <b>{itemTrade}</b>
-              </p>
-            )}
-          </>
-        )}
+              {postType === "Sale" && (
+                <>
+                  <p className="text-sm font-medium truncate">{itemTitle}</p>
+                  {itemPrice && (
+                    <p className="text-xs text-[#E59E2C]">
+                      ₱{itemPrice.toLocaleString()}
+                    </p>
+                  )}
+                </>
+              )}
 
-        {(postType === "PasaBuy" ||
-          postType === "Emergency Lending") && (
-          <p className="text-sm font-medium truncate">{itemTitle}</p>
-        )}
-      </div>
-    </Link>
-  </div>
+              {postType === "Rent" && (
+                <>
+                  <p className="text-sm font-medium truncate">{itemTitle}</p>
+                  {itemPrice && (
+                    <p className="text-xs text-[#E59E2C]">
+                      ₱{itemPrice.toLocaleString()} / Day
+                    </p>
+                  )}
+                </>
+              )}
+
+              {postType === "Trade" && (
+                <>
+                  <p className="text-sm font-medium truncate">{itemTitle}</p>
+                  {itemPrice && (
+                    <p className="text-xs text-[#E59E2C]">
+                      ₱{itemPrice.toLocaleString()} + Trade for{" "}
+                      <b>{itemTrade}</b>
+                    </p>
+                  )}
+                </>
+              )}
+
+              {(postType === "PasaBuy" ||
+                postType === "Emergency Lending") && (
+                <p className="text-sm font-medium truncate">{itemTitle}</p>
+              )}
+            </div>
+          </Link>
+        </div>
+
         {/* Messages */}
         <div
           ref={scrollContainerRef}
@@ -385,17 +387,15 @@ export default function ChatClient({
               hour12: true,
             });
 
-            //SYSTEM MESSAGES (transaction forms)
+            // SYSTEM MESSAGES (transaction forms)
             if (messageRow.type === "system" && messageRow.transactions) {
               const txn = messageRow.transactions;
-              const isFromCurrentUser =
-                messageRow.sender_user_id === currentUserId;
 
               return (
                 <div key={messageRow.id} className="flex justify-center w-full">
                   <div className="bg-slate-100 border rounded-lg p-4 text-sm max-w-md">
                     {messageRow.transactions.status === "Pending" ? (
-                      //Current Transaction
+                      // Current Transaction
                       <LiveTransactionCard
                         key={messageRow.id}
                         post_type={postType ?? "Unknown"}
@@ -409,7 +409,7 @@ export default function ChatClient({
                         {/* 🧾 Show only the transaction record for this transaction_id */}
                         {transactionHistory &&
                           transactionHistory.some(
-                            (record) => record.transaction_id === txn.id // match this message's transaction
+                            (record) => record.transaction_id === txn.id
                           ) && (
                             <div className="border-t bg-white p-4 mt-3">
                               {transactionHistory
@@ -430,7 +430,8 @@ export default function ChatClient({
                                         post_id: snapshot.post_id,
                                         delivery_lat: snapshot.delivery_lat,
                                         delivery_lng: snapshot.delivery_lng,
-                                        rent_start_date: snapshot.rent_start_date,
+                                        rent_start_date:
+                                          snapshot.rent_start_date,
                                         rent_end_date: snapshot.rent_end_date,
                                         fulfillment_method:
                                           snapshot.fulfillment_method,
@@ -438,7 +439,8 @@ export default function ChatClient({
                                           snapshot.meetup_location,
                                         meetup_date: snapshot.meetup_date,
                                         meetup_time: snapshot.meetup_time,
-                                        payment_method: snapshot.payment_method,
+                                        payment_method:
+                                          snapshot.payment_method,
                                         status: snapshot.status,
                                         cash_added: snapshot.cash_added,
                                         offered_item: snapshot.offered_item,
@@ -459,7 +461,7 @@ export default function ChatClient({
               );
             }
 
-            //REGULAR TEXT MESSAGES
+            // REGULAR TEXT / IMAGE MESSAGES
             const isFromCurrentUser =
               messageRow.sender_user_id === currentUserId;
 
@@ -486,7 +488,6 @@ export default function ChatClient({
                       className="rounded-lg object-cover w-full h-auto cursor-pointer"
                       onClick={() => setPreviewUrl(url)}
                     />
-                    {/* 🕒 Timestamp for image messages */}
                     <p
                       className={`text-xs mt-1 ${
                         isFromCurrentUser ? "text-blue-100" : "text-gray-500"
@@ -499,7 +500,7 @@ export default function ChatClient({
               ));
             }
 
-            //TEXT MESSAGES
+            // TEXT MESSAGES
             return (
               <div
                 key={messageRow.id}
@@ -515,7 +516,6 @@ export default function ChatClient({
                   }`}
                 >
                   <p>{messageRow.body}</p>
-                  {/* 🕒 Timestamp below each message */}
                   <p
                     className={`text-xs mt-1 ${
                       isFromCurrentUser ? "text-blue-100" : "text-gray-500"
@@ -718,7 +718,7 @@ export default function ChatClient({
         </div>
       </div>
 
-      {/* ✅ Success Modal now lives at top level */}
+      {/* ✅ Success Modal */}
       <Dialog open={showSuccess} onOpenChange={setShowSuccess}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
@@ -740,6 +740,7 @@ export default function ChatClient({
         </DialogContent>
       </Dialog>
 
+      {/* Image Preview Modal */}
       <Dialog open={!!previewUrl} onOpenChange={() => setPreviewUrl(null)}>
         <DialogTitle className="text-white text-sm px-4 py-2" />
         <DialogContent className="border-none bg-transparent p-0 flex items-center justify-center">
