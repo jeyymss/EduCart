@@ -27,15 +27,7 @@ import {
   type PostOpt,
 } from "@/components/profile/AdvancedFilters";
 
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-
-import MessageSellerButton from "@/components/messages/MessageSellerBtn";
+import PasabuyModal from "@/components/posts/itemDetails/PasabuyModal";
 
 /* MOBILE NAV */
 const MobileTopNav = dynamic(
@@ -254,49 +246,11 @@ export default function PasaBuyBrowsePage() {
         </div>
       )}
 
-      {/* MODAL */}
-      {selectedPasaBuy && (
-        <Dialog
-          open
-          onOpenChange={(open) => !open && setSelectedPasaBuy(null)}
-        >
-          <DialogContent className="sm:max-w-lg">
-            <DialogHeader>
-              <DialogTitle>{selectedPasaBuy.item_title}</DialogTitle>
-            </DialogHeader>
-
-            <div className="mt-2 space-y-2 text-sm text-gray-600">
-              <p>
-                <strong>Description:</strong>{" "}
-                {selectedPasaBuy.item_description ?? ""}
-              </p>
-              <p>
-                <strong>Name:</strong>{" "}
-                {selectedPasaBuy.full_name ?? ""}
-              </p>
-              <p>
-                <strong>University:</strong>{" "}
-                {selectedPasaBuy.university_abbreviation ?? ""}
-              </p>
-              <p>
-                <strong>Role:</strong>{" "}
-                {selectedPasaBuy.role ?? ""}
-              </p>
-              <p>
-                <strong>Posted:</strong>{" "}
-                {selectedPasaBuy.created_at}
-              </p>
-            </div>
-
-            <DialogFooter>
-              <MessageSellerButton
-                postId={selectedPasaBuy.post_id}
-                sellerId={selectedPasaBuy.post_user_id}
-              />
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
+      {/* ✅ MODAL USING YOUR FILE */}
+      <PasabuyModal
+        post={selectedPasaBuy}
+        onClose={() => setSelectedPasaBuy(null)}
+      />
     </>
   );
 
@@ -390,8 +344,7 @@ export default function PasaBuyBrowsePage() {
                     onClick={() =>
                       setAdv((prev) => ({
                         ...prev,
-                        category:
-                          cat === "All Categories" ? undefined : cat,
+                        category: cat === "All Categories" ? undefined : cat,
                       }))
                     }
                   >

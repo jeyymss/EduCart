@@ -9,16 +9,10 @@ import type {
   AdvancedFilterValue,
   PostOpt,
 } from "@/components/profile/AdvancedFilters";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { getRelativeTime } from "@/utils/getRelativeTime";
 import { useState } from "react";
+
+import EmergencyModal from "@/components/posts/itemDetails/EmergencyModal";
+import PasabuyModal from "@/components/posts/itemDetails/PasabuyModal";
 
 export type UserPost = {
   post_id: string;
@@ -27,13 +21,15 @@ export type UserPost = {
   item_condition: string | null;
   category_name: string | null;
   post_type_name: string | null;
-  created_at: string; // ISO
+  created_at: string;
   image_urls: string[];
   full_name: string;
   status: "Listed" | "Sold" | "Unlisted";
   item_description?: string | null;
   university_abbreviation?: string | null;
   role?: string | null;
+  post_user_id?: string;
+  item_service_fee?: number | null; 
 };
 
 type UserPostsProps = {
@@ -84,7 +80,6 @@ export function UserPosts({
 }: UserPostsProps) {
   const { data: posts, isLoading, error } = useUserPosts(userId, status);
 
-  // Modal state (Emergency Lending / PasaBuy)
   const [selectedSpecial, setSelectedSpecial] = useState<UserPost | null>(null);
 
   if (error)
@@ -115,7 +110,7 @@ export function UserPosts({
     );
   }
 
-  // ——— Filtering ———
+  // FILTERING
   const allowedPostTypes: string[] | null =
     filters.posts && filters.posts.length > 0
       ? (filters.posts as PostOpt[]).flatMap(expandToAllSpellings)
@@ -161,7 +156,7 @@ export function UserPosts({
     );
   }
 
-  // ——— Sorting ———
+  // SORTING
   const sorted = [...filtered].sort((a, b) => {
     if (filters.price) return byPrice(a, b, filters.price);
     if (filters.time) return byTime(a, b, filters.time);
@@ -198,49 +193,19 @@ export function UserPosts({
         ))}
       </div>
 
-      {selectedSpecial &&
-        (selectedSpecial.post_type_name === "Emergency Lending" ||
-          selectedSpecial.post_type_name === "PasaBuy") && (
-          <Dialog
-            open
-            onOpenChange={(open) => {
-              if (!open) setSelectedSpecial(null);
-            }}
-          >
-            <DialogContent className="sm:max-w-lg">
-              <DialogHeader>
-                <DialogTitle>{selectedSpecial.item_title}</DialogTitle>
-              </DialogHeader>
+      {selectedSpecial?.post_type_name === "Emergency Lending" && (
+        <EmergencyModal
+          post={selectedSpecial as any}
+          onClose={() => setSelectedSpecial(null)}
+        />
+      )}
 
-              <div className="space-y-2 text-sm text-gray-600 mt-2">
-                <div className="space-y-2">
-                  <p>
-                    <strong>Description:</strong>{" "}
-                    {selectedSpecial.item_description ?? ""}
-                  </p>
-                  <p>
-                    <strong>Name:</strong> {selectedSpecial.full_name ?? ""}
-                  </p>
-                  <p>
-                    <strong>University:</strong>{" "}
-                    {selectedSpecial.university_abbreviation ?? ""}
-                  </p>
-                  <p>
-                    <strong>Role:</strong> {selectedSpecial.role ?? ""}
-                  </p>
-                  <p>
-                    <strong>Posted:</strong>{" "}
-                    <span>{getRelativeTime(selectedSpecial.created_at)}</span>
-                  </p>
-                </div>
-              </div>
-
-              <DialogFooter>
-                <Button className="hover:cursor-pointer">Message</Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        )}
+      {selectedSpecial?.post_type_name === "PasaBuy" && (
+        <PasabuyModal
+          post={selectedSpecial as any}
+          onClose={() => setSelectedSpecial(null)}
+        />
+      )}
     </>
   );
 }

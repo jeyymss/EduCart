@@ -19,31 +19,20 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { Input } from "@/components/ui/input";
-
 import {
   AdvancedFilters,
   type AdvancedFilterValue,
   type PostOpt,
 } from "@/components/profile/AdvancedFilters";
 
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-
-import MessageSellerButton from "@/components/messages/MessageSellerBtn";
-import { getRelativeTime } from "@/utils/getRelativeTime";
-
-/* MOBILE NAV */
 const MobileTopNav = dynamic(
   () => import("@/components/mobile/MobileTopNav"),
   { ssr: false }
 );
 
-/* TYPES & OPTIONS */
+import EmergencyModal from "@/components/posts/itemDetails/EmergencyModal";
+
+/* TYPES */
 type ToolbarPost = "All" | PostOpt;
 
 const POST_TYPE_OPTIONS: ToolbarPost[] = [
@@ -91,7 +80,6 @@ function getPrice(v: unknown): number | null {
 }
 
 export default function EmergencyBrowsePage() {
-  // Emergency posts
   const {
     data: emergency = [],
     isLoading,
@@ -101,9 +89,9 @@ export default function EmergencyBrowsePage() {
   const searchParams = useSearchParams();
   const initialSearch = (searchParams.get("search") ?? "").toString();
 
-  // default to Emergency Lending
   const [postType, setPostType] =
     useState<ToolbarPost | null>("Emergency Lending");
+
   const [search, setSearch] = useState(initialSearch);
 
   const [adv, setAdv] = useState<AdvancedFilterValue>({
@@ -115,7 +103,7 @@ export default function EmergencyBrowsePage() {
     maxPrice: null,
   });
 
-  // modal state 
+  /* ⭐ MODAL STATE */
   const [selectedEmergency, setSelectedEmergency] =
     useState<EmergencyPost | null>(null);
 
@@ -123,18 +111,15 @@ export default function EmergencyBrowsePage() {
   const filtered = useMemo(() => {
     if (!emergency) return [];
     const q = search.trim().toLowerCase();
-
     const withIndex = emergency.map((it: EmergencyPost, i) => ({ it, i }));
 
     return withIndex
       .filter(({ it }) => {
-        // toolbar postType filter
         if (postType && postType !== "All") {
           const current = asPostOpt(String(it.post_type_name));
           if (current !== postType) return false;
         }
 
-        // text search
         if (q) {
           const hay = `${it.item_title ?? ""} ${it.category_name ?? ""} ${
             it.full_name ?? ""
@@ -142,19 +127,17 @@ export default function EmergencyBrowsePage() {
           if (!hay.includes(q)) return false;
         }
 
-        // advanced filter: post types
         if (adv.posts.length > 0) {
           const current = asPostOpt(String(it.post_type_name));
           if (!current || !adv.posts.includes(current)) return false;
         }
 
-        // advanced filter: category
         if (adv.category && adv.category !== "All Categories") {
           if (String(it.category_name) !== adv.category) return false;
         }
 
-        // advanced filter: price range
         const priceNum = getPrice((it as any).item_price);
+
         if (adv.minPrice != null && priceNum != null && priceNum < adv.minPrice)
           return false;
 
@@ -169,24 +152,11 @@ export default function EmergencyBrowsePage() {
   if (error)
     return <div className="p-10">Error: {(error as Error).message}</div>;
 
-  // Shared search bar component
+  /* SEARCH BAR */
   const SearchBar = () => (
-    <div
-      className="
-      flex w-full max-w-4xl items-center
-      gap-2 sm:gap-3
-      rounded-full bg-white shadow-md
-      ring-1 ring-black/10
-      px-3 sm:px-4 py-1 sm:py-2
-    "
-    >
-      {/* Post Type Dropdown */}
+    <div className="flex w-full max-w-4xl items-center gap-2 sm:gap-3 rounded-full bg-white shadow-md ring-1 ring-black/10 px-3 sm:px-4 py-1 sm:py-2">
       <DropdownMenu>
-        <DropdownMenuTrigger
-          className="flex items-center gap-1 px-3 py-1.5 rounded-full 
-                     bg-[#E7F3FF] text-xs sm:text-sm font-medium text-[#102E4A] 
-                     whitespace-nowrap hover:bg-[#d7e8ff]"
-        >
+        <DropdownMenuTrigger className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-[#E7F3FF] text-xs sm:text-sm font-medium text-[#102E4A] hover:bg-[#d7e8ff] whitespace-nowrap">
           {postType ?? "All Types"}
           <ChevronDown className="w-4 h-4" />
         </DropdownMenuTrigger>
@@ -195,9 +165,7 @@ export default function EmergencyBrowsePage() {
           {POST_TYPE_OPTIONS.map((label) => (
             <DropdownMenuItem
               key={label}
-              onClick={() =>
-                setPostType(label === "All" ? null : label)
-              }
+              onClick={() => setPostType(label === "All" ? null : label)}
             >
               {label}
             </DropdownMenuItem>
@@ -205,7 +173,6 @@ export default function EmergencyBrowsePage() {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {/* Search Input */}
       <div className="flex-1 flex items-center gap-2">
         <Search className="w-4 h-4 text-gray-400 hidden sm:block" />
 
@@ -213,37 +180,20 @@ export default function EmergencyBrowsePage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search anything..."
-          className="h-9 sm:h-10 w-full border-none shadow-none 
-                     px-0 sm:px-1 text-sm focus-visible:ring-0 focus-visible:ring-offset-0"
+          className="h-9 sm:h-10 w-full border-none shadow-none px-0 sm:px-1 text-sm focus-visible:ring-0"
           autoComplete="off"
-          inputMode="search"
         />
       </div>
 
-      {/* Advanced Filters */}
-      <div className="flex-shrink-0">
-        <AdvancedFilters
-          value={adv}
-          onApply={(next) => setAdv({ ...next })}
-        />
-      </div>
+      <AdvancedFilters value={adv} onApply={(next) => setAdv({ ...next })} />
     </div>
   );
 
-  // Shared items grid component
+  /* ITEMS GRID */
   const ItemsGrid = () => (
     <>
       {isLoading ? (
-        <div
-          className="
-            grid gap-5 
-            grid-cols-1
-            sm:grid-cols-2
-            md:grid-cols-2
-            lg:grid-cols-2
-            xl:grid-cols-2
-          "
-        >
+        <div className="grid gap-5 grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2">
           {Array.from({ length: 8 }).map((_, i) => (
             <div
               key={i}
@@ -256,22 +206,13 @@ export default function EmergencyBrowsePage() {
           <p className="text-lg font-medium">No items found</p>
         </div>
       ) : (
-        <div
-          className="
-            grid gap-5 
-            grid-cols-1
-            sm:grid-cols-2
-            md:grid-cols-2
-            lg:grid-cols-2
-            xl:grid-cols-2
-          "
-        >
+        <div className="grid gap-5 grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2">
           {filtered.map((emg) => (
             <button
               key={emg.post_id}
               type="button"
               onClick={() => setSelectedEmergency(emg)}
-              className="text-left rounded-2xl bg-white overflow-hidden shadow-sm transition-all duration-300 md:hover:-translate-y-1 md:hover:shadow-lg focus:outline-none"
+              className="text-left rounded-2xl bg-white overflow-hidden shadow-sm transition-all duration-300 md:hover:-translate-y-1 md:hover:shadow-lg"
             >
               <EmergencyCard
                 id={emg.post_id}
@@ -289,16 +230,12 @@ export default function EmergencyBrowsePage() {
 
   return (
     <div className="bg-white min-h-screen">
-      {/* MOBILE LAYOUT */}
+      {/* MOBILE */}
       <div className="md:hidden">
         <MobileTopNav />
 
-        {/* 🔵 FULL WIDTH BLUE BACKGROUND FIX */}
-        <div id="home-top-search-origin" className="w-full">
-          <div
-            id="home-top-search"
-            className="relative left-1/2 right-1/2 -mx-[50vw] w-screen bg-[#102E4A]"
-          >
+        <div className="w-full">
+          <div className="relative left-1/2 right-1/2 -mx-[50vw] w-screen bg-[#102E4A]">
             <div className="mx-auto max-w-[1600px] px-4 py-3 pb-4">
               <div className="flex justify-center mb-3">
                 <SearchBar />
@@ -307,13 +244,7 @@ export default function EmergencyBrowsePage() {
               <div className="flex justify-center">
                 <div className="w-full max-w-4xl">
                   <DropdownMenu>
-                    <DropdownMenuTrigger
-                      className="
-                      w-full flex items-center justify-between px-4 py-2 
-                      bg-white rounded-xl shadow ring-1 ring-black/10 
-                      text-[#102E4A] text-sm font-medium
-                    "
-                    >
+                    <DropdownMenuTrigger className="w-full flex items-center justify-between px-4 py-2 bg-white rounded-xl shadow ring-1 ring-black/10 text-[#102E4A] text-sm font-medium">
                       {adv.category ?? "All Categories"}
                       <ChevronDown className="w-4 h-4" />
                     </DropdownMenuTrigger>
@@ -349,25 +280,18 @@ export default function EmergencyBrowsePage() {
         </main>
       </div>
 
-      {/* DESKTOP LAYOUT */}
+      {/* DESKTOP */}
       <div className="hidden md:block">
-        <div id="home-top-search-origin" className="w-full">
-          <div id="home-top-search" className="w-full bg-[#102E4A]">
-            <div className="mx-auto max-w-[1600px] px-6 md:px-8 py-6 md:py-8">
-              <div className="flex justify-center">
-                <SearchBar />
-              </div>
+        <div className="w-full bg-[#102E4A]">
+          <div className="mx-auto max-w-[1600px] px-6 md:px-8 py-6 md:py-8">
+            <div className="flex justify-center">
+              <SearchBar />
             </div>
           </div>
         </div>
 
         <div className="flex">
-          <aside
-            className="
-            w-64 bg-white border-r p-6 
-            sticky top-[90px] h-[calc(100vh-90px)] overflow-y-auto shadow-sm
-          "
-          >
+          <aside className="w-64 bg-white border-r p-6 sticky top-[90px] h-[calc(100vh-90px)] overflow-y-auto shadow-sm">
             <h2 className="font-semibold text-[#102E4A] mb-4">
               Filter Categories
             </h2>
@@ -409,47 +333,10 @@ export default function EmergencyBrowsePage() {
         </div>
       </div>
 
-      {/* MODAL  */}
-      {selectedEmergency && (
-        <Dialog
-          open
-          onOpenChange={(open) => !open && setSelectedEmergency(null)}
-        >
-          <DialogContent className="sm:max-w-lg">
-            <DialogHeader>
-              <DialogTitle>{selectedEmergency.item_title}</DialogTitle>
-            </DialogHeader>
-            <div className="mt-2 space-y-2 text-sm text-gray-600">
-              <p>
-                <strong>Description:</strong>{" "}
-                {selectedEmergency.item_description ?? ""}
-              </p>
-              <p>
-                <strong>Name:</strong>{" "}
-                {selectedEmergency.full_name ?? ""}
-              </p>
-              <p>
-                <strong>University:</strong>{" "}
-                {selectedEmergency.university_abbreviation ?? ""}
-              </p>
-              <p>
-                <strong>Role:</strong>{" "}
-                {selectedEmergency.role ?? ""}
-              </p>
-              <p>
-                <strong>Posted:</strong>{" "}
-                {getRelativeTime(selectedEmergency.created_at)}
-              </p>
-            </div>
-            <DialogFooter>
-              <MessageSellerButton
-                postId={selectedEmergency.post_id}
-                sellerId={selectedEmergency.post_user_id}
-              />
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
+      <EmergencyModal
+        post={selectedEmergency}
+        onClose={() => setSelectedEmergency(null)}
+      />
     </div>
   );
 }

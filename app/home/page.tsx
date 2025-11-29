@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronDown, Search, X } from "lucide-react";
+import { ChevronDown, Search } from "lucide-react";
 
 import { ItemCard } from "@/components/posts/displayposts/ItemCard";
 import { EmergencyCard } from "@/components/posts/displayposts/emergencyCard";
@@ -13,14 +13,6 @@ import { GiveawayPostCard } from "@/components/posts/displayposts/giveawayPostCa
 import { ItemCardSkeleton } from "@/components/posts/displayposts/ItemCard";
 import { PostCardSkeleton } from "@/components/EmergencyPasaBuySkele";
 import { Button } from "@/components/ui/button";
-
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 
 import { getRelativeTime } from "@/utils/getRelativeTime";
 
@@ -54,6 +46,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+import EmergencyModal from "@/components/posts/itemDetails/EmergencyModal";
+import PasabuyModal from "@/components/posts/itemDetails/PasabuyModal";
+
 // Mobile ribbon
 const MobileTopNav = dynamic(() => import("@/components/mobile/MobileTopNav"), {
   ssr: false,
@@ -63,9 +58,6 @@ const cv = {
   contentVisibility: "auto" as const,
   containIntrinsicSize: "800px",
 };
-
-const hoverCard =
-  "transition-all duration-300 md:hover:-translate-y-1 md:hover:shadow-lg rounded-2xl bg-white";
 
 /* Post type */
 type ToolbarPost = "All" | PostOpt;
@@ -167,7 +159,8 @@ export default function HomePage() {
     if (adv.category) params.set("category", adv.category);
     if (adv.time) params.set("time", adv.time);
     if (adv.price) params.set("priceSort", adv.price);
-    if (adv.posts && adv.posts.length > 0) params.set("posts", adv.posts.join(","));
+    if (adv.posts && adv.posts.length > 0)
+      params.set("posts", adv.posts.join(","));
     if (adv.minPrice != null) params.set("minPrice", String(adv.minPrice));
     if (adv.maxPrice != null) params.set("maxPrice", String(adv.maxPrice));
 
@@ -205,10 +198,9 @@ export default function HomePage() {
               suppressHydrationWarning
             >
               <div className="flex w-full max-w-4xl items-center gap-2 sm:gap-3 rounded-full bg-white shadow-md ring-1 ring-black/10 px-3 sm:px-4 py-1.5 sm:py-2">
-                
                 {/* Post Type dropdown */}
                 <DropdownMenu>
-                  <DropdownMenuTrigger className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-[#E7F3FF] text-xs sm:text-sm font-medium text-[#102E4A] whitespace-nowrap hover:bg-[#d7e8ff] focus:outline-none">
+                  <DropdownMenuTrigger className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-[#E7F3FF] text-xs sm:text-sm font-medium text-[#102E4A] whitespace-nowrap hover:bg-[#d7e8ff]">
                     {postType ?? "All Types"}
                     <ChevronDown className="w-4 h-4" />
                   </DropdownMenuTrigger>
@@ -217,7 +209,9 @@ export default function HomePage() {
                     {POST_TYPE_OPTIONS.map((label) => (
                       <DropdownMenuItem
                         key={label}
-                        onClick={() => setPostType(label === "All" ? null : label)}
+                        onClick={() =>
+                          setPostType(label === "All" ? null : label)
+                        }
                       >
                         {label}
                       </DropdownMenuItem>
@@ -234,7 +228,7 @@ export default function HomePage() {
                     onChange={(e) => setQ(e.target.value)}
                     readOnly={!mounted}
                     placeholder="Search anything..."
-                    className="h-9 sm:h-10 w-full border-none shadow-none px-0 sm:px-1 text-sm outline-none focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                    className="h-9 sm:h-10 w-full border-none shadow-none px-0 sm:px-1 text-sm outline-none"
                     autoComplete="off"
                     inputMode="search"
                   />
@@ -242,7 +236,10 @@ export default function HomePage() {
 
                 {/* Advanced Filters */}
                 <div className="flex-shrink-0">
-                  <AdvancedFilters value={adv} onApply={(next) => setAdv({ ...next })} />
+                  <AdvancedFilters
+                    value={adv}
+                    onApply={(next) => setAdv({ ...next })}
+                  />
                 </div>
 
                 <button type="submit" className="hidden" aria-hidden="true" />
@@ -254,7 +251,6 @@ export default function HomePage() {
 
       {/* PAGE CONTENT */}
       <div className="px-4 sm:px-6 md:px-8 pt-1 pb-20 md:pb-8 lg:pb-8 space-y-8 lg:space-y-10 max-w-[1600px] mx-auto">
-
         {/* CATEGORY GRID */}
         <section
           className="-mt-18 md:mt-4 lg:mt-6 rounded-2xl border bg-white p-4 sm:p-5 shadow-sm md:hover:shadow-md transition-all"
@@ -270,7 +266,11 @@ export default function HomePage() {
             {[
               { name: "Hobbies & Toys", src: "/hobbies.jpg", href: "#" },
               { name: "Accessories", src: "/accessories.jpg", href: "#" },
-              { name: "Beauty & Personal Care", src: "/beauty.jpg", href: "#" },
+              {
+                name: "Beauty & Personal Care",
+                src: "/beauty.jpg",
+                href: "#",
+              },
               { name: "Clothing", src: "/clothing.jpg", href: "#" },
               { name: "Academic", src: "/academic.jpg", href: "#" },
               { name: "Electronics", src: "/electronics.jpg", href: "#" },
@@ -308,14 +308,16 @@ export default function HomePage() {
         {/* MAIN CONTENT SECTIONS WRAPPER */}
         <div className="-mx-4 sm:-mx-6 md:-mx-8 px-4 sm:px-6 md:px-8 py-4 md:py-6 lg:py-8 bg-white -mt-4 md:-mt-6 lg:-mt-10">
           <div className="mx-auto max-w-[1600px] space-y-8 lg:space-y-10">
-
             {/* --- EMERGENCY LENDING --- */}
             <section
               id="emergency"
               className="scroll-mt-28 sm:scroll-mt-32 md:scroll-mt-36 lg:scroll-mt-40"
               style={cv}
             >
-              <SectionHeader title="Emergency Lending" href="/browse/emergency" />
+              <SectionHeader
+                title="Emergency Lending"
+                href="/browse/emergency"
+              />
 
               {emergencyLoading ? (
                 <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-thin scrollbar-thumb-gray-300 py-1 md:grid md:grid-cols-3 md:gap-4">
@@ -373,79 +375,11 @@ export default function HomePage() {
                 </>
               )}
 
-              {/* --- EMERGENCY MODAL --- */}
-              {selectedEmergency && (
-                <Dialog
-                  open
-                  onOpenChange={(open) => !open && setSelectedEmergency(null)}
-                >
-                  <DialogContent className="sm:max-w-lg rounded-2xl p-6">
-
-                    {/* CLOSE BUTTON */}
-                    <button
-                      onClick={() => setSelectedEmergency(null)}
-                      className="absolute right-4 top-4 text-gray-500 hover:text-gray-700"
-                    >
-                      <X className="w-5 h-5" />
-                    </button>
-
-                    <DialogHeader>
-                      <DialogTitle className="text-xl font-bold text-[#102E4A]">
-                        {selectedEmergency.item_title}
-                      </DialogTitle>
-                    </DialogHeader>
-
-                    {/* BODY */}
-                    <div className="mt-4 space-y-3 text-sm text-gray-700">
-                      <p>
-                        <span className="font-semibold text-[#102E4A]">Description:</span>{" "}
-                        {selectedEmergency.item_description}
-                      </p>
-
-                      <p>
-                        <span className="font-semibold text-[#102E4A]">Name:</span>{" "}
-                        {selectedEmergency.full_name}
-                      </p>
-
-                      <p>
-                        <span className="font-semibold text-[#102E4A]">University:</span>{" "}
-                        {selectedEmergency.university_abbreviation}
-                      </p>
-
-                      <p>
-                        <span className="font-semibold text-[#102E4A]">Role:</span>{" "}
-                        {selectedEmergency.role}
-                      </p>
-
-                      <p>
-                        <span className="font-semibold text-[#102E4A]">Posted:</span>{" "}
-                        {getRelativeTime(selectedEmergency.created_at)}
-                      </p>
-                    </div>
-
-                    {/* FOOTER BUTTONS */}
-                    <DialogFooter className="flex flex-col sm:flex-row sm:justify-end gap-3 pt-4">
-
-                      {/* VIEW LISTER */}
-                      <Link href={`/${selectedEmergency.post_user_id}`} className="w-full sm:w-auto">
-                        <Button
-                          variant="outline"
-                          className="w-full py-2 font-medium rounded-lg border-[#102E4A] text-[#102E4A] hover:bg-[#102E4A] hover:text-white transition"
-                        >
-                          View Lister
-                        </Button>
-                      </Link>
-
-                      {/* MESSAGE SELLER */}
-                      <MessageSellerButton
-                        postId={selectedEmergency.post_id}
-                        sellerId={selectedEmergency.post_user_id}
-                        className="w-full sm:w-auto bg-[#F3D58D] hover:bg-[#e8c880] text-black font-medium py-2 rounded-lg"
-                      />
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
-              )}
+              {/* EMERGENCY MODAL */}
+              <EmergencyModal
+                post={selectedEmergency}
+                onClose={() => setSelectedEmergency(null)}
+              />
             </section>
 
             {/* --- FEATURED LISTING --- */}
@@ -560,85 +494,11 @@ export default function HomePage() {
                 </>
               )}
 
-              {/* --- PASABUY MODAL --- */}
-              {selectedPasaBuy && (
-                <Dialog
-                  open
-                  onOpenChange={(open) => !open && setSelectedPasaBuy(null)}
-                >
-                  <DialogContent className="sm:max-w-lg rounded-2xl p-6">
-
-                    {/* CLOSE BUTTON */}
-                    <button
-                      onClick={() => setSelectedPasaBuy(null)}
-                      className="absolute right-4 top-4 text-gray-500 hover:text-gray-700"
-                    >
-                      <X className="w-5 h-5" />
-                    </button>
-
-                    <DialogHeader>
-                      <DialogTitle className="text-xl font-bold text-[#102E4A]">
-                        {selectedPasaBuy.item_title}
-                      </DialogTitle>
-                    </DialogHeader>
-
-                    {/* BODY */}
-                    <div className="mt-4 space-y-3 text-sm text-gray-700">
-
-                      <p>
-                        <span className="font-semibold text-[#102E4A]">Description:</span>{" "}
-                        {selectedPasaBuy.item_description}
-                      </p>
-
-                      <p>
-                        <span className="font-semibold text-[#102E4A]">Service Fee:</span>{" "}
-                        ₱{selectedPasaBuy.item_service_fee}
-                      </p>
-
-                      <p>
-                        <span className="font-semibold text-[#102E4A]">Name:</span>{" "}
-                        {selectedPasaBuy.full_name}
-                      </p>
-
-                      <p>
-                        <span className="font-semibold text-[#102E4A]">University:</span>{" "}
-                        {selectedPasaBuy.university_abbreviation}
-                      </p>
-
-                      <p>
-                        <span className="font-semibold text-[#102E4A]">Role:</span>{" "}
-                        {selectedPasaBuy.role}
-                      </p>
-
-                      <p>
-                        <span className="font-semibold text-[#102E4A]">Posted:</span>{" "}
-                        {getRelativeTime(selectedPasaBuy.created_at)}
-                      </p>
-                    </div>
-
-                    {/* FOOTER BUTTONS */}
-                    <DialogFooter className="flex flex-col sm:flex-row sm:justify-end gap-3 pt-4">
-
-                      {/* VIEW LISTER BUTTON */}
-                      <Link href={`/${selectedPasaBuy.post_user_id}`} className="w-full sm:w-auto">
-                        <Button
-                          variant="outline"
-                          className="w-full py-2 font-medium rounded-lg border-[#102E4A] text-[#102E4A] hover:bg-[#102E4A] hover:text-white transition"
-                        >
-                          View Lister
-                        </Button>
-                      </Link>
-
-                      {/* MESSAGE SELLER BUTTON */}
-                      <MessageSellerButton
-                        postId={selectedPasaBuy.post_id}
-                        sellerId={selectedPasaBuy.post_user_id}
-                        className="w-full sm:w-auto bg-[#F3D58D] hover:bg-[#e8c880] text-black font-medium py-2 rounded-lg"
-                      />
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
-              )}
+              {/* PASABUY MODAL */}
+              <PasabuyModal
+                post={selectedPasaBuy}
+                onClose={() => setSelectedPasaBuy(null)}
+              />
             </section>
 
             {/* --- DONATION & GIVEAWAYS --- */}
@@ -647,7 +507,10 @@ export default function HomePage() {
               className="scroll-mt-28 sm:scroll-mt-32 md:scroll-mt-36 lg:scroll-mt-40"
               style={cv}
             >
-              <SectionHeader title="Donation & Giveaways" href="/browse/giveaways" />
+              <SectionHeader
+                title="Donation & Giveaways"
+                href="/browse/giveaways"
+              />
 
               <div className="space-y-4">
                 {giveawaysLoading && <p>Loading…</p>}
@@ -672,7 +535,6 @@ export default function HomePage() {
                 )}
               </div>
             </section>
-
           </div>
         </div>
       </div>
