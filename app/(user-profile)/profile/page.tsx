@@ -28,9 +28,11 @@ import { UserPosts } from "@/components/profile/UserPosts";
 import UserReviews from "@/components/profile/UserReviews";
 import MobileTopNav from "@/components/mobile/MobileTopNav";
 
-const AVATAR_DIM = 96; // cozier on mobile; md+ will upscale via classes
+/* ⭐ NEW IMPORT */
+import AddBusinessModal from "@/components/profile/AddBusinessModal";
 
-/* ---------------------- Animation (typed) ---------------------- */
+const AVATAR_DIM = 96;
+
 const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
 const fadeUp: Variants = {
@@ -51,7 +53,6 @@ export default function ProfilePage() {
 
   const [isEditing, setIsEditing] = useState(false);
 
-  // Freeze page scroll while editing (pure front-end)
   useEffect(() => {
     const prev = document.body.style.overflow;
     if (isEditing) document.body.style.overflow = "hidden";
@@ -72,6 +73,7 @@ export default function ProfilePage() {
     const hash = window.location.hash.replace("#", "");
     if (hash) setActiveTab(hash);
   }, []);
+
   const handleTabChange = (value: string) => {
     setActiveTab(value);
     window.history.replaceState(null, "", `#${value}`);
@@ -121,12 +123,14 @@ export default function ProfilePage() {
         Loading…
       </div>
     );
+
   if (error)
     return (
       <div className="min-h-screen flex justify-center items-center">
         Error: {(error as Error).message}
       </div>
     );
+
   if (!displayUser) return null;
 
   const renderTabContent = (
@@ -182,7 +186,7 @@ export default function ProfilePage() {
               setIsEditing(false);
               if (updated) {
                 setLocalUser(
-                  (prev) =>
+                  (prev: any) =>
                     ({
                       ...(prev ?? displayUser),
                       ...updated,
@@ -237,7 +241,7 @@ export default function ProfilePage() {
               </motion.div>
             </div>
 
-            {/* Header strip */}
+            {/* Header Strip */}
             <motion.div
               className="bg-white shadow-sm px-4 md:px-6 pb-4"
               variants={fadeUp}
@@ -245,7 +249,7 @@ export default function ProfilePage() {
               animate="animate"
             >
               <div className="flex flex-col md:flex-row items-start md:items-start justify-start md:justify-between gap-4 md:pl-6">
-                {/* Left: avatar + name/bio */}
+                {/* Left: avatar + name */}
                 <div className="flex items-start gap-3 md:gap-4 w-full">
                   <motion.div
                     className="relative -mt-12 md:-mt-16 rounded-full ring-4 ring-white shadow-md overflow-hidden w-24 h-24 md:w-[128px] md:h-[128px]"
@@ -261,9 +265,7 @@ export default function ProfilePage() {
                     }}
                   >
                     <Image
-                      src={
-                        displayUser?.avatar_url ?? "/avatarplaceholder.png"
-                      }
+                      src={displayUser?.avatar_url ?? "/avatarplaceholder.png"}
                       alt="Avatar"
                       width={AVATAR_DIM}
                       height={AVATAR_DIM}
@@ -280,12 +282,14 @@ export default function ProfilePage() {
                     <p className="text-sm md:text-base text-muted-foreground">
                       {displayUser.bio ?? "This user has no bio yet."}
                     </p>
+
                     <div className="flex flex-wrap gap-2 mt-2">
                       {displayUser.role && (
                         <span className="px-3 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">
                           {displayUser.role}
                         </span>
                       )}
+
                       {displayUser.universities?.abbreviation && (
                         <span className="px-3 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">
                           {displayUser.universities.abbreviation}
@@ -295,22 +299,14 @@ export default function ProfilePage() {
                   </div>
                 </div>
 
-                {/* Add Business Account */}
+                {/* Add Business Account Modal */}
                 <motion.div
-                  className="mt-3 md:mt-2 w-full md:w-auto"
+                  className="mt-3 md:mt-2 w-full md:w-auto flex justify-end md:justify-start"
                   variants={fadeIn}
                   initial="initial"
                   animate="animate"
                 >
-                  <Button
-                    variant="outline"
-                    className="w-full md:w-auto border-[#F3AD4B] text-[#F3AD4B] hover:bg-[#FFF7E9]"
-                    onClick={() => {
-                      console.log("Add Business Account clicked");
-                    }}
-                  >
-                    Add Business Account
-                  </Button>
+                  <AddBusinessModal />
                 </motion.div>
               </div>
             </motion.div>
@@ -334,30 +330,25 @@ export default function ProfilePage() {
                 : "opacity-100",
             ].join(" ")}
           >
-            {/* SCROLLABLE ONE-ROW WRAPPER */}
             <div className="overflow-x-auto whitespace-nowrap [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               <TabsList className="inline-flex min-w-max p-0 bg-transparent h-auto">
-                {[
-                  "listings",
-                  "favorites",
-                  "transactions",
-                  "reviews",
-                  "settings",
-                ].map((tab) => (
-                  <TabsTrigger
-                    key={tab}
-                    value={tab}
-                    className="tab-trigger px-4 py-3 rounded-none hover:cursor-pointer relative flex-shrink-0 text-sm md:text-base"
-                  >
-                    {tab.charAt(0).toUpperCase() + tab.slice(1)}
-                    {!isEditing && activeTab === tab && (
-                      <motion.span
-                        layoutId="profile-tab-underline"
-                        className="absolute bottom-0 left-0 right-0 h-[2px] bg-black/80"
-                      />
-                    )}
-                  </TabsTrigger>
-                ))}
+                {["listings", "favorites", "transactions", "reviews", "settings"].map(
+                  (tab) => (
+                    <TabsTrigger
+                      key={tab}
+                      value={tab}
+                      className="tab-trigger px-4 py-3 rounded-none hover:cursor-pointer relative flex-shrink-0 text-sm md:text-base"
+                    >
+                      {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                      {!isEditing && activeTab === tab && (
+                        <motion.span
+                          layoutId="profile-tab-underline"
+                          className="absolute bottom-0 left-0 right-0 h-[2px] bg-black/80"
+                        />
+                      )}
+                    </TabsTrigger>
+                  )
+                )}
               </TabsList>
             </div>
           </div>
@@ -383,7 +374,7 @@ export default function ProfilePage() {
                   defaultValue="all"
                   className="w-full"
                 >
-                  {/* sticky filters bar */}
+                  {/* Sub-tab Filters */}
                   <motion.div
                     className="sticky top-0 z-20 bg-white/90 backdrop-blur border-b flex flex-col gap-2 px-3 py-2 md:flex-row md:justify-between md:items-center md:gap-4 md:px-4"
                     variants={fadeIn}
@@ -406,6 +397,7 @@ export default function ProfilePage() {
                           />
                           )
                         </TabsTrigger>
+
                         <TabsTrigger
                           value="listed"
                           className="tab-trigger hover:cursor-pointer flex-shrink-0 text-sm md:text-base"
@@ -420,6 +412,7 @@ export default function ProfilePage() {
                           />
                           )
                         </TabsTrigger>
+
                         <TabsTrigger
                           value="sold"
                           className="tab-trigger hover:cursor-pointer flex-shrink-0 text-sm md:text-base"
@@ -434,6 +427,7 @@ export default function ProfilePage() {
                           />
                           )
                         </TabsTrigger>
+
                         <TabsTrigger
                           value="unlisted"
                           className="tab-trigger hover:cursor-pointer flex-shrink-0 text-sm md:text-base"
@@ -453,12 +447,13 @@ export default function ProfilePage() {
 
                     {/* Filters */}
                     <div className="flex flex-col gap-2 w-full md:w-auto md:flex-row md:items-center md:gap-3">
-                      {/* Post type selector */}
+                      {/* Post Type Dropdown */}
                       <DropdownMenu>
                         <DropdownMenuTrigger className="flex items-center justify-between gap-1 px-3 py-2 border rounded-lg bg-white shadow-sm text-sm font-medium hover:bg-gray-50 w-full md:w-auto">
                           {filtersByTab[activeSubTab]?.postType ?? "Post Type"}
                           <ChevronDown className="w-4 h-4" />
                         </DropdownMenuTrigger>
+
                         <DropdownMenuContent align="end">
                           {[
                             "All",
@@ -484,7 +479,7 @@ export default function ProfilePage() {
                         </DropdownMenuContent>
                       </DropdownMenu>
 
-                      {/* Search + advanced filters in a single row on mobile */}
+                      {/* Search + Advanced Filters */}
                       <div className="flex items-center gap-2 w-full md:w-auto">
                         <Input
                           type="text"
@@ -512,7 +507,7 @@ export default function ProfilePage() {
                     </div>
                   </motion.div>
 
-                  {/* animated sub-tab content */}
+                  {/* Animated Sub-Tab Content */}
                   <AnimatePresence mode="wait">
                     {activeSubTab === "all" && (
                       <motion.div
@@ -525,6 +520,7 @@ export default function ProfilePage() {
                         {renderTabContent("all")}
                       </motion.div>
                     )}
+
                     {activeSubTab === "listed" && (
                       <motion.div
                         key="listed"
@@ -536,6 +532,7 @@ export default function ProfilePage() {
                         {renderTabContent("listed", "Listed")}
                       </motion.div>
                     )}
+
                     {activeSubTab === "sold" && (
                       <motion.div
                         key="sold"
@@ -547,6 +544,7 @@ export default function ProfilePage() {
                         {renderTabContent("sold", "Sold")}
                       </motion.div>
                     )}
+
                     {activeSubTab === "unlisted" && (
                       <motion.div
                         key="unlisted"
@@ -562,7 +560,6 @@ export default function ProfilePage() {
                 </Tabs>
               </section>
             </TabsContent>
-
             {/* FAVORITES */}
             <TabsContent value="favorites">
               <motion.section
@@ -573,6 +570,7 @@ export default function ProfilePage() {
                 exit="exit"
               >
                 <h2 className="text-lg font-semibold mb-4">My Favorites</h2>
+
                 {displayUser?.id && <FavoritesList userId={displayUser.id} />}
               </motion.section>
             </TabsContent>
@@ -599,6 +597,7 @@ export default function ProfilePage() {
                 exit="exit"
               >
                 <h2 className="text-lg font-semibold mb-4">My Reviews</h2>
+
                 <UserReviews userId={displayUser.id} />
               </motion.section>
             </TabsContent>
@@ -618,6 +617,7 @@ export default function ProfilePage() {
           </div>
         </Tabs>
       </div>
+
       {/* Mobile Bottom Navigation */}
       <div className="md:hidden">
         <MobileTopNav />
