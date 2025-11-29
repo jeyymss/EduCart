@@ -55,13 +55,19 @@ const WEB_CREATE_ROUTES: Record<"emergency" | "pasabuy" | "giveaway", string> = 
   giveaway: "/giveaway/new",
 };
 
-export default function MobileTopNav() {
+export default function MobileTopNav({
+  showOnlyBottom = false,
+}: {
+  showOnlyBottom?: boolean;
+}) {
   const pathname = usePathname();
   const router = useRouter();
 
   const [open, setOpen] = React.useState(false);
   const [choice, setChoice] =
-    React.useState<"" | "sale" | "rent" | "trade" | "emergency" | "pasabuy" | "giveaway">("");
+    React.useState<
+      "" | "sale" | "rent" | "trade" | "emergency" | "pasabuy" | "giveaway"
+    >("");
 
   const prevPath = React.useRef(pathname);
   React.useEffect(() => {
@@ -69,7 +75,7 @@ export default function MobileTopNav() {
     prevPath.current = pathname;
   }, [pathname, open]);
 
-  /* FIXED HOME ACTIVE LOGIC */
+  /* HOME ACTIVE */
   const isActive = (href: string) => {
     if (href === "/") {
       return (
@@ -86,6 +92,7 @@ export default function MobileTopNav() {
   const handleSelectChange = (v: string) => {
     const val = v as typeof choice;
     setChoice(val);
+
     if (val === "emergency" || val === "pasabuy" || val === "giveaway") {
       router.push(WEB_CREATE_ROUTES[val]);
       setOpen(false);
@@ -98,6 +105,7 @@ export default function MobileTopNav() {
     if (!next) setChoice("");
   };
 
+  /* Search relocation logic */
   React.useEffect(() => {
     const slot = document.getElementById("mobile-search-slot");
     const search = document.getElementById("home-top-search");
@@ -132,7 +140,8 @@ export default function MobileTopNav() {
 
   return (
     <>
-      {!hideTopChips && (
+      {/* TOP NAV — Hidden when showOnlyBottom = true */}
+      {!showOnlyBottom && !hideTopChips && (
         <div className="md:hidden sticky top-[56px] z-[40] bg-white shadow-sm">
           <nav className="px-3" aria-label="Secondary">
             {!isProductPage && (
@@ -177,8 +186,9 @@ export default function MobileTopNav() {
         onOpenList={() => setOpen(true)}
       />
 
-      <div className="md:hidden h-20" />
-
+      {!showOnlyBottom && <div className="md:hidden h-20" />}
+      
+      {/* Create Listing Dialog */}
       <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogContent className="sm:max-w-lg w-[95vw] max-h-[85vh] overflow-hidden p-0">
           <div className="p-4 sm:p-5">
@@ -207,9 +217,15 @@ export default function MobileTopNav() {
             </div>
 
             <div className="max-h-[60vh] overflow-auto pr-1">
-              {choice === "sale" && <ForSaleForm selectedType={TYPE_LABEL.sale} />}
-              {choice === "rent" && <RentForm selectedType={TYPE_LABEL.rent} />}
-              {choice === "trade" && <TradeForm selectedType={TYPE_LABEL.trade} />}
+              {choice === "sale" && (
+                <ForSaleForm selectedType={TYPE_LABEL.sale} />
+              )}
+              {choice === "rent" && (
+                <RentForm selectedType={TYPE_LABEL.rent} />
+              )}
+              {choice === "trade" && (
+                <TradeForm selectedType={TYPE_LABEL.trade} />
+              )}
             </div>
           </div>
         </DialogContent>
@@ -267,7 +283,6 @@ function BottomBar({
   return (
     <div className="md:hidden fixed inset-x-0 bottom-0 z-30 bg-white border-t border-black/10 h-16 pb-[env(safe-area-inset-bottom)]">
       <div className="relative mx-auto max-w-screen-sm px-6 h-full flex items-center justify-between">
-
         <NavIcon href="/" label="Home" active={homeActive}>
           <Home className="h-5 w-5" />
         </NavIcon>
@@ -315,6 +330,7 @@ function ProfileBottomItem({ active }: any) {
   const supabase = React.useMemo(() => createClient(), []);
 
   const handleProfile = () => router.push("/profile");
+
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut();
