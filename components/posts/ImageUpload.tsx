@@ -76,7 +76,7 @@ export default function ImageUploader({
         {selectedFiles.length < maxFiles && (
           <label
             htmlFor="file-upload"
-            className={`flex flex-col items-center justify-center text-center border-2 border-dashed border-[#CACACA] hover:border-orange-400 rounded-md cursor-pointer transition
+            className={`flex flex-col items-center justify-center text-center border-2 border-dashed border-[#CACACA] hover:border-yellow-400 rounded-md cursor-pointer transition
               ${
                 selectedFiles.length === 0 ? "w-full py-4" : "w-[86px] h-[80px]"
               }
@@ -93,13 +93,13 @@ export default function ImageUploader({
               onChange={handleFiles}
             />
 
-            <div className="bg-orange-50 p-2 rounded-full">
-              <Upload className="w-4 h-4 text-orange-400" />
+            <div className="bg-yellow-200 p-2 rounded-full">
+              <Upload className="w-4 h-4 text-black-400" />
             </div>
 
             {selectedFiles.length === 0 && (
               <>
-                <p className="text-orange-500 text-xs font-medium">
+                <p className="text-yellow-500 text-xs font-medium">
                   Click to Upload
                 </p>
                 <p className="text-[10px] text-gray-400">(Max: {maxFiles})</p>

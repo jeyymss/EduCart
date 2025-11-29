@@ -3,6 +3,7 @@
 import { useRef, useState, useEffect } from "react";
 import { ForRent } from "@/app/api/formSubmit/rent/route";
 import { useCategories, Category } from "@/hooks/queries/useCategories";
+
 import {
   Select,
   SelectTrigger,
@@ -10,53 +11,63 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
+
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
 import ImageUploader from "../posts/ImageUpload";
+import AddressPickerWithMap from "../location/AddressPickerWithMap";
+import { CircleQuestionMark, X } from "lucide-react";
+
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@/components/ui/popover";
 
 interface FormProps {
   selectedType: string;
+  onClose?: () => void;
 }
 
-export function RentForm({ selectedType }: FormProps) {
+export function RentForm({ selectedType, onClose }: FormProps) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [condition, setCondition] = useState<string>("");
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+
+  const [pickupLat, setPickupLat] = useState<number | null>(null);
+  const [pickupLng, setPickupLng] = useState<number | null>(null);
+  const [pickupAddress, setPickupAddress] = useState<string>("");
 
   const formRef = useRef<HTMLFormElement | null>(null);
   const [isFormValid, setIsFormValid] = useState(false);
 
   const { data: categories, isLoading } = useCategories();
 
+  /* FORM VALIDATION */
   useEffect(() => {
     const form = formRef.current;
 
-    const handleValidation = () => {
-      const formValid = form?.checkValidity() ?? false;
-      const isValid =
-        formValid &&
+    const validate = () => {
+      const valid =
+        (form?.checkValidity() ?? false) &&
         selectedFiles.length > 0 &&
         condition !== "" &&
-        selectedCategory !== "";
+        selectedCategory !== "" &&
+        pickupAddress !== "";
 
-      setIsFormValid(isValid);
+      setIsFormValid(valid);
     };
 
-    if (form) {
-      form.addEventListener("input", handleValidation);
-    }
+    form?.addEventListener("input", validate);
+    validate();
 
-    handleValidation();
+    return () => form?.removeEventListener("input", validate);
+  }, [selectedFiles, condition, selectedCategory, pickupAddress]);
 
-    return () => {
-      if (form) {
-        form.removeEventListener("input", handleValidation);
-      }
-    };
-  }, [selectedFiles, condition, selectedCategory]);
-
+  /* SUBMIT */
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
@@ -68,131 +79,225 @@ export function RentForm({ selectedType }: FormProps) {
 
     try {
       setLoading(true);
+
       const formData = new FormData(e.currentTarget);
-
       formData.delete("itemImage");
+      selectedFiles.forEach((file) => formData.append("itemImage", file));
 
-      selectedFiles.forEach((file) => {
-        formData.append("itemImage", file);
-      });
-
-      const output = await ForRent(
+      const result = await ForRent(
         formData,
         selectedType,
         selectedCategory,
-        condition
+        condition,
+        pickupLat,
+        pickupLng,
+        pickupAddress
       );
 
       setLoading(false);
 
-      if (output?.error) {
-        setError(output.error);
-      } else {
-        window.location.href = "/home";
-      }
+      if (result?.error) setError(result.error);
+      else window.location.href = "/home";
     } catch (err) {
       console.error(err);
+      setLoading(false);
       setError("Submit Failed");
     }
   };
 
   return (
-    <form ref={formRef} onSubmit={handleSubmit} className="space-y-2">
-      {/* Item Name */}
-      <Label className="text-sm">
-        Item Name<span className="text-red-600">*</span>
-      </Label>
-      <Input
-        type="text"
-        name="itemTitle"
-        placeholder="Enter Name"
-        className="w-full border border-gray-300 p-2 rounded-md"
-        required
-      />
+    <div
+      className="
+        relative
+        px-2 
+        md:px-4
+        rounded-lg
+        overflow-visible max-h-none
+        md:max-h-[75vh] md:overflow-y-auto
+      "
+    >
+      {/* Close Button */}
+      {onClose && (
+        <button
+          onClick={onClose}
+          className="
+            absolute 
+            top-2 
+            right-2 
+            p-1 
+            rounded-full 
+            text-gray-500 
+            hover:bg-gray-200 
+            hover:text-black 
+            transition
+          "
+        >
+          <X className="w-5 h-5" />
+        </button>
+      )}
 
-      {/* Price */}
-      <Label className="text-sm">
-        Daily Rent Price<span className="text-red-600">*</span>
-      </Label>
-      <Input
-        type="number"
-        name="itemPrice"
-        placeholder="Price"
-        className="w-full border border-gray-300 p-2 rounded-md"
-        required
-      />
+      <form ref={formRef} onSubmit={handleSubmit} className="space-y-4 pb-6">
 
-      {/* Condition */}
-      <Label className="text-sm">
-        Condition<span className="text-red-600">*</span>
-      </Label>
-      <Select onValueChange={setCondition}>
-        <SelectTrigger className="w-full">
-          <SelectValue placeholder="Select condition" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="New">New</SelectItem>
-          <SelectItem value="Used - Like New">Used - Like New</SelectItem>
-          <SelectItem value="Used - Very Good">Used - Very Good</SelectItem>
-          <SelectItem value="Used - Good">Used - Good</SelectItem>
-          <SelectItem value="Used - Acceptable">Used - Acceptable</SelectItem>
-        </SelectContent>
-      </Select>
+        {/* Item Name */}
+        <div>
+          <Label className="text-sm font-medium">
+            Item Name <span className="text-red-600">*</span>
+          </Label>
+          <Input
+            type="text"
+            name="itemTitle"
+            placeholder="Enter item name"
+            className="border-gray-300 mt-1"
+            required
+          />
+        </div>
 
-      {/* Category */}
-      <Label className="text-sm">
-        Category<span className="text-red-600">*</span>
-      </Label>
-      <Select onValueChange={(value) => setSelectedCategory(value)}>
-        <SelectTrigger className="w-full">
-          <SelectValue placeholder="Select a category" />
-        </SelectTrigger>
-        <SelectContent>
-          {categories?.map((category: Category) => (
-            <SelectItem key={category.id} value={category.name}>
-              {category.name}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+        {/* Daily Rent Price */}
+        <div>
+          <Label className="text-sm font-medium">
+            Daily Rent Price <span className="text-red-600">*</span>
+          </Label>
+          <Input
+            type="number"
+            name="itemPrice"
+            placeholder="Price per day"
+            className="border-gray-300 mt-1"
+            required
+          />
+        </div>
 
-      {/* Description */}
-      <Label className="text-sm">
-        Description<span className="text-red-600">*</span>
-      </Label>
-      <textarea
-        placeholder="Description"
-        name="itemDescription"
-        required
-        className="w-full border border-gray-300 p-2 rounded-md"
-      />
+        {/* Condition */}
+        <div>
+          <Label className="text-sm font-medium">
+            Condition <span className="text-red-600">*</span>
+          </Label>
 
-      {/* Upload Images */}
-      <Label className="text-sm">
-        Upload Images<span className="text-red-600">*</span>
-      </Label>
-      <ImageUploader
-        selectedFiles={selectedFiles}
-        setSelectedFiles={setSelectedFiles}
-      />
+          <Select onValueChange={setCondition}>
+            <SelectTrigger className="w-full mt-1">
+              <SelectValue placeholder="Select condition" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="New">New</SelectItem>
+              <SelectItem value="Used - Like New">Used - Like New</SelectItem>
+              <SelectItem value="Used - Very Good">Used - Very Good</SelectItem>
+              <SelectItem value="Used - Good">Used - Good</SelectItem>
+              <SelectItem value="Used - Acceptable">Used - Acceptable</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
 
-      {/* Error Message */}
-      {error && <p className="text-sm text-red-600 text-center">{error}</p>}
+        {/* Category */}
+        <div>
+          <Label className="text-sm font-medium">
+            Category <span className="text-red-600">*</span>
+          </Label>
 
-      {/* Submit Button */}
-      <button
-        type="submit"
-        disabled={!isFormValid || loading || isLoading}
-        className={`w-full p-2 rounded-md font-semibold transition 
-          ${
-            isFormValid
-              ? "bg-[#C7D9E5] text-[#333333]  hover:text-white hover:bg-[#122C4F] hover:cursor-pointer"
-              : "bg-[#DEDEDE] text-[#333333]"
-          }
-        `}
-      >
-        Post
-      </button>
-    </form>
+          <Select onValueChange={setSelectedCategory}>
+            <SelectTrigger className="w-full mt-1">
+              <SelectValue placeholder="Select category" />
+            </SelectTrigger>
+
+            <SelectContent>
+              {categories?.map((cat: Category) => (
+                <SelectItem key={cat.id} value={cat.name}>
+                  {cat.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Description */}
+        <div>
+          <Label className="text-sm font-medium">
+            Description <span className="text-red-600">*</span>
+          </Label>
+
+          <textarea
+            placeholder="Describe your rental item..."
+            name="itemDescription"
+            className="w-full border border-gray-300 p-2 rounded-md mt-1 min-h-[100px]"
+            required
+          />
+        </div>
+
+        {/* Upload Images */}
+        <div>
+          <Label className="text-sm font-medium">
+            Upload Images <span className="text-red-600">*</span>
+          </Label>
+
+          <div className="mt-1">
+            <ImageUploader
+              selectedFiles={selectedFiles}
+              setSelectedFiles={setSelectedFiles}
+            />
+          </div>
+        </div>
+
+        {/* Pickup Location */}
+        <div>
+          <div className="flex items-center gap-1">
+            <Label className="text-sm font-medium">
+              Pickup / Meet-up Location <span className="text-red-600">*</span>
+            </Label>
+
+            <Popover>
+              <PopoverTrigger asChild>
+                <CircleQuestionMark className="w-4 h-4 text-gray-600" />
+              </PopoverTrigger>
+
+              <PopoverContent className="text-xs max-w-[200px]">
+                Select the meet-up location for the rental item.
+              </PopoverContent>
+            </Popover>
+          </div>
+
+          <div className="mt-1">
+            <AddressPickerWithMap
+              onSelect={(lat, lng, address) => {
+                setPickupLat(lat);
+                setPickupLng(lng);
+                setPickupAddress(address);
+              }}
+            />
+          </div>
+
+          <Input
+            readOnly
+            value={pickupAddress}
+            placeholder="Selected address will appear here"
+            className="bg-gray-100 mt-2"
+          />
+
+          <input type="hidden" name="pickup_lat" value={pickupLat ?? ""} />
+          <input type="hidden" name="pickup_lng" value={pickupLng ?? ""} />
+          <input type="hidden" name="pickup_address" value={pickupAddress} />
+        </div>
+
+        {/* Error */}
+        {error && <p className="text-sm text-red-600 text-center">{error}</p>}
+
+        {/* Submit */}
+        <button
+          type="submit"
+          disabled={!isFormValid || loading || isLoading}
+          className={`
+            w-full 
+            p-3 
+            rounded-md 
+            font-semibold 
+            transition mt-2
+            ${
+              isFormValid
+                ? "bg-[#C7D9E5] text-[#333] hover:bg-[#122C4F] hover:text-white"
+                : "bg-[#DEDEDE] text-[#333]"
+            }
+          `}
+        >
+          Post
+        </button>
+      </form>
+    </div>
   );
 }

@@ -5,11 +5,7 @@ import { uploadImage } from "../../uploadImage/route";
 import { withErrorHandling } from "@/hooks/withErrorHandling";
 
 export async function ForRent(
-  formData: FormData,
-  selectedType: string,
-  selectedCategory: string,
-  selectedCondition: string
-) {
+formData: FormData, selectedType: string, selectedCategory: string, selectedCondition: string, pickupLat: number | null, pickupLng: number | null, pickupAddress: string) {
   return await withErrorHandling(async () => {
     const supabase = await createClient();
 
