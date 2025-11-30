@@ -1,20 +1,27 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { ChevronDown } from "lucide-react";
 
 import { ItemCard } from "@/components/posts/displayposts/ItemCard";
 import { useOrganizationItems } from "@/hooks/queries/displayItems";
+
+import SmartSearchBar from "@/components/search/SearchBar";
+import {
+  matchesSmartMulti,
+  asPostOpt,
+  getPrice,
+} from "@/hooks/useSmartSearch";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
+
 import {
-  AdvancedFilters,
   type AdvancedFilterValue,
   type PostOpt,
 } from "@/components/profile/AdvancedFilters";
@@ -25,41 +32,10 @@ const MobileTopNav = dynamic(
   { ssr: false }
 );
 
-/* ---------------------- Post Type (same as Browse) ---------------------- */
+/* Post Type */
 type ToolbarPost = "All" | PostOpt;
 
-const POST_TYPE_OPTIONS: ToolbarPost[] = [
-  "All",
-  "Sale",
-  "Rent",
-  "Trade",
-  "Emergency Lending",
-  "PasaBuy",
-  "Donation and Giveaway",
-];
-
-function asPostOpt(s: string): PostOpt | null {
-  const map: Record<string, PostOpt> = {
-    Sale: "Sale",
-    Rent: "Rent",
-    Trade: "Trade",
-    "Emergency Lending": "Emergency Lending",
-    PasaBuy: "PasaBuy",
-    "Donation and Giveaway": "Donation and Giveaway",
-  };
-  return map[s] ?? null;
-}
-
-function getPrice(v: unknown): number | null {
-  if (v == null) return null;
-  if (typeof v === "number") return Number.isFinite(v) ? v : null;
-  const cleaned = String(v).replace(/[^0-9.]/g, "");
-  if (!cleaned) return null;
-  const n = parseFloat(cleaned);
-  return Number.isFinite(n) ? n : null;
-}
-
-/* -------------------------- Category rules (UI) ------------------------- */
+/* Category rules */
 type CategoryRule = { label: string; match: string[] };
 
 const CATEGORY_RULES: CategoryRule[] = [
@@ -68,16 +44,22 @@ const CATEGORY_RULES: CategoryRule[] = [
   { label: "Pet Supplies", match: ["Pet Supplies"] },
   { label: "Sports", match: ["Sports"] },
   { label: "Electronics", match: ["Electronics"] },
-  { label: "Academic", match: ["Academic", "Books & Supplies", "Books and Supplies"] },
+  {
+    label: "Academic",
+    match: ["Academic", "Books & Supplies", "Books and Supplies"],
+  },
   { label: "Clothing", match: ["Clothing", "Apparel"] },
-  { label: "Beauty & Personal Care", match: ["Beauty & Personal Care", "Beauty", "Personal Care"] },
+  {
+    label: "Beauty & Personal Care",
+    match: ["Beauty & Personal Care", "Beauty", "Personal Care"],
+  },
   { label: "Accessories", match: ["Accessories"] },
   { label: "Hobbies & Toys", match: ["Hobbies & Toys", "Toys", "Hobbies"] },
 ];
 
 const CATEGORIES: string[] = CATEGORY_RULES.map((c) => c.label);
 
-/* ------------------------------- Page ----------------------------------- */
+/* Page */
 export default function OrganizationPage() {
   const { data: items, isLoading, error } = useOrganizationItems();
 
@@ -94,31 +76,41 @@ export default function OrganizationPage() {
     maxPrice: null,
   });
 
+  /* SmartSearchBar */
+  useEffect(() => {
+    if (!adv.category) {
+      setSelectedCategory("All Categories");
+    } else {
+      setSelectedCategory(adv.category);
+    }
+  }, [adv.category]);
+
   const filtered = useMemo(() => {
     if (!items) return [];
-    const q = search.trim().toLowerCase();
+    const q = search.trim();
 
     const withIndex = items.map((it, i) => ({ it, i }));
 
     return withIndex
       .filter(({ it }) => {
+        const title = it.item_title ?? "";
+
+        /* STRICT TITLE MULTI-WORD PREFIX SEARCH */
+        if (q && !matchesSmartMulti(title, q)) return false;
+
+        /* Post Type Filter */
         if (postType && postType !== "All") {
           const current = asPostOpt(String(it.post_type_name));
           if (current !== postType) return false;
         }
 
-        if (q) {
-          const hay = `${it.item_title ?? ""} ${it.category_name ?? ""} ${
-            it.organization_name ?? ""
-          }`.toLowerCase();
-          if (!hay.includes(q)) return false;
-        }
-
+        /* Advanced Filters: Post Types */
         if (adv.posts.length > 0) {
           const current = asPostOpt(String(it.post_type_name));
           if (!current || !adv.posts.includes(current)) return false;
         }
 
+        /* Category Filter using CATEGORY_RULES + selectedCategory */
         if (selectedCategory && selectedCategory !== "All Categories") {
           const rule = CATEGORY_RULES.find(
             (c) => c.label === selectedCategory
@@ -132,6 +124,7 @@ export default function OrganizationPage() {
           }
         }
 
+        /* Price Filter */
         const priceNum = getPrice(it.item_price);
         if (
           adv.minPrice != null &&
@@ -152,6 +145,7 @@ export default function OrganizationPage() {
         const a = A.it;
         const b = B.it;
 
+        /* Price sort */
         if (adv.price) {
           const pa = getPrice(a.item_price);
           const pb = getPrice(b.item_price);
@@ -162,12 +156,14 @@ export default function OrganizationPage() {
           if (na !== nb) return adv.price === "low" ? na - nb : nb - na;
         }
 
+        /* Time sort */
         if (adv.time) {
           const ta = +new Date(a.created_at);
           const tb = +new Date(b.created_at);
           if (ta !== tb) return adv.time === "newest" ? tb - ta : ta - tb;
         }
 
+        /* Stable fallback */
         return A.i - B.i;
       })
       .map(({ it }) => it);
@@ -187,64 +183,6 @@ export default function OrganizationPage() {
       category: cat === "All Categories" ? undefined : cat,
     }));
   };
-
-  const handleAdvancedApply = (next: AdvancedFilterValue) => {
-    setAdv({ ...next });
-    if (next.category) {
-      setSelectedCategory(next.category);
-    } else {
-      setSelectedCategory("All Categories");
-    }
-  };
-
-  const SearchBar = () => (
-    <div
-      className="
-        flex w-full max-w-4xl items-center
-        gap-2 sm:gap-3
-        rounded-full bg-white shadow-md
-        ring-1 ring-black/10
-        px-3 sm:px-4 py-1 sm:py-2
-      "
-    >
-      <DropdownMenu>
-        <DropdownMenuTrigger
-          className="flex items-center gap-1 px-3 py-1.5 rounded-full 
-                     bg-[#E7F3FF] text-xs sm:text-sm font-medium text-[#102E4A] 
-                     whitespace-nowrap hover:bg-[#d7e8ff]"
-        >
-          {postType ?? "All Types"}
-          <ChevronDown className="w-4 h-4" />
-        </DropdownMenuTrigger>
-
-        <DropdownMenuContent align="start">
-          {POST_TYPE_OPTIONS.map((label) => (
-            <DropdownMenuItem
-              key={label}
-              onClick={() => setPostType(label === "All" ? null : label)}
-            >
-              {label}
-            </DropdownMenuItem>
-          ))}
-        </DropdownMenuContent>
-      </DropdownMenu>
-
-      <div className="flex-1 flex items-center gap-2">
-        <Input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search organization items..."
-          className="h-9 sm:h-10 w-full border-none shadow-none 
-                     px-0 sm:px-1 text-sm focus-visible:ring-0 focus-visible:ring-offset-0"
-          autoComplete="off"
-        />
-      </div>
-
-      <div className="flex-shrink-0">
-        <AdvancedFilters value={adv} onApply={handleAdvancedApply} />
-      </div>
-    </div>
-  );
 
   const Listings = () => {
     if (isLoading) {
@@ -306,7 +244,15 @@ export default function OrganizationPage() {
           >
             <div className="mx-auto max-w-[1600px] px-4 py-3 pb-4">
               <div className="flex justify-center mb-3">
-                <SearchBar />
+                {/* SmartSearchBar */}
+                <SmartSearchBar
+                  search={search}
+                  setSearch={setSearch}
+                  postType={postType}
+                  setPostType={setPostType}
+                  adv={adv}
+                  setAdv={setAdv}
+                />
               </div>
 
               {/* Mobile categories dropdown */}
@@ -320,7 +266,7 @@ export default function OrganizationPage() {
                         text-[#102E4A] text-sm font-medium
                       "
                     >
-                      {adv.category ?? "All Categories"}
+                      {selectedCategory ?? "All Categories"}
                       <ChevronDown className="w-4 h-4" />
                     </DropdownMenuTrigger>
 
@@ -356,7 +302,15 @@ export default function OrganizationPage() {
           <div id="home-top-search" className="w-full bg-[#102E4A]">
             <div className="mx-auto max-w-[1600px] px-6 md:px-8 py-6 md:py-8">
               <div className="flex justify-center">
-                <SearchBar />
+                {/* SmartSearchBar */}
+                <SmartSearchBar
+                  search={search}
+                  setSearch={setSearch}
+                  postType={postType}
+                  setPostType={setPostType}
+                  adv={adv}
+                  setAdv={setAdv}
+                />
               </div>
             </div>
           </div>
