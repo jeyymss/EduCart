@@ -2,6 +2,9 @@
 
 import React, { useState, useEffect } from "react";
 import { Button } from "../ui/button";
+import Image from "next/image";
+import { Label } from "../ui/label";
+import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
 import {
   Dialog,
   DialogContent,
@@ -51,6 +54,19 @@ export default function PastTransactionDetails({
   const [deliveryFee, setDeliveryFee] = useState<number | null>(null);
   const [distanceKm, setDistanceKm] = useState<number | null>(null);
   const [totalPayment, setTotalPayment] = useState<number | null>(null);
+  const [balance, setBalance] = useState<number>(0);
+  const [paymentMethod, setPaymentMethod] = useState("wallet");
+
+  useEffect(() => {
+      async function load() {
+          const res = await fetch("/api/wallet/get");
+          const data = await res.json();
+
+          setBalance(data.balance);
+      }
+
+      load();
+  }, []);
 
   useEffect(() => {
     const fetchDistanceAndFee = async () => {
@@ -96,6 +112,11 @@ export default function PastTransactionDetails({
         hour12: true,
       })
     : null;
+
+  const insufficientBalance =
+    paymentMethod === "wallet" &&
+    totalPayment !== null &&
+    balance < totalPayment;
 
   return (
     <div className="border rounded-xl p-5 bg-white shadow-md transition-all">
@@ -286,19 +307,53 @@ export default function PastTransactionDetails({
             </div>
           </div>
 
-          {/* PAYMENT BUTTONS */}
-          <div className="flex items-center justify-center gap-4 pt-1">
-            <Button
-              className="w-1/2 text-black transition hover:brightness-95 hover:cursor-pointer"
-              style={{ backgroundColor: "#FFF1D0" }}
-            >
-              Wallet
-            </Button>
+          <div className="space-y-4 p-4 border rounded-xl bg-white">
 
-            <Button className="w-1/2 bg-[#0F8EE9] hover:bg-[#0d7ac5] text-white hover:cursor-pointer">
-              GCash
-            </Button>
-          </div>
+          <h2 className="text-lg font-semibold">Payment Method</h2>
+
+          <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="space-y-3">
+
+            {/* WALLET */}
+            <div
+              className="flex items-center justify-between p-4 rounded-lg border hover:bg-gray-50 transition cursor-pointer"
+              onClick={() => setPaymentMethod("wallet")}
+            >
+              <div className="flex items-center gap-3">
+                <Image src="/icons/wallet.png" alt="wallet" width={28} height={28} />
+                <div>
+                  <p className="font-medium text-base">Wallet</p>
+                  <p className="text-sm text-gray-500">₱ {balance.toFixed(2)}</p>
+                </div>
+              </div>
+
+              <RadioGroupItem value="wallet" id="wallet" className="h-5 w-5" />
+            </div>
+
+            {/* GCASH */}
+            <div
+              className="flex items-center justify-between p-4 rounded-lg border hover:bg-gray-50 transition cursor-pointer"
+              onClick={() => setPaymentMethod("gcash")}
+            >
+              <div className="flex items-center gap-3">
+                <Image src="/icons/gcash.png" alt="gcash" width={32} height={32} />
+                <p className="font-medium text-base text-blue-600">GCash</p>
+              </div>
+
+              <RadioGroupItem value="gcash" id="gcash" className="h-5 w-5" />
+            </div>
+
+          </RadioGroup>
+
+          {/* Continue Payment */}
+          <Button
+          className="w-full mt-4"
+          disabled={insufficientBalance}
+        >
+          {insufficientBalance ? "Insufficient Balance" : "Continue Payment"}
+        </Button>
+        </div>
+
+
         </DialogContent>
       </Dialog>
 

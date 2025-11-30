@@ -47,6 +47,7 @@ import {
   MessageSquare,
   Plus,
   User,
+  Wallet,
   X,
 } from "lucide-react";
 
@@ -271,6 +272,7 @@ export function Header() {
 
                   {/* Messages + Profile */}
                   <DropdownMenu>
+                    {/* MESSAGE BUTTON */}
                     <Link
                       href={"/messages"}
                       className="hover:opacity-80"
@@ -278,9 +280,17 @@ export function Header() {
                     >
                       <MessageSquare className="w-6 h-6" />
                     </Link>
+                    {/* WALLET BUTTON */}
+                    <Link
+                      href={"/wallet"}
+                      className="hover:opacity-80"
+                      style={{ color: primary }}
+                    >
+                      <Wallet className="w-6 h-6" />
+                    </Link>
                     <DropdownMenuTrigger asChild>
                       <button
-                        className="hover:opacity-80"
+                        className="hover:opacity-80 hover:cursor-pointer"
                         aria-label="Open user menu"
                         style={{ color: primary }}
                       >
