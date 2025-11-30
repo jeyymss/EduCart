@@ -30,21 +30,6 @@ export async function RentTransaction(
     const userID = user.id;
     if (!userID) return { error: "User ID is missing." };
 
-    // Prevent multiple pending transactions for same conversation
-    const { data: existingPending } = await supabase
-      .from("transactions")
-      .select("id")
-      .eq("conversation_id", conversationId)
-      .eq("status", "Pending")
-      .maybeSingle();
-
-    if (existingPending) {
-      return {
-        error:
-          "You already have a pending transaction for this conversation. Please wait for the seller to confirm.",
-      };
-    }
-
     // Get meet-up values
     const inputDate = formData.get("inputDate") as string;
     const inputTime = formData.get("inputTime") as string;
@@ -97,7 +82,7 @@ export async function RentTransaction(
 
     if (insertError) {
       console.error("Insert Failed:", insertError);
-      return { error: "Database error: " + insertError.message };
+      return { error: insertError.message };
     }
 
     // Insert linked system message

@@ -211,7 +211,7 @@ export default function PastTransactionDetails({
         txn.payment_method === "Online Payment" &&
         currentUserRole === "buyer" && (
           <Button
-            className="mt-4 w-full rounded-lg py-2 text-black"
+            className="mt-4 w-full rounded-lg py-2 text-black hover:cursor-pointer"
             style={{ backgroundColor: "#C7D9E5" }}
             onClick={() => setShowPaymentDialog(true)}
           >
@@ -223,7 +223,7 @@ export default function PastTransactionDetails({
       <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
         <DialogContent
           className="
-            space-y-4 p-4 sm:p-6 relative
+            space-y-4 p-4 sm:p-6
             fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2
             w-full max-w-[90%] sm:max-w-md
             rounded-lg sm:rounded-xl
@@ -232,7 +232,7 @@ export default function PastTransactionDetails({
         >
 
           <button
-            className="absolute right-4 top-4 text-gray-500 hover:text-gray-700 transition"
+            className="absolute right-4 top-4 text-gray-500 hover:text-gray-700 transition hover:cursor-pointer"
             onClick={() => setShowPaymentDialog(false)}
           >
             <X className="w-5 h-5" />
@@ -289,13 +289,13 @@ export default function PastTransactionDetails({
           {/* PAYMENT BUTTONS */}
           <div className="flex items-center justify-center gap-4 pt-1">
             <Button
-              className="w-1/2 text-black transition hover:brightness-95"
+              className="w-1/2 text-black transition hover:brightness-95 hover:cursor-pointer"
               style={{ backgroundColor: "#FFF1D0" }}
             >
               Wallet
             </Button>
 
-            <Button className="w-1/2 bg-[#0F8EE9] hover:bg-[#0d7ac5] text-white">
+            <Button className="w-1/2 bg-[#0F8EE9] hover:bg-[#0d7ac5] text-white hover:cursor-pointer">
               GCash
             </Button>
           </div>

@@ -30,25 +30,6 @@ export async function TradeTransaction(
 
     if (!userID) return { error: "User ID is missing." };
 
-    // ✅ Check for existing pending transaction
-    const { data: existingPending, error: checkError } = await supabase
-      .from("transactions")
-      .select("id")
-      .eq("conversation_id", conversationId)
-      .eq("status", "Pending")
-      .maybeSingle();
-
-    if (checkError) {
-      console.error("Check error:", checkError);
-    }
-
-    if (existingPending) {
-      return {
-        error:
-          "You already have a pending transaction for this conversation. Please wait for the seller to confirm.",
-      };
-    }
-
     // Get values from the form
     const cashAdded = formData.get("cashAdded") as number | null;
     const offeredItem = formData.get("offeredItem") as string;
@@ -99,7 +80,7 @@ export async function TradeTransaction(
     if (insertError) {
       console.error("Insert Failed:", insertError);
       return {
-        error: "Database error:" + insertError.message,
+        error: insertError.message,
       };
     }
 
