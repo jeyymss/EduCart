@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronDown, Search } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 
 import { ItemCard } from "@/components/posts/displayposts/ItemCard";
 import { EmergencyCard } from "@/components/posts/displayposts/emergencyCard";
@@ -31,7 +31,7 @@ import dynamic from "next/dynamic";
 import MessageSellerButton from "@/components/messages/MessageSellerBtn";
 import Footer from "@/components/Footer";
 
-import { Input } from "@/components/ui/input";
+import SmartSearchBar from "@/components/search/SearchBar";
 
 import {
   AdvancedFilters,
@@ -49,17 +49,12 @@ import {
 import EmergencyModal from "@/components/posts/itemDetails/EmergencyModal";
 import PasabuyModal from "@/components/posts/itemDetails/PasabuyModal";
 
-// Mobile ribbon
+/* MOBILE RIBBON */
 const MobileTopNav = dynamic(() => import("@/components/mobile/MobileTopNav"), {
   ssr: false,
 });
 
-const cv = {
-  contentVisibility: "auto" as const,
-  containIntrinsicSize: "800px",
-};
-
-/* Post type */
+/* Post type type */
 type ToolbarPost = "All" | PostOpt;
 
 const POST_TYPE_OPTIONS: ToolbarPost[] = [
@@ -99,11 +94,14 @@ function SectionHeader({
   );
 }
 
+const cv = {
+  contentVisibility: "auto" as const,
+  containIntrinsicSize: "800px",
+};
+
 export default function HomePage() {
   const router = useRouter();
-  const [q, setQ] = useState<string>("");
-
-  // advanced filters
+  const [search, setSearch] = useState("");
   const [postType, setPostType] = useState<ToolbarPost | null>(null);
 
   const [adv, setAdv] = useState<AdvancedFilterValue>({
@@ -115,9 +113,6 @@ export default function HomePage() {
     maxPrice: null,
   });
 
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-
   const {
     data: items = [],
     isLoading: itemLoading,
@@ -127,13 +122,11 @@ export default function HomePage() {
   const {
     data: emergency = [],
     isLoading: emergencyLoading,
-    error: emergencyError,
   } = useHomePageEmergency();
 
   const {
     data: pasabuy = [],
     isLoading: pasabuyLoading,
-    error: pasabuyError,
   } = useHomePagePasaBuy();
 
   const {
@@ -151,16 +144,14 @@ export default function HomePage() {
   function handleSearchSubmit(e: React.FormEvent) {
     e.preventDefault();
 
-    const term = q.trim();
     const params = new URLSearchParams();
 
-    if (term) params.set("search", term);
+    if (search.trim()) params.set("search", search.trim());
     if (postType && postType !== "All") params.set("type", postType);
     if (adv.category) params.set("category", adv.category);
     if (adv.time) params.set("time", adv.time);
     if (adv.price) params.set("priceSort", adv.price);
-    if (adv.posts && adv.posts.length > 0)
-      params.set("posts", adv.posts.join(","));
+    if (adv.posts.length > 0) params.set("posts", adv.posts.join(","));
     if (adv.minPrice != null) params.set("minPrice", String(adv.minPrice));
     if (adv.maxPrice != null) params.set("maxPrice", String(adv.maxPrice));
 
@@ -170,17 +161,17 @@ export default function HomePage() {
     router.push(`/browse?${qs}`);
   }
 
-  if (itemError && emergencyError) {
+  if (itemError) {
     return (
       <div className="px-4 md:px-8 py-10">
-        Error: {(emergencyError as Error).message}
+        Error: {(itemError as Error).message}
       </div>
     );
   }
 
   return (
     <div className="bg-white scroll-smooth">
-      {/* MOBILE PRIMARY NAV RIBBON */}
+      {/* MOBILE NAV */}
       <MobileTopNav />
 
       {/* TOP SEARCH BAR */}
@@ -194,56 +185,15 @@ export default function HomePage() {
               onSubmit={handleSearchSubmit}
               className="flex justify-center"
               role="search"
-              aria-label="Site search"
-              suppressHydrationWarning
             >
-              <div className="flex w-full max-w-4xl items-center gap-2 sm:gap-3 rounded-full bg-white shadow-md ring-1 ring-black/10 px-3 sm:px-4 py-1.5 sm:py-2">
-                {/* Post Type dropdown */}
-                <DropdownMenu>
-                  <DropdownMenuTrigger className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-[#E7F3FF] text-xs sm:text-sm font-medium text-[#102E4A] whitespace-nowrap hover:bg-[#d7e8ff]">
-                    {postType ?? "All Types"}
-                    <ChevronDown className="w-4 h-4" />
-                  </DropdownMenuTrigger>
-
-                  <DropdownMenuContent align="start">
-                    {POST_TYPE_OPTIONS.map((label) => (
-                      <DropdownMenuItem
-                        key={label}
-                        onClick={() =>
-                          setPostType(label === "All" ? null : label)
-                        }
-                      >
-                        {label}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-
-                {/* Search input */}
-                <div className="flex-1 flex items-center gap-2">
-                  <Search className="w-4 h-4 text-gray-400 hidden sm:block" />
-
-                  <Input
-                    value={q ?? ""}
-                    onChange={(e) => setQ(e.target.value)}
-                    readOnly={!mounted}
-                    placeholder="Search anything..."
-                    className="h-9 sm:h-10 w-full border-none shadow-none px-0 sm:px-1 text-sm outline-none"
-                    autoComplete="off"
-                    inputMode="search"
-                  />
-                </div>
-
-                {/* Advanced Filters */}
-                <div className="flex-shrink-0">
-                  <AdvancedFilters
-                    value={adv}
-                    onApply={(next) => setAdv({ ...next })}
-                  />
-                </div>
-
-                <button type="submit" className="hidden" aria-hidden="true" />
-              </div>
+              <SmartSearchBar
+                search={search}
+                setSearch={setSearch}
+                postType={postType}
+                setPostType={setPostType}
+                adv={adv}
+                setAdv={setAdv}
+              />
             </form>
           </div>
         </div>
@@ -264,23 +214,19 @@ export default function HomePage() {
 
           <div className="mt-4 grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-9 gap-3 sm:gap-4">
             {[
-              { name: "Hobbies & Toys", src: "/hobbies.jpg", href: "#" },
-              { name: "Accessories", src: "/accessories.jpg", href: "#" },
-              {
-                name: "Beauty & Personal Care",
-                src: "/beauty.jpg",
-                href: "#",
-              },
-              { name: "Clothing", src: "/clothing.jpg", href: "#" },
-              { name: "Academic", src: "/academic.jpg", href: "#" },
-              { name: "Electronics", src: "/electronics.jpg", href: "#" },
-              { name: "Sports", src: "/sports.jpg", href: "#" },
-              { name: "Pet Supplies", src: "/pet.jpg", href: "#" },
-              { name: "Home & Furniture", src: "/home.jpg", href: "#" },
+              { name: "Hobbies & Toys", src: "/hobbies.jpg" },
+              { name: "Accessories", src: "/accessories.jpg" },
+              { name: "Beauty & Personal Care", src: "/beauty.jpg" },
+              { name: "Clothing", src: "/clothing.jpg" },
+              { name: "Academic", src: "/academic.jpg" },
+              { name: "Electronics", src: "/electronics.jpg" },
+              { name: "Sports", src: "/sports.jpg" },
+              { name: "Pet Supplies", src: "/pet.jpg" },
+              { name: "Home & Furniture", src: "/home.jpg" },
             ].map((cat) => (
               <Link
                 key={cat.name}
-                href={cat.href}
+                href="#"
                 className="group relative block overflow-hidden rounded-xl border bg-white shadow-sm md:hover:-translate-y-1 md:hover:shadow-md transition-all"
               >
                 <div className="relative aspect-square w-full">
@@ -293,7 +239,6 @@ export default function HomePage() {
                     sizes="(max-width: 640px) 45vw, (max-width: 768px) 30vw, (max-width: 1024px) 18vw, 12vw"
                     className="object-cover transition-transform duration-300 group-hover:scale-105"
                   />
-
                   <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent opacity-90" />
 
                   <span className="absolute inset-x-0 bottom-0 m-2 rounded-lg bg-white/85 px-2.5 py-1 text-center text-[10px] sm:text-[11px] font-semibold text-[#102E4A] ring-1 ring-black/10 backdrop-blur md:group-hover:bg-white">
@@ -305,10 +250,10 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* MAIN CONTENT SECTIONS WRAPPER */}
+        {/* EMERGENCY LENDING */}
         <div className="-mx-4 sm:-mx-6 md:-mx-8 px-4 sm:px-6 md:px-8 py-4 md:py-6 lg:py-8 bg-white -mt-4 md:-mt-6 lg:-mt-10">
           <div className="mx-auto max-w-[1600px] space-y-8 lg:space-y-10">
-            {/* --- EMERGENCY LENDING --- */}
+            {/* EMERGENCY SECTION */}
             <section
               id="emergency"
               className="scroll-mt-28 sm:scroll-mt-32 md:scroll-mt-36 lg:scroll-mt-40"
@@ -333,7 +278,7 @@ export default function HomePage() {
                 </div>
               ) : (
                 <>
-                  {/* MOBILE: scroll, limit 3 */}
+                  {/* MOBILE */}
                   <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-thin scrollbar-thumb-gray-300 py-1 md:hidden">
                     {emergency.slice(0, 3).map((emg) => (
                       <button
@@ -375,14 +320,13 @@ export default function HomePage() {
                 </>
               )}
 
-              {/* EMERGENCY MODAL */}
               <EmergencyModal
                 post={selectedEmergency}
                 onClose={() => setSelectedEmergency(null)}
               />
             </section>
 
-            {/* --- FEATURED LISTING --- */}
+            {/* FEATURED */}
             <section
               id="featured"
               className="scroll-mt-28 sm:scroll-mt-32 md:scroll-mt-36 lg:scroll-mt-40"
@@ -401,7 +345,7 @@ export default function HomePage() {
                     </div>
                   ))}
                 </div>
-              ) : !items || items.length === 0 ? (
+              ) : !items.length ? (
                 <div className="flex h-28 items-center justify-center rounded-xl border bg-gray-50 text-gray-500">
                   No items available.
                 </div>
@@ -430,7 +374,7 @@ export default function HomePage() {
               )}
             </section>
 
-            {/* --- PASABUY --- */}
+            {/* PASABUY */}
             <section
               id="pasabuy"
               className="scroll-mt-28 sm:scroll-mt-32 md:scroll-mt-36 lg:scroll-mt-40"
@@ -494,14 +438,13 @@ export default function HomePage() {
                 </>
               )}
 
-              {/* PASABUY MODAL */}
               <PasabuyModal
                 post={selectedPasaBuy}
                 onClose={() => setSelectedPasaBuy(null)}
               />
             </section>
 
-            {/* --- DONATION & GIVEAWAYS --- */}
+            {/* GIVEAWAYS */}
             <section
               id="giveaways"
               className="scroll-mt-28 sm:scroll-mt-32 md:scroll-mt-36 lg:scroll-mt-40"

@@ -1,7 +1,9 @@
 "use client";
 
 import { useRef } from "react";
+import { usePathname } from "next/navigation";
 import { ChevronDown, Search } from "lucide-react";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -49,8 +51,25 @@ export default function SmartSearchBar({
   adv,
   setAdv,
 }: SmartSearchBarProps) {
-
+  const pathname = usePathname();
   const searchInputRef = useRef<HTMLInputElement | null>(null);
+
+  /* AUTO DETECT LOCK PAGE */
+  const isEmergency = pathname.includes("emergency");
+  const isPasaBuy = pathname.includes("pasabuy");
+  const isGiveaway = pathname.includes("giveaway");
+
+  /* DEFINE LOCKED VALUES */
+  const lockedValue: ToolbarPost | null =
+    isEmergency
+      ? "Emergency Lending"
+      : isPasaBuy
+      ? "PasaBuy"
+      : isGiveaway
+      ? "Donation and Giveaway"
+      : null;
+
+  const isLocked = lockedValue !== null;
 
   return (
     <div
@@ -65,26 +84,36 @@ export default function SmartSearchBar({
       {/* POST TYPE DROPDOWN */}
       <DropdownMenu>
         <DropdownMenuTrigger
-          className="
+          disabled={isLocked}
+          className={`
             flex items-center gap-1 px-3 py-1.5 rounded-full 
-            bg-[#E7F3FF] text-xs sm:text-sm font-medium text-[#102E4A] 
-            whitespace-nowrap hover:bg-[#d7e8ff]
-          "
+            text-xs sm:text-sm font-medium whitespace-nowrap
+            ${
+              isLocked
+                ? "bg-gray-200 text-gray-500 cursor-not-allowed opacity-70"
+                : "bg-[#E7F3FF] text-[#102E4A] hover:bg-[#d7e8ff]"
+            }
+          `}
         >
-          {postType ?? "All Types"}
-          <ChevronDown className="w-4 h-4" />
+          {/* Show locked value or normal */}
+          {isLocked ? lockedValue : postType ?? "All Types"}
+
+          {!isLocked && <ChevronDown className="w-4 h-4" />}
         </DropdownMenuTrigger>
 
-        <DropdownMenuContent align="start">
-          {POST_TYPE_OPTIONS.map((opt) => (
-            <DropdownMenuItem
-              key={opt}
-              onClick={() => setPostType(opt === "All" ? null : opt)}
-            >
-              {opt}
-            </DropdownMenuItem>
-          ))}
-        </DropdownMenuContent>
+        {/* Only show menu when NOT locked */}
+        {!isLocked && (
+          <DropdownMenuContent align="start">
+            {POST_TYPE_OPTIONS.map((opt) => (
+              <DropdownMenuItem
+                key={opt}
+                onClick={() => setPostType(opt === "All" ? null : opt)}
+              >
+                {opt}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        )}
       </DropdownMenu>
 
       {/* SEARCH FIELD */}
@@ -96,10 +125,7 @@ export default function SmartSearchBar({
           value={search}
           onChange={(e) => {
             setSearch(e.target.value);
-
-            setTimeout(() => {
-              searchInputRef.current?.focus();
-            }, 0);
+            setTimeout(() => searchInputRef.current?.focus(), 0);
           }}
           placeholder="Search anything..."
           className="

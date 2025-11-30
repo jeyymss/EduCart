@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ChevronDown, Search } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import Link from "next/link";
@@ -12,14 +12,19 @@ import {
   type PasaBuyPost,
 } from "@/hooks/queries/displayItems";
 
+import SmartSearchBar from "@/components/search/SearchBar";
+import {
+  matchesSmartMulti,
+  asPostOpt,
+  getPrice,
+} from "@/hooks/useSmartSearch";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
-import { Input } from "@/components/ui/input";
 
 import {
   AdvancedFilters,
@@ -37,16 +42,6 @@ const MobileTopNav = dynamic(
 
 type ToolbarPost = "All" | PostOpt;
 
-const POST_TYPE_OPTIONS: ToolbarPost[] = [
-  "All",
-  "Sale",
-  "Rent",
-  "Trade",
-  "Emergency Lending",
-  "PasaBuy",
-  "Donation and Giveaway",
-];
-
 const CATEGORIES: string[] = [
   "All Categories",
   "Home & Furniture",
@@ -59,27 +54,6 @@ const CATEGORIES: string[] = [
   "Accessories",
   "Hobbies & Toys",
 ];
-
-function asPostOpt(s: string): PostOpt | null {
-  const map: Record<string, PostOpt> = {
-    Sale: "Sale",
-    Rent: "Rent",
-    Trade: "Trade",
-    "Emergency Lending": "Emergency Lending",
-    PasaBuy: "PasaBuy",
-    "Donation and Giveaway": "Donation and Giveaway",
-  };
-  return map[s] ?? null;
-}
-
-function getPrice(v: unknown): number | null {
-  if (v == null) return null;
-  if (typeof v === "number") return Number.isFinite(v) ? v : null;
-  const cleaned = String(v).replace(/[^0-9.]/g, "");
-  if (!cleaned) return null;
-  const n = parseFloat(cleaned);
-  return Number.isFinite(n) ? n : null;
-}
 
 export default function PasaBuyBrowsePage() {
   const {
@@ -106,100 +80,44 @@ export default function PasaBuyBrowsePage() {
 
   const filtered = useMemo(() => {
     if (!pasabuy) return [];
-    const q = search.trim().toLowerCase();
 
-    const withIndex = pasabuy.map((it: PasaBuyPost, i) => ({ it, i }));
+    return pasabuy.filter((it: PasaBuyPost) => {
+      const title = it.item_title ?? "";
 
-    return withIndex
-      .filter(({ it }) => {
-        if (postType && postType !== "All") {
-          const current = asPostOpt(String(it.post_type_name));
-          if (current !== postType) return false;
-        }
+      if (search.trim() && !matchesSmartMulti(title, search.trim()))
+        return false;
 
-        if (q) {
-          const hay = `${it.item_title ?? ""} ${it.category_name ?? ""} ${
-            it.full_name ?? ""
-          }`.toLowerCase();
-          if (!hay.includes(q)) return false;
-        }
+      /* Post Type Filter */
+      if (postType && postType !== "All") {
+        const current = asPostOpt(String(it.post_type_name));
+        if (current !== postType) return false;
+      }
 
-        if (adv.posts.length > 0) {
-          const current = asPostOpt(String(it.post_type_name));
-          if (!current || !adv.posts.includes(current)) return false;
-        }
+      /* Advanced Post Type Filter */
+      if (adv.posts.length > 0) {
+        const current = asPostOpt(String(it.post_type_name));
+        if (!current || !adv.posts.includes(current)) return false;
+      }
 
-        if (adv.category && adv.category !== "All Categories") {
-          if (String(it.category_name) !== adv.category) return false;
-        }
+      /* Category Filter */
+      if (adv.category && adv.category !== "All Categories") {
+        if (String(it.category_name) !== adv.category) return false;
+      }
 
-        const priceNum = getPrice((it as any).item_price);
-        if (adv.minPrice != null && priceNum != null && priceNum < adv.minPrice)
-          return false;
+      /* Price Filter */
+      const priceNum = getPrice((it as any).item_price);
 
-        if (adv.maxPrice != null && priceNum != null && priceNum > adv.maxPrice)
-          return false;
+      if (adv.minPrice != null && priceNum != null && priceNum < adv.minPrice)
+        return false;
 
-        return true;
-      })
-      .map(({ it }) => it);
+      if (adv.maxPrice != null && priceNum != null && priceNum > adv.maxPrice)
+        return false;
+
+      return true;
+    });
   }, [pasabuy, postType, search, adv]);
 
   if (error) return <div className="p-10">Error: {(error as Error).message}</div>;
-
-  const SearchBar = () => (
-    <div
-      className="
-        flex w-full max-w-4xl items-center
-        gap-2 sm:gap-3
-        rounded-full bg-white shadow-md
-        ring-1 ring-black/10
-        px-3 sm:px-4 py-1 sm:py-2
-      "
-    >
-      <DropdownMenu>
-        <DropdownMenuTrigger
-          className="flex items-center gap-1 px-3 py-1.5 rounded-full 
-                     bg-[#E7F3FF] text-xs sm:text-sm font-medium text-[#102E4A] 
-                     whitespace-nowrap hover:bg-[#d7e8ff]"
-        >
-          {postType ?? "All Types"}
-          <ChevronDown className="w-4 h-4" />
-        </DropdownMenuTrigger>
-
-        <DropdownMenuContent align="start">
-          {POST_TYPE_OPTIONS.map((label) => (
-            <DropdownMenuItem
-              key={label}
-              onClick={() => setPostType(label === "All" ? null : label)}
-            >
-              {label}
-            </DropdownMenuItem>
-          ))}
-        </DropdownMenuContent>
-      </DropdownMenu>
-
-      <div className="flex-1 flex items-center gap-2">
-        <Search className="w-4 h-4 text-gray-400 hidden sm:block" />
-        <Input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search anything..."
-          className="h-9 sm:h-10 w-full border-none shadow-none 
-                     px-0 sm:px-1 text-sm focus-visible:ring-0 focus-visible:ring-offset-0"
-          autoComplete="off"
-          inputMode="search"
-        />
-      </div>
-
-      <div className="flex-shrink-0">
-        <AdvancedFilters
-          value={adv}
-          onApply={(next) => setAdv({ ...next })}
-        />
-      </div>
-    </div>
-  );
 
   const ItemsGrid = () => (
     <>
@@ -246,7 +164,7 @@ export default function PasaBuyBrowsePage() {
         </div>
       )}
 
-      {/* ✅ MODAL USING YOUR FILE */}
+      {/* PASABUY MODAL */}
       <PasabuyModal
         post={selectedPasaBuy}
         onClose={() => setSelectedPasaBuy(null)}
@@ -260,7 +178,6 @@ export default function PasaBuyBrowsePage() {
       <div className="md:hidden">
         <MobileTopNav />
 
-        {/* FULL WIDTH BLUE HEADER */}
         <div id="home-top-search-origin" className="w-full">
           <div
             id="home-top-search"
@@ -268,10 +185,19 @@ export default function PasaBuyBrowsePage() {
           >
             <div className="mx-auto max-w-[1600px] px-4 py-3 pb-4">
 
+              {/* SmartSearchBar */}
               <div className="flex justify-center mb-3">
-                <SearchBar />
+                <SmartSearchBar
+                  search={search}
+                  setSearch={setSearch}
+                  postType={postType}
+                  setPostType={setPostType}
+                  adv={adv}
+                  setAdv={setAdv}
+                />
               </div>
 
+              {/* CATEGORY DROPDOWN */}
               <div className="flex justify-center">
                 <div className="w-full max-w-4xl">
                   <DropdownMenu>
@@ -287,8 +213,7 @@ export default function PasaBuyBrowsePage() {
                           onClick={() =>
                             setAdv((prev) => ({
                               ...prev,
-                              category:
-                                cat === "All Categories" ? undefined : cat,
+                              category: cat === "All Categories" ? undefined : cat,
                             }))
                           }
                         >
@@ -316,17 +241,25 @@ export default function PasaBuyBrowsePage() {
       <div className="hidden md:block">
         <div className="w-full bg-[#102E4A]">
           <div className="mx-auto max-w-[1600px] px-6 md:px-8 py-6 md:py-8">
+
             <div className="flex justify-center">
-              <SearchBar />
+              {/* ✔ SmartSearchBar */}
+              <SmartSearchBar
+                search={search}
+                setSearch={setSearch}
+                postType={postType}
+                setPostType={setPostType}
+                adv={adv}
+                setAdv={setAdv}
+              />
             </div>
+
           </div>
         </div>
 
         <div className="flex">
           <aside className="w-64 bg-white border-r p-6 sticky top-[90px] h-[calc(100vh-90px)] overflow-y-auto shadow-sm">
-            <h2 className="font-semibold text-[#102E4A] mb-4">
-              Filter Categories
-            </h2>
+            <h2 className="font-semibold text-[#102E4A] mb-4">Filter Categories</h2>
 
             <nav className="space-y-2 text-sm">
               {CATEGORIES.map((cat) => {
@@ -341,6 +274,7 @@ export default function PasaBuyBrowsePage() {
                         ? "bg-[#eaf1fb] text-[#102E4A] font-medium"
                         : "hover:bg-[#f3f6fa]"
                     }`}
+
                     onClick={() =>
                       setAdv((prev) => ({
                         ...prev,
@@ -359,6 +293,7 @@ export default function PasaBuyBrowsePage() {
             <h1 className="font-extrabold text-3xl text-[#102E4A] mb-4">
               PasaBuy Posts
             </h1>
+
             <ItemsGrid />
           </main>
         </div>

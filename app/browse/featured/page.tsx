@@ -1,12 +1,19 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ChevronDown, Search } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 
 import { ItemCard } from "@/components/posts/displayposts/ItemCard";
 import { useBrowsepageItems } from "@/hooks/queries/displayItems";
+
+import SmartSearchBar from "@/components/search/SearchBar";
+import {
+  matchesSmartMulti,
+  asPostOpt,
+  getPrice,
+} from "@/hooks/useSmartSearch";
 
 import {
   DropdownMenu,
@@ -15,30 +22,20 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-import { Input } from "@/components/ui/input";
-
 import {
   AdvancedFilters,
   type AdvancedFilterValue,
   type PostOpt,
 } from "@/components/profile/AdvancedFilters";
 
+/* MOBILE NAV */
 const MobileTopNav = dynamic(
   () => import("@/components/mobile/MobileTopNav"),
   { ssr: false }
 );
 
+/* TYPES */
 type ToolbarPost = "All" | PostOpt;
-
-const POST_TYPE_OPTIONS: ToolbarPost[] = [
-  "All",
-  "Sale",
-  "Rent",
-  "Trade",
-  "Emergency Lending",
-  "PasaBuy",
-  "Donation and Giveaway",
-];
 
 const CATEGORIES: string[] = [
   "All Categories",
@@ -53,32 +50,12 @@ const CATEGORIES: string[] = [
   "Hobbies & Toys",
 ];
 
-function asPostOpt(s: string): PostOpt | null {
-  const map: Record<string, PostOpt> = {
-    Sale: "Sale",
-    Rent: "Rent",
-    Trade: "Trade",
-    "Emergency Lending": "Emergency Lending",
-    PasaBuy: "PasaBuy",
-    "Donation and Giveaway": "Donation and Giveaway",
-  };
-  return map[s] ?? null;
-}
-
-function getPrice(v: unknown): number | null {
-  if (v == null) return null;
-  if (typeof v === "number") return Number.isFinite(v) ? v : null;
-  const cleaned = String(v).replace(/[^0-9.]/g, "");
-  if (!cleaned) return null;
-  const n = parseFloat(cleaned);
-  return Number.isFinite(n) ? n : null;
-}
-
 export default function FeaturedBrowsePage() {
   const { data: items, isLoading, error } = useBrowsepageItems();
   const searchParams = useSearchParams();
   const initialSearch = (searchParams.get("search") ?? "").toString();
 
+  /* STATE */
   const [postType, setPostType] = useState<ToolbarPost | null>(null);
   const [search, setSearch] = useState(initialSearch);
 
@@ -91,106 +68,52 @@ export default function FeaturedBrowsePage() {
     maxPrice: null,
   });
 
+  /* FILTERED RESULTS */
   const filtered = useMemo(() => {
     if (!items) return [];
-    const q = search.trim().toLowerCase();
 
-    const withIndex = items.map((it, i) => ({ it, i }));
+    return items.filter((it) => {
+      const title = it.item_title ?? "";
 
-    return withIndex
-      .filter(({ it }) => {
-        if (postType && postType !== "All") {
-          const current = asPostOpt(String(it.post_type_name));
-          if (current !== postType) return false;
-        }
+      /* STRICT MULTI-WORD PREFIX TITLE SEARCH */
+      if (search.trim() && !matchesSmartMulti(title, search.trim()))
+        return false;
 
-        if (q) {
-          const hay = `${it.item_title ?? ""} ${it.category_name ?? ""} ${
-            it.full_name ?? ""
-          }`.toLowerCase();
-          if (!hay.includes(q)) return false;
-        }
+      /* Post Type Filter */
+      if (postType && postType !== "All") {
+        const current = asPostOpt(String(it.post_type_name));
+        if (current !== postType) return false;
+      }
 
-        if (adv.posts.length > 0) {
-          const current = asPostOpt(String(it.post_type_name));
-          if (!current || !adv.posts.includes(current)) return false;
-        }
+      /* Advanced Post Types */
+      if (adv.posts.length > 0) {
+        const current = asPostOpt(String(it.post_type_name));
+        if (!current || !adv.posts.includes(current)) return false;
+      }
 
-        if (adv.category && adv.category !== "All Categories") {
-          if (String(it.category_name) !== adv.category) return false;
-        }
+      /* Category */
+      if (adv.category && adv.category !== "All Categories") {
+        if (String(it.category_name) !== adv.category) return false;
+      }
 
-        const priceNum = getPrice(it.item_price);
-        if (adv.minPrice != null && priceNum != null && priceNum < adv.minPrice)
-          return false;
+      /* Price */
+      const priceNum = getPrice(it.item_price);
 
-        if (adv.maxPrice != null && priceNum != null && priceNum > adv.maxPrice)
-          return false;
+      if (adv.minPrice != null && priceNum != null && priceNum < adv.minPrice)
+        return false;
 
-        return true;
-      })
-      .map(({ it }) => it);
+      if (adv.maxPrice != null && priceNum != null && priceNum > adv.maxPrice)
+        return false;
+
+      return true;
+    });
   }, [items, postType, search, adv]);
 
+  /* ERROR */
   if (error)
     return <div className="p-10">Error: {(error as Error).message}</div>;
 
-  const SearchBar = () => (
-    <div
-      className="
-      flex w-full max-w-4xl items-center
-      gap-2 sm:gap-3
-      rounded-full bg-white shadow-md
-      ring-1 ring-black/10
-      px-3 sm:px-4 py-1 sm:py-2
-    "
-    >
-      <DropdownMenu>
-        <DropdownMenuTrigger
-          className="flex items-center gap-1 px-3 py-1.5 rounded-full 
-                     bg-[#E7F3FF] text-xs sm:text-sm font-medium text-[#102E4A] 
-                     whitespace-nowrap hover:bg-[#d7e8ff]"
-        >
-          {postType ?? "All Types"}
-          <ChevronDown className="w-4 h-4" />
-        </DropdownMenuTrigger>
-
-        <DropdownMenuContent align="start">
-          {POST_TYPE_OPTIONS.map((label) => (
-            <DropdownMenuItem
-              key={label}
-              onClick={() =>
-                setPostType(label === "All" ? null : label)
-              }
-            >
-              {label}
-            </DropdownMenuItem>
-          ))}
-        </DropdownMenuContent>
-      </DropdownMenu>
-
-      <div className="flex-1 flex items-center gap-2">
-        <Search className="w-4 h-4 text-gray-400 hidden sm:block" />
-        <Input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search anything..."
-          className="h-9 sm:h-10 w-full border-none shadow-none 
-                     px-0 sm:px-1 text-sm focus-visible:ring-0 focus-visible:ring-offset-0"
-          autoComplete="off"
-          inputMode="search"
-        />
-      </div>
-
-      <div className="flex-shrink-0">
-        <AdvancedFilters
-          value={adv}
-          onApply={(next) => setAdv({ ...next })}
-        />
-      </div>
-    </div>
-  );
-
+  /* GRID RENDERER */
   const ItemsGrid = () => (
     <>
       {isLoading ? (
@@ -247,20 +170,27 @@ export default function FeaturedBrowsePage() {
       <div className="md:hidden">
         <MobileTopNav />
 
-        {/* FULL WIDTH BLUE BACKGROUND FIX */}
+        {/* BLUE STRIP */}
         <div id="home-top-search-origin" className="w-full">
           <div
             id="home-top-search"
             className="relative left-1/2 right-1/2 -mx-[50vw] w-screen bg-[#102E4A]"
           >
             <div className="mx-auto max-w-[1600px] px-4 py-3 pb-4">
-              
-              {/* Search Bar */}
+
+              {/* Smart Search Bar */}
               <div className="flex justify-center mb-3">
-                <SearchBar />
+                <SmartSearchBar
+                  search={search}
+                  setSearch={setSearch}
+                  postType={postType}
+                  setPostType={setPostType}
+                  adv={adv}
+                  setAdv={setAdv}
+                />
               </div>
 
-              {/* Category Dropdown */}
+              {/* CATEGORY DROPDOWN */}
               <div className="flex justify-center">
                 <div className="w-full max-w-4xl">
                   <DropdownMenu>
@@ -276,8 +206,7 @@ export default function FeaturedBrowsePage() {
                           onClick={() =>
                             setAdv((prev) => ({
                               ...prev,
-                              category:
-                                cat === "All Categories" ? undefined : cat,
+                              category: cat === "All Categories" ? undefined : cat,
                             }))
                           }
                         >
@@ -306,7 +235,17 @@ export default function FeaturedBrowsePage() {
         <div className="w-full bg-[#102E4A]">
           <div className="mx-auto max-w-[1600px] px-6 md:px-8 py-6 md:py-8">
             <div className="flex justify-center">
-              <SearchBar />
+
+              {/* Smart Search Bar */}
+              <SmartSearchBar
+                search={search}
+                setSearch={setSearch}
+                postType={postType}
+                setPostType={setPostType}
+                adv={adv}
+                setAdv={setAdv}
+              />
+
             </div>
           </div>
         </div>
@@ -333,8 +272,7 @@ export default function FeaturedBrowsePage() {
                     onClick={() =>
                       setAdv((prev) => ({
                         ...prev,
-                        category:
-                          cat === "All Categories" ? undefined : cat,
+                        category: cat === "All Categories" ? undefined : cat,
                       }))
                     }
                   >
@@ -349,6 +287,7 @@ export default function FeaturedBrowsePage() {
             <h1 className="font-extrabold text-3xl text-[#102E4A] mb-4">
               Featured Listings
             </h1>
+
             <ItemsGrid />
           </main>
         </div>
