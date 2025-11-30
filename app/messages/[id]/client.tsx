@@ -425,6 +425,7 @@ export default function ChatClient({
                                       itemTitle={snapshot.item_title}
                                       currentUserRole={currentUserRole}
                                       createdAt={record.created_at}
+                                      transaction_id={record.transaction_id}
                                       txn={{
                                         price: snapshot.price,
                                         post_id: snapshot.post_id,

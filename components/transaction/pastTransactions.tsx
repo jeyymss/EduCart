@@ -15,13 +15,14 @@ import {
 import { calculateDeliveryFee } from "@/utils/deliveryFee";
 import { createClient } from "@/utils/supabase/client";
 import { getRoadDistanceKm } from "@/utils/getRoadDistance";
-import { X } from "lucide-react";
+import { Wallet, X } from "lucide-react";
 
 interface PastTransactionDetails {
   postType: string;
   itemTitle?: string;
   currentUserRole: string;
   createdAt?: string;
+  transaction_id: string;
   txn: {
     price?: number | string | null;
     post_id: string;
@@ -49,6 +50,7 @@ export default function PastTransactionDetails({
   currentUserRole,
   createdAt,
   txn,
+  transaction_id
 }: PastTransactionDetails) {
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [deliveryFee, setDeliveryFee] = useState<number | null>(null);
@@ -56,6 +58,8 @@ export default function PastTransactionDetails({
   const [totalPayment, setTotalPayment] = useState<number | null>(null);
   const [balance, setBalance] = useState<number>(0);
   const [paymentMethod, setPaymentMethod] = useState("wallet");
+  const [isPaying, setIsPaying] = useState(false);
+  const [successMsg, setSuccessMsg] = useState("");
 
   useEffect(() => {
       async function load() {
@@ -117,6 +121,61 @@ export default function PastTransactionDetails({
     paymentMethod === "wallet" &&
     totalPayment !== null &&
     balance < totalPayment;
+
+  const handleWalletPayment = async () => {
+    if (paymentMethod !== "wallet") {
+      // later you will handle GCash here
+      return;
+    }
+
+    if (!totalPayment) return;
+
+    setIsPaying(true);
+    setSuccessMsg("");
+
+    try {
+      const res = await fetch("/api/wallet/pay", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          transactionId: transaction_id, // ⚠️ make sure txn has .id = transactions.id
+          amount: totalPayment,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || data.error) {
+        alert(data.error || "Payment failed");
+        setIsPaying(false);
+        return;
+      }
+
+      // Update local balance using value from API
+      if (typeof data.newBalance === "number") {
+        setBalance(data.newBalance);
+      } else {
+        // fallback: manually subtract
+        setBalance((prev) => (prev ?? 0) - totalPayment);
+      }
+
+      setSuccessMsg("Payment successful!");
+
+      // You might also want to update txn.status locally if you want:
+      // txn.status = "Paid"; (or lift this state up in parent)
+
+      setTimeout(() => {
+        setIsPaying(false);
+        setShowPaymentDialog(false);
+      }, 1200);
+    } catch (err) {
+      console.error(err);
+      alert("Something went wrong while processing payment.");
+      setIsPaying(false);
+    }
+  };
+
+  console.log("transaction_id:", transaction_id);
 
   return (
     <div className="border rounded-xl p-5 bg-white shadow-md transition-all">
@@ -319,7 +378,7 @@ export default function PastTransactionDetails({
               onClick={() => setPaymentMethod("wallet")}
             >
               <div className="flex items-center gap-3">
-                <Image src="/icons/wallet.png" alt="wallet" width={28} height={28} />
+                <Wallet width={28} height={28} />
                 <div>
                   <p className="font-medium text-base">Wallet</p>
                   <p className="text-sm text-gray-500">₱ {balance.toFixed(2)}</p>
@@ -335,7 +394,7 @@ export default function PastTransactionDetails({
               onClick={() => setPaymentMethod("gcash")}
             >
               <div className="flex items-center gap-3">
-                <Image src="/icons/gcash.png" alt="gcash" width={32} height={32} />
+                <Image src="/GCASH.png" alt="gcash" width={32} height={32} />
                 <p className="font-medium text-base text-blue-600">GCash</p>
               </div>
 
@@ -346,11 +405,23 @@ export default function PastTransactionDetails({
 
           {/* Continue Payment */}
           <Button
-          className="w-full mt-4"
-          disabled={insufficientBalance}
-        >
-          {insufficientBalance ? "Insufficient Balance" : "Continue Payment"}
-        </Button>
+            className="w-full mt-4"
+            disabled={insufficientBalance || isPaying}
+            onClick={handleWalletPayment}
+          >
+            {isPaying
+              ? "Processing..."
+              : insufficientBalance
+              ? "Insufficient Balance"
+              : "Continue Payment"}
+          </Button>
+
+          {successMsg && (
+            <p className="mt-2 text-center text-sm font-medium text-green-600">
+              {successMsg}
+            </p>
+          )}
+
         </div>
 
 
