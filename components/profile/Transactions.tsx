@@ -65,7 +65,6 @@ export default function Transactions({ userId }: { userId: string }) {
 
   const Header = (
     <div className="sticky top-0 z-20 bg-white border-b flex justify-between items-center gap-4 px-4 py-3">
-
       {/* MOBILE: Center tabs */}
       <TabsList className="flex bg-transparent h-auto w-full justify-center md:justify-start">
         {(["active", "completed", "cancelled"] as TxStatus[]).map((tab) => (
@@ -118,7 +117,6 @@ export default function Transactions({ userId }: { userId: string }) {
       ) : filtered.length === 0 ? (
         <div className="text-sm text-gray-500">No transactions found.</div>
       ) : (
-        /* UPDATED TABLE WRAPPER (MOBILE-FRIENDLY) */
         <div className="overflow-x-auto rounded-xl border bg-white max-w-full">
           <table className="w-full text-sm border-collapse">
             <colgroup>
@@ -131,11 +129,21 @@ export default function Transactions({ userId }: { userId: string }) {
 
             <thead className="bg-gray-50 text-gray-700 text-[12px] uppercase font-semibold">
               <tr>
-                <th className="px-3 py-2 whitespace-nowrap text-center md:text-left">Name</th>
-                <th className="px-3 py-2 whitespace-nowrap text-center md:text-left">Total Price</th>
-                <th className="px-3 py-2 whitespace-nowrap text-center md:text-left">Listing Type</th>
-                <th className="px-3 py-2 whitespace-nowrap text-center md:text-left">Transaction Type</th>
-                <th className="px-3 py-2 whitespace-nowrap text-center md:text-left">Action</th>
+                <th className="px-3 py-2 whitespace-nowrap text-center md:text-left">
+                  Name
+                </th>
+                <th className="px-3 py-2 whitespace-nowrap text-center md:text-left">
+                  Total Price
+                </th>
+                <th className="px-3 py-2 whitespace-nowrap text-center md:text-left">
+                  Listing Type
+                </th>
+                <th className="px-3 py-2 whitespace-nowrap text-center md:text-left">
+                  Transaction Type
+                </th>
+                <th className="px-3 py-2 whitespace-nowrap text-center md:text-left">
+                  Action
+                </th>
               </tr>
             </thead>
 
@@ -150,7 +158,8 @@ export default function Transactions({ userId }: { userId: string }) {
                   title={tx.title}
                   price={tx.price}
                   total={tx.total}
-                  status={tx.status}
+                  // 👇 use REAL DB STATUS; fallback to tab status for safety
+                  status={(tx as any).raw_status ?? tx.status}
                   postType={tx.post_type}
                   image={tx.image_url}
                   onView={handleView}
@@ -192,7 +201,7 @@ export default function Transactions({ userId }: { userId: string }) {
                 payment_method: selectedTx.payment_method,
                 method: selectedTx.method,
                 type: selectedTx.type,
-                status: selectedTx.status,
+                status: (selectedTx as any).raw_status ?? selectedTx.status,
                 created_at: (selectedTx as any).created_at,
                 post_id: selectedTx.post_id,
                 buyer: selectedTx.buyer,

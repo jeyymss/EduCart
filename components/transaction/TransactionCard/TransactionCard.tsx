@@ -14,10 +14,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { AddDeliveryDialog } from "@/components/transaction/AddDelivery";
 import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
-import { CourierStatusDialog } from "@/components/transaction/CourierStatusDialog";
 import LeaveReviewDialog from "../LeaveReviewDialog";
 
 export type TxMethod = "Meetup" | "Delivery";
@@ -30,11 +28,13 @@ export type TxStatus =
   | "Completed"
   | "Cancelled"
   | "Pending"
-  | "Processing";
+  | "Processing"
+  | "Paid"
+  | "PickedUp";
 
 export type TransactionCardProps = {
   id: string; // transaction_records.id (for viewing)
-  transactionId: string; // ✅ transactions.id (for updates)
+  transactionId: string; // transactions.id (for updates)
   type: TxSide;
   method: TxMethod;
   title: string;
@@ -44,24 +44,35 @@ export type TransactionCardProps = {
   onView: (id: string) => void;
   onPrimary?: (id: string) => void;
   primaryLabel?: string;
-  status?: TxStatus;
+  // 👇 REAL DB STATUS (Paid, PickedUp, Completed, etc.)
+  status?: TxStatus | string;
   postType?: string;
 };
 
-function computeActionLabel(type: TxSide, status?: TxStatus): string {
-  if (!status) return type === "Purchases" ? "Received" : "Add Delivery";
-  switch (status) {
-    case "Cancelled":
-    case "cancelled":
-      return "Cancelled";
-    case "Completed":
-    case "completed":
-      return "Completed";
-    case "Accepted":
-      return type === "Purchases" ? "Received" : "Add Delivery";
-    default:
-      return type === "Purchases" ? "Received" : "Add Delivery";
+function computeActionLabel(type: TxSide, status?: string): string {
+  if (!status) return "";
+
+  const s = status.toLowerCase();
+
+  // BUYER VIEW
+  if (type === "Purchases") {
+    if (s === "paid") return "Waiting for Delivery";
+    if (s === "pickedup") return "Order Received";
+    if (s === "completed") return "Completed";
+    if (s === "cancelled") return "Cancelled";
+    return "";
   }
+
+  // SELLER VIEW
+  if (type === "Sales") {
+    if (s === "paid") return "Order Picked Up";
+    if (s === "pickedup") return "On Hold";
+    if (s === "completed") return "Completed";
+    if (s === "cancelled") return "Cancelled";
+    return "";
+  }
+
+  return "";
 }
 
 export default function TransactionCard({
@@ -78,10 +89,9 @@ export default function TransactionCard({
   status = "active",
   postType,
 }: TransactionCardProps) {
-  const [openReceived, setOpenReceived] = useState(false);
-  const [openDelivery, setOpenDelivery] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
-  const [courierId, setCourierId] = useState<number | null>(null);
+  const [openBuyerReceived, setOpenBuyerReceived] = useState(false);
+  const [openSellerPickedUp, setOpenSellerPickedUp] = useState(false);
   const [openReview, setOpenReview] = useState(false);
   const [sellerId, setSellerId] = useState<string | null>(null);
   const [buyerId, setBuyerId] = useState<string | null>(null);
@@ -89,91 +99,209 @@ export default function TransactionCard({
   const supabase = createClient();
 
   const badgeText = postType ?? (type === "Sales" ? "Sale" : "Buy");
-  const action = primaryLabel ?? computeActionLabel(type, status);
+  const action = primaryLabel ?? computeActionLabel(type, status?.toString());
   const isTerminal =
-    status?.toLowerCase?.() === "cancelled" ||
-    status?.toLowerCase?.() === "completed";
+    status?.toString().toLowerCase() === "cancelled" ||
+    status?.toString().toLowerCase() === "completed";
 
-  // ✅ Fetch courier_id for this transaction
+  // Fetch buyer/seller for review dialog
   useEffect(() => {
-    const fetchCourier = async () => {
+    const fetchUsers = async () => {
       const { data, error } = await supabase
         .from("transactions")
-        .select("courier_id")
+        .select("buyer_id, seller_id")
         .eq("id", transactionId)
         .single();
 
       if (error) {
-        console.warn("Failed to fetch courier_id:", error);
+        console.warn("User fetch failed:", error);
         return;
       }
-      setCourierId(data?.courier_id ?? null);
+      setBuyerId(data?.buyer_id ?? null);
+      setSellerId(data?.seller_id ?? null);
     };
 
-    if (transactionId) fetchCourier();
+    if (transactionId) fetchUsers();
   }, [transactionId, supabase]);
 
-  useEffect(() => {
-  const fetchUsers = async () => {
-    const { data, error } = await supabase
-      .from("transactions")
-      .select("buyer_id, seller_id")
-      .eq("id", transactionId)
-      .single();
-    if (error) return console.warn("User fetch failed:", error);
-    setBuyerId(data?.buyer_id ?? null);
-    setSellerId(data?.seller_id ?? null);
-  };
-    if (transactionId) fetchUsers();
-  }, [transactionId]);
-
-
-  const handleConfirmReceived = async () => {
+  // SELLER: mark as PickedUp
+  const handleSellerPickedUp = async () => {
     try {
       setIsUpdating(true);
       const loadingToast = toast.loading("Updating transaction...");
 
-      const { data, error } = await supabase
+      const { error } = await supabase
+        .from("transactions")
+        .update({ status: "PickedUp" })
+        .eq("id", transactionId);
+
+      if (error) throw error;
+
+      toast.success("✅ Order marked as picked up.");
+      toast.dismiss(loadingToast);
+      onPrimary?.(transactionId);
+    } catch (err) {
+      console.error("Error updating transaction (PickedUp):", err);
+      toast.error("❌ Failed to update transaction.");
+    } finally {
+      setIsUpdating(false);
+      setOpenSellerPickedUp(false);
+    }
+  };
+
+  // BUYER: mark as Completed
+  const handleBuyerReceived = async () => {
+    try {
+      setIsUpdating(true);
+      const loadingToast = toast.loading("Updating transaction...");
+
+      const { error } = await supabase
         .from("transactions")
         .update({ status: "Completed" })
-        .eq("id", transactionId)
-        .select("*");
+        .eq("id", transactionId);
 
       if (error) throw error;
 
       toast.success("✅ Transaction marked as completed!");
       toast.dismiss(loadingToast);
 
-      // 🧡 Open review dialog right after marking completed
+      // Open review dialog
       setTimeout(() => setOpenReview(true), 300);
-
+      onPrimary?.(transactionId);
     } catch (err) {
-      console.error("Error updating transaction:", err);
+      console.error("Error updating transaction (Completed):", err);
       toast.error("❌ Failed to update transaction.");
     } finally {
       setIsUpdating(false);
-      setOpenReceived(false);
+      setOpenBuyerReceived(false);
     }
   };
 
+  // Decide which kind of button to show
+  const renderActionButton = () => {
+    if (!onPrimary || !action) return null;
 
-  const isReceivedDisabled = !courierId; // ✅ disable if courier_id is null
+    // Disabled states
+    if (
+      action === "Waiting for Delivery" ||
+      action === "On Hold" ||
+      action === "Completed" ||
+      action === "Cancelled"
+    ) {
+      const baseColor =
+        action === "Completed"
+          ? "bg-green-600"
+          : action === "Cancelled"
+          ? "bg-red-600"
+          : "bg-gray-400";
+
+      return (
+        <Button
+          size="sm"
+          className={`rounded-full text-xs px-5 h-8 text-white ${baseColor}`}
+          disabled
+        >
+          {action}
+        </Button>
+      );
+    }
+
+    // BUYER: Order Received
+    if (action === "Order Received" && type === "Purchases") {
+      return (
+        <AlertDialog
+          open={openBuyerReceived}
+          onOpenChange={setOpenBuyerReceived}
+        >
+          <AlertDialogTrigger asChild>
+            <Button
+              size="sm"
+              className="rounded-full text-xs px-5 h-8 text-white bg-slate-900 hover:bg-slate-800 hover:cursor-pointer"
+              disabled={isUpdating}
+            >
+              {isUpdating ? "Processing..." : action}
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Confirm Receipt</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you’ve received the item? Once confirmed, the
+                transaction will be marked as completed.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel className="hover:cursor-pointer">
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleBuyerReceived}
+                className="hover:cursor-pointer"
+                disabled={isUpdating}
+              >
+                {isUpdating ? "Updating..." : "Yes, Received"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      );
+    }
+
+    // SELLER: Order Picked Up
+    if (action === "Order Picked Up" && type === "Sales") {
+      return (
+        <AlertDialog
+          open={openSellerPickedUp}
+          onOpenChange={setOpenSellerPickedUp}
+        >
+          <AlertDialogTrigger asChild>
+            <Button
+              size="sm"
+              className="rounded-full text-xs px-5 h-8 text-white bg-slate-900 hover:bg-slate-800 hover:cursor-pointer"
+              disabled={isUpdating}
+            >
+              {isUpdating ? "Processing..." : action}
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Mark as Picked Up</AlertDialogTitle>
+              <AlertDialogDescription>
+                Confirm that the courier or buyer has picked up the order. The
+                status will change to <strong>PickedUp</strong>.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel className="hover:cursor-pointer">
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleSellerPickedUp}
+                className="hover:cursor-pointer"
+                disabled={isUpdating}
+              >
+                {isUpdating ? "Updating..." : "Yes, Picked Up"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      );
+    }
+
+    // Fallback (should rarely be used)
+    return (
+      <Button
+        size="sm"
+        className="rounded-full text-xs px-5 h-8 text-white bg-slate-900 hover:bg-slate-800 hover:cursor-pointer"
+        disabled={isUpdating}
+      >
+        {isUpdating ? "Processing..." : action}
+      </Button>
+    );
+  };
 
   return (
     <>
-      {/* 🚚 AddDeliveryDialog uses the real transactionId */}
-      {action === "Add Delivery" && (
-        <AddDeliveryDialog
-          open={openDelivery}
-          onOpenChange={setOpenDelivery}
-          transactionId={transactionId}
-          onUpdated={() => {
-          setCourierId(1); // Mock instant refresh — ideally refetch
-          onPrimary?.(transactionId);
-        }}
-        />
-      )}
-
       <tr
         className={`hover:bg-gray-50 transition-colors cursor-pointer ${
           isTerminal ? "opacity-80" : ""
@@ -209,108 +337,19 @@ export default function TransactionCard({
           className="px-6 py-4 text-right"
           onClick={(e) => e.stopPropagation()}
         >
-          {onPrimary && (
-            <>
-              {action === "Received" ? (
-                <AlertDialog open={openReceived} onOpenChange={setOpenReceived}>
-                  <AlertDialogTrigger asChild>
-                    <Button
-                      size="sm"
-                      className={`rounded-full text-xs px-5 h-8 text-white ${
-                        isReceivedDisabled
-                          ? "bg-gray-400 cursor-not-allowed"
-                          : "bg-slate-900 hover:bg-slate-800 hover:cursor-pointer"
-                      }`}
-                      disabled={isUpdating || isReceivedDisabled}
-                    >
-                      {isUpdating
-                        ? "Processing..."
-                        : isReceivedDisabled
-                        ? "Waiting for courier"
-                        : action}
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Confirm Receipt</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Are you sure you’ve received the item? Once confirmed, the
-                        transaction will be marked as completed.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel className="hover:cursor-pointer">
-                        Cancel
-                      </AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={handleConfirmReceived}
-                        className="hover:cursor-pointer"
-                        disabled={isUpdating}
-                      >
-                        {isUpdating ? "Updating..." : "Yes, Received"}
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              ) : action === "Add Delivery" ? (
-                <>
-                  {!courierId ? (
-                    // ✨ Seller hasn’t added courier yet
-                    <Button
-                      size="sm"
-                      className="rounded-full text-xs px-5 h-8 text-white bg-slate-900 hover:bg-slate-800 hover:cursor-pointer"
-                      onClick={() => setOpenDelivery(true)}
-                    >
-                      Add Delivery
-                    </Button>
-                  ) : (
-                    // ✅ Courier already added — show status modal
-                      <>
-                        <Button
-                          size="sm"
-                          className="rounded-full text-xs px-5 h-8 text-white bg-blue-600 hover:bg-blue-700 hover:cursor-pointer"
-                          onClick={() => setOpenDelivery(true)} // reuse dialog toggle
-                        >
-                          Courier Added
-                        </Button>
-
-                        <CourierStatusDialog
-                          open={openDelivery}
-                          onOpenChange={setOpenDelivery}
-                          transactionId={transactionId}
-                        />
-                      </>
-                    )}
-                </>
-              ) : (
-                <Button
-                  size="sm"
-                  className={`rounded-full text-xs px-5 h-8 text-white ${
-                    action === "Cancelled"
-                      ? "bg-red-600"
-                      : action === "Completed"
-                      ? "bg-green-600"
-                      : "bg-slate-900 hover:bg-slate-800"
-                  }`}
-                  disabled={action === "Cancelled" || action === "Completed"}
-                >
-                  {action}
-                </Button>
-              )}
-            </>
-          )}
+          {renderActionButton()}
         </td>
       </tr>
 
       {openReview && sellerId && buyerId && (
-      <LeaveReviewDialog
-        open={openReview}
-        onOpenChange={setOpenReview}
-        transactionId={transactionId}
-        sellerId={sellerId}
-        buyerId={buyerId}
-      />
-    )}
+        <LeaveReviewDialog
+          open={openReview}
+          onOpenChange={setOpenReview}
+          transactionId={transactionId}
+          sellerId={sellerId}
+          buyerId={buyerId}
+        />
+      )}
     </>
   );
 }

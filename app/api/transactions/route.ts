@@ -8,6 +8,8 @@ function mapDbStatusToTab(
     case "Accepted":
     case "Pending":
     case "Processing":
+    case "Paid":
+    case "PickedUp":
       return "active";
     case "Completed":
       return "completed";
@@ -99,18 +101,25 @@ export async function GET(req: Request) {
           ? post.image_urls[0]
           : "/bluecart.png";
 
-      const status = mapDbStatusToTab(txn.status || snap.status);
+      const rawStatus: string = txn.status || snap.status || "Pending";
+      const statusTab = mapDbStatusToTab(rawStatus);
 
       const isBuyer = row.buyer_id === userId;
 
       // Cancelled items should not show for seller
-      if (status === "cancelled" && !isBuyer) return null;
+      if (statusTab === "cancelled" && !isBuyer) return null;
 
       return {
         id: row.id,
         transaction_id: row.transaction_id,
         reference_code: row.reference_code,
-        status,
+
+        // 🟢 For tabs & filters
+        status: statusTab,
+
+        // 🟡 REAL DB STATUS (Paid, PickedUp, Completed, etc.)
+        raw_status: rawStatus,
+
         type: isBuyer ? "Purchases" : "Sales",
         method: txn.fulfillment_method || snap.fulfillment_method || "Meetup",
         payment_method: txn.payment_method || snap.payment_method,
@@ -121,7 +130,6 @@ export async function GET(req: Request) {
         post_type: postType.name || snap.post_type || "Buy",
         image_url: imageUrl,
 
-        // Fixed buyer/seller
         buyer: buyerObj?.name || "",
         seller: sellerObj?.name || "",
 
@@ -129,12 +137,9 @@ export async function GET(req: Request) {
         seller_id: row.seller_id,
 
         post_id: post.id,
-        
       };
     })
     .filter(Boolean);
-
-  console.log("✅ Final transactions count:", transactions.length);
 
   return NextResponse.json({ transactions });
 }
