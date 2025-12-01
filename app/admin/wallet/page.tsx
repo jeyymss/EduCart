@@ -179,7 +179,7 @@ export default function WalletPage() {
           {/* Table Header */}
           <div className="grid grid-cols-12 items-center px-8 py-3 text-xs md:text-sm font-semibold text-gray-700 bg-[#C7D9E5]">
             <div className="col-span-4 md:col-span-3">User Name</div>
-            <div className="col-span-6 md:col-span-5">Product</div>
+            <div className="col-span-6 md:col-span-5">Description</div>
             <div className="col-span-2 md:col-span-2 text-right">Price</div>
             <div className="col-span-12 md:col-span-2 md:text-right">
               Status

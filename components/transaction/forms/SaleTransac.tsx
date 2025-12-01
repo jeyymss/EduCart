@@ -12,10 +12,11 @@ import { useState, useRef, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { SaleTransaction } from "@/app/api/transacForm/SaleTransac/route";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { CircleQuestionMark } from "lucide-react";
 import AddressPickerWithMap from "@/components/location/AddressPickerWithMap";
 
+import { createClient } from "@/utils/supabase/client";
+import { calculateDeliveryFee } from "@/utils/deliveryFee";
+import { getRoadDistanceKm } from "@/utils/getRoadDistance";
 
 interface FormProps {
   conversationId: number;
@@ -42,19 +43,30 @@ export default function SaleTransacForm({
   const [selectPayment, setSelectPayment] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
-  //map picker
+
+  // map picker
   const [deliveryLat, setDeliveryLat] = useState<number | null>(null);
   const [deliveryLng, setDeliveryLng] = useState<number | null>(null);
   const [deliveryAddress, setDeliveryAddress] = useState<string>("");
 
+  // NEW: Delivery Fee States
+  const [distanceKm, setDistanceKm] = useState<number | null>(null);
+  const [deliveryFee, setDeliveryFee] = useState<number | null>(null);
+
+  // validate form
   useEffect(() => {
     const form = formRef.current;
 
     const handleValidation = () => {
       const formValid = form?.checkValidity() ?? false;
-      const isValid = formValid && selectPayment !== "" && selectedType !== "";
-      setIsFormValid(isValid);
+      const valid =
+        formValid &&
+        selectPayment !== "" &&
+        selectedType !== "" &&
+        (selectedType !== "Delivery" ||
+          (deliveryLat !== null && deliveryLng !== null));
+
+      setIsFormValid(valid);
     };
 
     if (form) {
@@ -64,11 +76,44 @@ export default function SaleTransacForm({
     handleValidation();
 
     return () => {
-      if (form) {
-        form.removeEventListener("input", handleValidation);
-      }
+      form?.removeEventListener("input", handleValidation);
     };
-  }, [selectPayment, selectedType]);
+  }, [selectedType, selectPayment, deliveryLat, deliveryLng]);
+
+  //Calculate delivery fee when a delivery address is selected
+  useEffect(() => {
+    async function computeFee() {
+      if (
+        selectedType !== "Delivery" ||
+        deliveryLat === null ||
+        deliveryLng === null
+      )
+        return;
+
+      const supabase = createClient();
+      const { data: post } = await supabase
+        .from("posts")
+        .select("pickup_lat, pickup_lng")
+        .eq("id", post_id)
+        .single();
+
+      if (!post) return;
+
+      const km = await getRoadDistanceKm(
+        post.pickup_lat,
+        post.pickup_lng,
+        deliveryLat,
+        deliveryLng
+      );
+
+      const fee = calculateDeliveryFee(km);
+
+      setDistanceKm(km);
+      setDeliveryFee(fee);
+    }
+
+    computeFee();
+  }, [deliveryLat, deliveryLng, selectedType, post_id]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -88,16 +133,18 @@ export default function SaleTransacForm({
         sellerId,
         post_id,
         postType,
-        deliveryLat,
-        deliveryLng,
-        deliveryAddress
+        deliveryLat,          
+        deliveryLng,          
+        deliveryAddress,      
+        deliveryFee,         
+        distanceKm            
       );
 
       setLoading(false);
       if (result?.error) {
         setError(result.error);
       } else {
-        onClose?.(); 
+        onClose?.();
       }
     } catch (err) {
       console.error(err);
@@ -105,20 +152,20 @@ export default function SaleTransacForm({
     }
   };
 
+  const formatCurrency = (v?: number | null) =>
+  v != null ? `₱${v.toLocaleString()}` : "—";
+
   return (
     <form className="space-y-3" ref={formRef} onSubmit={handleSubmit}>
       <Label>Item</Label>
       <Input value={itemTitle ?? ""} readOnly name="itemTitle" />
       <Label>Price ₱ </Label>
-      <Input
-        value={itemPrice ? `${itemPrice.toLocaleString()}` : ""}
-        readOnly
-      />
+      <Input value={itemPrice ?? ""} readOnly />
 
       <Label>Preferred Method</Label>
       <Select value={selectedType} onValueChange={setSelectedType}>
         <SelectTrigger className="w-full">
-          <SelectValue placeholder="Select Delivery Method" />
+          <SelectValue placeholder="Delivery or Meetup" />
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="Meetup">Meetup</SelectItem>
@@ -126,42 +173,18 @@ export default function SaleTransacForm({
         </SelectContent>
       </Select>
 
-      {selectedType === "Meetup" && (
-        <div className="space-y-3">
-          <div className="flex flex-col space-y-3 max-w-full">
-            <Label>Location</Label>
-            <Input placeholder="Location" name="inputLocation" />
-          </div>
-          <div className="flex justify-between gap-4">
-            <div className="space-y-3 w-1/2">
-              <Label htmlFor="date">Date</Label>
-              <Input
-                type="date"
-                id="date"
-                className="w-full"
-                name="inputDate"
-              />
-            </div>
-            <div className="space-y-3 w-1/2">
-              <Label htmlFor="time">Time</Label>
-              <Input type="time" id="time" step="60" name="inputTime" />
-            </div>
-          </div>
-        </div>
-      )}
-
+      {/* DELIVERY SECTION */}
       {selectedType === "Delivery" && (
         <>
-          {/* Delivery Location */}
-          <Label className="text-sm">
-            Delivery Location<span className="text-red-600">*</span>  
+          <Label>
+            Delivery Location <span className="text-red-500">*</span>
           </Label>
 
           <AddressPickerWithMap
-            onSelect={(lat, lng, address) => {
+            onSelect={(lat, lng, addr) => {
               setDeliveryLat(lat);
               setDeliveryLng(lng);
-              setDeliveryAddress(address);
+              setDeliveryAddress(addr);
             }}
           />
 
@@ -172,9 +195,17 @@ export default function SaleTransacForm({
             className="bg-gray-100"
           />
 
-          <input type="hidden" name="delivery_lat" value={deliveryLat ?? ""} />
-          <input type="hidden" name="delivery_lng" value={deliveryLng ?? ""} />
-          <input type="hidden" name="delivery_address" value={deliveryAddress} />
+          {/* SHOW DELIVERY FEE + DISTANCE */}
+          {deliveryFee !== null && (
+            <div className="p-3 border rounded-lg bg-gray-50 mt-3">
+              <p className="text-sm">
+                <strong>Distance:</strong> {distanceKm?.toFixed(2)} km
+              </p>
+              <p className="text-sm">
+                <strong>Delivery Fee:</strong> {formatCurrency(deliveryFee)}
+              </p>
+            </div>
+          )}
         </>
       )}
 
@@ -189,13 +220,9 @@ export default function SaleTransacForm({
         </SelectContent>
       </Select>
 
-      {error && <p className="text-sm text-red-600 text-center">{error}</p>}
+      {error && <p className="text-sm text-red-600">{error}</p>}
 
-      <Button
-        type="submit"
-        disabled={!isFormValid || loading}
-        className="w-full"
-      >
+      <Button type="submit" disabled={!isFormValid || loading} className="w-full">
         {loading ? "Submitting..." : "Confirm"}
       </Button>
     </form>

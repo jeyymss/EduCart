@@ -6,13 +6,13 @@ export async function POST(req: Request) {
   const supabase = await createClient();
   const body = await req.json();
 
-  const { transactionId, amount } = body;
+  const { transactionId, amount, deliveryFee } = body;
 
-  if (!transactionId || !amount) {
+  if (!transactionId || amount == null) {
     return Response.json({ error: "Missing parameters" }, { status: 400 });
   }
 
-  // 1) Get current user
+  // 1) Get logged-in user
   const {
     data: { user },
     error: userError,
@@ -22,7 +22,7 @@ export async function POST(req: Request) {
     return Response.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  // 2) Fetch wallet
+  // 2) Fetch wallet for balance check only
   const { data: wallet, error: walletError } = await supabase
     .from("wallets")
     .select("current_balance")
@@ -30,7 +30,6 @@ export async function POST(req: Request) {
     .single();
 
   if (walletError || !wallet) {
-    console.error("Wallet fetch error:", walletError);
     return Response.json({ error: "Wallet not found" }, { status: 404 });
   }
 
@@ -38,46 +37,23 @@ export async function POST(req: Request) {
     return Response.json({ error: "Insufficient balance" }, { status: 400 });
   }
 
-  const newBalance = wallet.current_balance - amount;
-
-  // 3) Update wallet balance
-  const { error: updateErr } = await supabase
-    .from("wallets")
-    .update({ current_balance: newBalance })
-    .eq("user_id", user.id);
-
-  if (updateErr) {
-    console.error("Wallet update error:", updateErr);
-    return Response.json({ error: "Failed to deduct wallet" }, { status: 500 });
-  }
-
-  // 4) Insert wallet_transactions row
-  const { error: logErr } = await supabase.from("wallet_transactions").insert({
-    user_id: user.id,
-    amount: -amount, // NEGATIVE = deduction
-    type: "Payment",
-    status: "Completed",
-    description: `Paid ₱${amount} using wallet`,
-    reference_id: transactionId,
-  });
-
-  if (logErr) {
-    console.error("Wallet log error:", logErr);
-    return Response.json({ error: "Failed to log payment" }, { status: 500 });
-  }
-
-  // 5) Update transaction status
+  // 3) ONLY update transaction → Trigger handles the payment
   const { error: txnErr } = await supabase
     .from("transactions")
     .update({
       status: "Paid",
+      delivery_fee: deliveryFee ?? null,
     })
     .eq("id", transactionId);
 
   if (txnErr) {
     console.error("Transaction update error:", txnErr);
-    // we don't rollback wallet here, but you could improve this later
+    return Response.json(
+      { error: "Failed to update transaction status" },
+      { status: 500 }
+    );
   }
 
-  return Response.json({ success: true, newBalance });
+  // Trigger will deduct wallet + move escrow + log everything
+  return Response.json({ success: true });
 }

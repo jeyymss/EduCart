@@ -15,12 +15,14 @@ export async function SaleTransaction(
   postType: string,
   deliveryLat: number | null,
   deliveryLng: number | null,
-  deliveryAddress: string
+  deliveryAddress: string,
+  deliveryFee: number | null,       // ✅ NEW
+  distanceKm: number | null         // ✅ NEW
 ) {
   return await withErrorHandling(async () => {
     const supabase = await createClient();
 
-    //get user session
+    // Get user session
     const {
       data: { session },
     } = await supabase.auth.getSession();
@@ -28,12 +30,10 @@ export async function SaleTransaction(
     if (!session) throw new Error("User not authenticated");
     if (!session.user.email) return { error: "User email is missing." };
 
-    //get user id
-    const userID = session.user.id
-
+    const userID = session.user.id;
     if (!userID) return { error: "User ID is missing." };
 
-    // Get values from the form
+    // Get meetup fields
     const inputDate = formData.get("inputDate") as string;
     const inputTime = formData.get("inputTime") as string;
     const location = formData.get("inputLocation") as string | null;
@@ -45,12 +45,19 @@ export async function SaleTransaction(
       .eq("name", postType)
       .single();
 
-    if (!selectedType) {
+    if (!selectedType)
       return { error: "Preferred method is required." };
-    }
 
-    if (!selectPayment) {
+    if (!selectPayment)
       return { error: "Payment method is required." };
+
+    // Delivery validation
+    if (selectedType === "Delivery") {
+      if (!deliveryLat || !deliveryLng)
+        return { error: "Delivery location is required." };
+
+      if (deliveryFee == null || distanceKm == null)
+        return { error: "Delivery fee calculation failed." };
     }
 
     // Insert transaction and RETURN id
@@ -65,32 +72,39 @@ export async function SaleTransaction(
           post_type_id: post_type?.id,
           item_title: itemTitle,
           price: itemPrice,
+
+          // fulfillment
           fulfillment_method: selectedType,
           payment_method: selectPayment,
-          meetup_location: location,
-          meetup_date: inputDate || null,
-          meetup_time: inputTime || null,
-          delivery_lat: deliveryLat,
-          delivery_lng: deliveryLng,
-          delivery_location: deliveryAddress,
+
+          // meetup
+          meetup_location: selectedType === "Meetup" ? location : null,
+          meetup_date: selectedType === "Meetup" ? inputDate || null : null,
+          meetup_time: selectedType === "Meetup" ? inputTime || null : null,
+
+          // delivery
+          delivery_lat: selectedType === "Delivery" ? deliveryLat : null,
+          delivery_lng: selectedType === "Delivery" ? deliveryLng : null,
+          delivery_location: selectedType === "Delivery" ? deliveryAddress : null,
+          delivery_fee: selectedType === "Delivery" ? deliveryFee : null,      // ✅ NEW
+          delivery_distance_km: selectedType === "Delivery" ? distanceKm : null, // ✅ NEW
+
           status: "Pending",
         },
       ])
-      .select("id") 
+      .select("id")
       .single();
 
     if (insertError) {
       console.error("Insert Failed:", insertError);
-      return {
-        error: insertError.message,
-      };
+      return { error: insertError.message };
     }
 
-    // Insert system message linked to this transaction
+    // Insert system message
     const { error: messageError } = await supabase.from("messages").insert([
       {
         conversation_id: conversationId,
-        sender_user_id: userID, // buyer is sender
+        sender_user_id: userID,
         transaction_id: insertedTransaction.id,
         type: "system",
         body: "Transaction Created",

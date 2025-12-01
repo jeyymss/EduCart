@@ -121,7 +121,7 @@ export default function LiveTransactionCard({
 
       {/* BUTTONS */}
       {txn.status === "Pending" && (
-        <div className="mt-4 flex gap-3">
+        <div className="mt-4 flex flex-col gap-3">
           {currentUserRole === "seller" ? (
             <>
               <Button
