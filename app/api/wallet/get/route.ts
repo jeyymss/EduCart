@@ -16,7 +16,7 @@ export async function GET() {
 
   const { data: wallet, error } = await supabase
     .from("wallets")
-    .select("current_balance")
+    .select("current_balance, escrow_balance")
     .eq("user_id", user.id)
     .single();
 
@@ -25,6 +25,6 @@ export async function GET() {
     return Response.json({ error: "Wallet not found" }, { status: 404 });
   }
 
-  return Response.json({ balance: wallet.current_balance });
+  return Response.json({ balance: wallet.current_balance, escrow: wallet.escrow_balance });
 }
 

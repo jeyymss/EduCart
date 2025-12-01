@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 export default function UserWalletPage() {
     const [balance, setBalance] = useState<number | null>(null);
+    const [escrowbalance, setEscrowBalance] = useState<number | null>(null);
 
     useEffect(() => {
         async function load() {
@@ -11,6 +12,7 @@ export default function UserWalletPage() {
             const data = await res.json();
 
             setBalance(data.balance);
+            setEscrowBalance(data.escrow);
         }
 
         load();
@@ -21,10 +23,15 @@ export default function UserWalletPage() {
             <div>
                 <h1>Wallet Dashboard</h1>
             </div>
-            <div>
+            <div className="mt-10 border">
                 <h3>Current Balance</h3>
                 <p>Available Funds</p>
                 <p>Balance: ₱{balance?.toFixed(2)}</p>
+            </div>
+            <div className="mt-10 border">
+                <h3>Escrow Balance</h3>
+                <p>On hold</p>
+                <p>Balance: ₱{escrowbalance?.toFixed(2)}</p>
             </div>
         </div>
         
