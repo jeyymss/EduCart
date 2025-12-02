@@ -421,6 +421,7 @@ export default function ChatClient({
                                   return (
                                     <PastTransactionDetails
                                       key={record.id}
+                                      conversation_id={conversationId.toString()}
                                       postType={record.post_type || "Unknown"}
                                       itemTitle={snapshot.item_title}
                                       currentUserRole={currentUserRole}

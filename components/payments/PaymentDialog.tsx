@@ -31,6 +31,8 @@ interface PaymentDialogProps {
   isPaying: boolean;
 
   handleWalletPayment: () => void;
+  handleGCashPayment: () => void;
+
   successMsg: string;
 }
 
@@ -48,6 +50,7 @@ export default function PaymentDialog({
   insufficientBalance,
   isPaying,
   handleWalletPayment,
+  handleGCashPayment,
   successMsg,
 }: PaymentDialogProps) {
   const formatCurrency = (v?: number | string | null) =>
@@ -64,15 +67,13 @@ export default function PaymentDialog({
         "
         onOpenAutoFocus={(e) => e.preventDefault()}
       >
-        {/* Close button */}
         <button
-          className="absolute right-4 top-4 text-gray-500 hover:text-gray-700 transition hover:cursor-pointer"
+          className="absolute right-4 top-4 text-gray-500 hover:text-gray-700 transition"
           onClick={() => onOpenChange(false)}
         >
           <X className="w-5 h-5" />
         </button>
 
-        {/* Header */}
         <DialogHeader>
           <DialogTitle className="text-[#102E4A]">Online Payment</DialogTitle>
           <DialogDescription>
@@ -80,7 +81,6 @@ export default function PaymentDialog({
           </DialogDescription>
         </DialogHeader>
 
-        {/* PAYMENT SUMMARY */}
         <div className="p-4 border rounded-lg bg-gray-50 space-y-3">
           <p className="font-semibold text-lg">{itemTitle}</p>
 
@@ -115,7 +115,6 @@ export default function PaymentDialog({
           </div>
         </div>
 
-        {/* PAYMENT METHOD */}
         <div className="space-y-4 p-4 border rounded-xl bg-white">
           <h2 className="text-lg font-semibold">Payment Method</h2>
 
@@ -124,7 +123,6 @@ export default function PaymentDialog({
             onValueChange={setPaymentMethod}
             className="space-y-3"
           >
-            {/* Wallet */}
             <div
               className="flex items-center justify-between p-4 rounded-lg border hover:bg-gray-50 transition cursor-pointer"
               onClick={() => setPaymentMethod("wallet")}
@@ -133,16 +131,12 @@ export default function PaymentDialog({
                 <Wallet width={28} height={28} />
                 <div>
                   <p className="font-medium text-base">Wallet</p>
-                  <p className="text-sm text-gray-500">
-                    ₱ {balance.toLocaleString()}
-                  </p>
+                  <p className="text-sm text-gray-500">₱ {balance.toLocaleString()}</p>
                 </div>
               </div>
-
               <RadioGroupItem value="wallet" className="h-5 w-5" />
             </div>
 
-            {/* GCash */}
             <div
               className="flex items-center justify-between p-4 rounded-lg border hover:bg-gray-50 transition cursor-pointer"
               onClick={() => setPaymentMethod("gcash")}
@@ -151,22 +145,19 @@ export default function PaymentDialog({
                 <Image src="/GCASH.png" alt="gcash" width={32} height={32} />
                 <p className="font-medium text-base text-blue-600">GCash</p>
               </div>
-
               <RadioGroupItem value="gcash" className="h-5 w-5" />
             </div>
           </RadioGroup>
 
-          {/* Continue Payment */}
           <Button
             className="w-full mt-4"
-            disabled={insufficientBalance || isPaying}
-            onClick={handleWalletPayment}
+            disabled={isPaying}
+            onClick={() => {
+              if (paymentMethod === "wallet") handleWalletPayment();
+              else if (paymentMethod === "gcash") handleGCashPayment();
+            }}
           >
-            {isPaying
-              ? "Processing..."
-              : insufficientBalance
-              ? "Insufficient Balance"
-              : "Continue Payment"}
+            {isPaying ? "Processing..." : "Continue Payment"}
           </Button>
 
           {successMsg && (

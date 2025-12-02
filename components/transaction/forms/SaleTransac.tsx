@@ -208,17 +208,34 @@ export default function SaleTransacForm({
           )}
         </>
       )}
-
-      <Label>Payment Method</Label>
-      <Select value={selectPayment} onValueChange={setSelectPayment}>
-        <SelectTrigger className="w-full">
-          <SelectValue placeholder="Select Payment Method" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="Cash on Hand">Cash on Hand</SelectItem>
-          <SelectItem value="Online Payment">Online Payment</SelectItem>
-        </SelectContent>
-      </Select>
+      
+      {selectedType === "Meetup" ? (
+        <>
+          <Label>Payment Method</Label>
+          <Select value={selectPayment} onValueChange={setSelectPayment}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select Payment Method" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Cash on Hand">Cash on Hand</SelectItem>
+              <SelectItem value="Online Payment">Online Payment</SelectItem>
+            </SelectContent>
+          </Select>
+        </>
+      ) : (
+        <>
+          <Label>Payment Method</Label>
+          <Select value={selectPayment} onValueChange={setSelectPayment}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select Payment Method" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Online Payment">Online Payment</SelectItem>
+            </SelectContent>
+          </Select>
+        </>
+      )}
+      
 
       {error && <p className="text-sm text-red-600">{error}</p>}
 

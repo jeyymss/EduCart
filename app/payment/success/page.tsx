@@ -1,47 +1,31 @@
 "use client";
 
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { useRouter } from "next/navigation";
 
 export default function PaymentSuccessPage() {
   const router = useRouter();
+  const params = useSearchParams();
+
+  const txnId = params.get("txn");
+  const convId = params.get("conv");
 
   useEffect(() => {
-    toast.success("✅ Payment Successful!", {
-      description:
-        "Your posting credits have been added to your EduCart account.",
-      duration: 5000,
-    });
+    const confirm = async () => {
+      await fetch("/api/payments/confirm", {
+        method: "POST",
+        body: JSON.stringify({ txnId }),
+      });
 
-    // Remove any PayMongo query params so it won’t repeat the toast
-    const url = new URL(window.location.href);
-    url.search = "";
-    window.history.replaceState({}, document.title, url.toString());
-  }, []);
+      router.replace(`/messages/${convId}?paid=true`);
+    };
+
+    if (txnId && convId) confirm();
+  }, [txnId, convId]);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-white px-6 text-center">
-      <h1 className="text-2xl font-bold text-[#577C8E] mb-2">
-        Payment Successful 🎉
-      </h1>
-      <p className="text-gray-600 max-w-sm mb-6">
-        Your payment was processed successfully. You can now use your new
-        posting credits to list more items on EduCart.
-      </p>
-
-      <div className="flex gap-3">
-        <Button
-          className="bg-[#577C8E] text-white hover:bg-[#476875]"
-          onClick={() => router.push("/profile")}
-        >
-          Go to Profile
-        </Button>
-        <Button variant="outline" onClick={() => router.push("/")}>
-          Back to Home
-        </Button>
-      </div>
-    </div>
+    <p className="p-6 text-center text-lg font-medium">
+      Processing payment...
+    </p>
   );
 }

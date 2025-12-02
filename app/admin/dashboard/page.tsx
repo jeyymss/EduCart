@@ -113,7 +113,7 @@ export default function AdminDashboard() {
             />
 
             <KpiCard
-              title="Total Sales"
+              title="Total Monthly Sales"
               value={
                 monthlySales !== null
                   ? "₱" +

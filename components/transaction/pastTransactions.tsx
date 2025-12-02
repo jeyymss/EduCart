@@ -13,25 +13,8 @@ interface PastTransactionDetailsProps {
   currentUserRole: string;
   createdAt?: string;
   transaction_id: string;
-  txn: {
-    price?: number | string | null;
-    post_id: string;
-    rent_start_date: string;
-    rent_end_date: string;
-    delivery_lat: number | null;
-    delivery_lng: number | null;
-    fulfillment_method?: string | null;
-    meetup_location?: string | null;
-    meetup_date?: string | null;
-    meetup_time?: string | null;
-    payment_method?: string | null;
-    status?: string | null;
-    cash_added?: number | string | null;
-    offered_item?: string | null;
-    pasabuy_location?: string | null;
-    pasabuy_cutoff?: string | null;
-    service_fee?: number | string | null;
-  };
+  conversation_id: string; // IMPORTANT!
+  txn: any;
 }
 
 export default function PastTransactionDetails({
@@ -41,6 +24,7 @@ export default function PastTransactionDetails({
   createdAt,
   txn,
   transaction_id,
+  conversation_id,
 }: PastTransactionDetailsProps) {
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
 
@@ -53,6 +37,17 @@ export default function PastTransactionDetails({
   const [isPaying, setIsPaying] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
 
+  // Detect successful payment redirect (?paid=true)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("paid") === "true") {
+      setSuccessMsg("Payment successful!");
+      setTimeout(() => {
+        window.location.href = `/messages/${conversation_id}`;
+      }, 2000);
+    }
+  }, []);
+
   // Load wallet balance
   useEffect(() => {
     async function load() {
@@ -63,9 +58,9 @@ export default function PastTransactionDetails({
     load();
   }, []);
 
-  // Compute delivery fee
+  // Fetch delivery fee
   useEffect(() => {
-    const fetchDistanceAndFee = async () => {
+    const fetchData = async () => {
       const supabase = createClient();
       const { data: post } = await supabase
         .from("posts")
@@ -90,7 +85,7 @@ export default function PastTransactionDetails({
       setTotalPayment(total);
     };
 
-    fetchDistanceAndFee();
+    fetchData();
   }, [txn]);
 
   const insufficientBalance =
@@ -98,103 +93,94 @@ export default function PastTransactionDetails({
     totalPayment !== null &&
     balance < totalPayment;
 
-  // Wallet payment API call
+  // Wallet Payment
   const handleWalletPayment = async () => {
     if (paymentMethod !== "wallet") return;
-
     if (!totalPayment) return;
+
     setIsPaying(true);
-    setSuccessMsg("");
 
-    try {
-      const res = await fetch("/api/wallet/pay", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          transactionId: transaction_id,
-          amount: totalPayment,
-          deliveryFee,
-        }),
-      });
+    const res = await fetch("/api/wallet/pay", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        transactionId: transaction_id,
+        amount: totalPayment,
+        deliveryFee,
+      }),
+    });
 
-      const data = await res.json();
+    const data = await res.json();
+    setIsPaying(false);
 
-      if (!res.ok || data.error) {
-        alert(data.error || "Payment failed");
-        setIsPaying(false);
-        return;
-      }
+    if (data.error) return alert(data.error);
 
-      if (typeof data.newBalance === "number") {
-        setBalance(data.newBalance);
-      }
-
-      setSuccessMsg("Payment successful!");
-
-      setTimeout(() => {
-        setIsPaying(false);
-        setShowPaymentDialog(false);
-      }, 1200);
-    } catch (err) {
-      console.error(err);
-      alert("Something went wrong processing the payment.");
-      setIsPaying(false);
-    }
+    setSuccessMsg("Payment successful!");
+    setTimeout(() => setShowPaymentDialog(false), 1500);
   };
 
-  // Format date/time
-  const formattedTime = createdAt
-    ? new Date(createdAt).toLocaleString("en-US", {
-        month: "short",
-        day: "numeric",
-        hour: "numeric",
-        minute: "2-digit",
-        hour12: true,
-      })
-    : null;
+  // GCash Payment
+  const handleGCashPayment = async () => {
+    if (!totalPayment) return;
+    setIsPaying(true);
 
-  const formatCurrency = (value?: number | string | null) =>
-    value != null ? `₱${Number(value).toLocaleString()}` : "—";
+    const res = await fetch("/api/payments/gcash", {
+      method: "POST",
+      body: JSON.stringify({
+        amount: totalPayment,
+        transactionId: transaction_id,
+        conversationId: conversation_id,
+        reference: `TXN-${transaction_id}`,
+      }),
+    });
+
+    const data = await res.json();
+    setIsPaying(false);
+
+    if (data?.checkout_url) {
+      window.location.href = data.checkout_url;
+    } else {
+      alert("Failed to initialize GCash payment.");
+    }
+  };
 
   return (
     <div className="border rounded-xl p-5 bg-white shadow-md transition-all">
       <p className="font-semibold text-base mb-4 text-[#102E4A]">Transaction Form Completed</p>
 
-      {/* --- TRANSACTION DETAILS HERE (unchanged) --- */}
-
       {txn.status === "Accepted" &&
         txn.payment_method === "Online Payment" &&
-        currentUserRole === "buyer" && (
+        currentUserRole === "buyer" &&
+        txn.status !== "Paid" && (
           <Button
-            className="mt-4 w-full rounded-lg py-2 text-black hover:cursor-pointer"
+            className="mt-4 w-full rounded-lg py-2"
             style={{ backgroundColor: "#C7D9E5" }}
             onClick={() => setShowPaymentDialog(true)}
           >
             Pay Now
           </Button>
-        )}
-
-      {/* ----- PAYMENT DIALOG COMPONENT ----- */}
-      <PaymentDialog
-        open={showPaymentDialog}
-        onOpenChange={setShowPaymentDialog}
-        itemTitle={itemTitle}
-        txnPrice={txn.price}
-        distanceKm={distanceKm}
-        deliveryFee={deliveryFee}
-        totalPayment={totalPayment}
-        paymentMethod={paymentMethod}
-        setPaymentMethod={setPaymentMethod}
-        balance={balance}
-        insufficientBalance={insufficientBalance}
-        isPaying={isPaying}
-        handleWalletPayment={handleWalletPayment}
-        successMsg={successMsg}
-      />
-
-      {formattedTime && (
-        <p className="text-xs text-gray-500 text-right mt-3">{formattedTime}</p>
       )}
+
+      {txn.status !== "Paid" && (
+        <PaymentDialog
+          open={showPaymentDialog}
+          onOpenChange={setShowPaymentDialog}
+          itemTitle={itemTitle}
+          txnPrice={txn.price}
+          distanceKm={distanceKm}
+          deliveryFee={deliveryFee}
+          totalPayment={totalPayment}
+          paymentMethod={paymentMethod}
+          setPaymentMethod={setPaymentMethod}
+          balance={balance}
+          insufficientBalance={insufficientBalance}
+          isPaying={isPaying}
+          handleWalletPayment={handleWalletPayment}
+          handleGCashPayment={handleGCashPayment}
+          successMsg={successMsg}
+        />
+      )}
+
     </div>
   );
 }
