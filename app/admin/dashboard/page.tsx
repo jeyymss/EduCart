@@ -1,6 +1,6 @@
 "use client";
 
-import * as React from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -16,7 +16,7 @@ import { useEffect } from "react";
 import { useDashboardStats } from "@/hooks/queries/admin/getDashboardStats";
 
 function CalendarDemo() {
-  const [date, setDate] = React.useState<Date | undefined>(new Date());
+  const [date, setDate] = useState<Date | undefined>(new Date());
 
   return (
     <Card className="rounded-xl shadow-sm h-full">
@@ -40,8 +40,47 @@ function CalendarDemo() {
 
 export default function AdminDashboard() {
   const router = useRouter();
+  const [walletBalance, setWalletBalance] = useState<number | null>(null);
+  const [monthlySales, setMonthlySales] = useState<number | null>(null);
 
   const { data, isLoading, isError, error } = useDashboardStats();
+
+  //fetch wallet balance
+  useEffect(() => {
+    const fetchBalance = async () => {
+      try {
+        const res = await fetch("/api/admin/wallet/balance");
+        const data = await res.json();
+
+        if (res.ok) {
+          setWalletBalance(data.balance);
+        }
+      } catch (error) {
+        console.error("Failed to fetch platform wallet balance:", error);
+      }
+    };
+
+    fetchBalance();
+  }, []);
+
+  //fetch monthly sales
+  useEffect(() => {
+    const fetchMonthlySales = async () => {
+      try {
+        const res = await fetch("/api/admin/wallet/monthly-sales");
+        const data = await res.json();
+
+        if (res.ok) {
+          setMonthlySales(data.totalSales);
+        }
+      } catch (error) {
+        console.error("Failed to fetch monthly sales:", error);
+      }
+    };
+
+    fetchMonthlySales();
+  }, []);
+
 
   useEffect(() => {
     if (error instanceof Error && error.message === "unauthorized") {
@@ -63,8 +102,26 @@ export default function AdminDashboard() {
           </div>
 
           <div className="lg:col-span-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 h-full">
-            <KpiCard title="Account Balance" />
-            <KpiCard title="Total Sales" />
+            <KpiCard
+              title="Account Balance"
+              value={
+                walletBalance !== null
+                  ? "₱" +
+                    walletBalance.toLocaleString("en-PH", { minimumFractionDigits: 2 })
+                  : null
+              }
+            />
+
+            <KpiCard
+              title="Total Sales"
+              value={
+                monthlySales !== null
+                  ? "₱" +
+                    monthlySales.toLocaleString("en-PH", { minimumFractionDigits: 2 })
+                  : null
+              }
+            />
+
             <KpiCard title="Platform Earnings" />
           </div>
         </div>
@@ -138,7 +195,7 @@ export default function AdminDashboard() {
   );
 }
 
-function KpiCard({ title }: { title: string }) {
+function KpiCard({ title, value }: { title: string; value?: string | null }) {
   return (
     <Card className="rounded-xl shadow-sm h-full">
       <CardHeader className="pb-2">
@@ -146,12 +203,18 @@ function KpiCard({ title }: { title: string }) {
           {title}
         </CardTitle>
       </CardHeader>
+
       <CardContent className="pb-6 flex items-center">
-        <div className="h-7 w-36 rounded-md bg-slate-100" />
+        {value ? (
+          <p className="text-2xl font-bold text-slate-800">{value}</p>
+        ) : (
+          <div className="h-7 w-36 rounded-md bg-slate-100 animate-pulse" />
+        )}
       </CardContent>
     </Card>
   );
 }
+
 
 function StatCard({
   icon,
