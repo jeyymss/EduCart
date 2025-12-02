@@ -24,7 +24,28 @@ import {
   XCircle,
 } from "lucide-react";
 
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+
+import { useState } from "react";
+
 export function WalletHistory({ transactions }: { transactions: any[] }) {
+  const ITEMS_PER_PAGE = 10;
+  const [page, setPage] = useState(1);
+
+  const totalPages = Math.ceil(transactions.length / ITEMS_PER_PAGE);
+
+  const startIndex = (page - 1) * ITEMS_PER_PAGE;
+  const currentItems = transactions.slice(
+    startIndex,
+    startIndex + ITEMS_PER_PAGE
+  );
+
   const formatAmount = (amount: number) =>
     "₱" + Number(amount).toFixed(2);
 
@@ -102,7 +123,7 @@ export function WalletHistory({ transactions }: { transactions: any[] }) {
                 </TableRow>
               )}
 
-              {transactions.map((t) => (
+              {currentItems.map((t) => (
                 <TableRow
                   key={t.id}
                   className="border-border/50 hover:bg-accent/5"
@@ -151,6 +172,57 @@ export function WalletHistory({ transactions }: { transactions: any[] }) {
             </TableBody>
           </Table>
         </div>
+
+        {/* ⭐ PAGINATION BELOW TABLE */}
+        {transactions.length > 0 && (
+          <div className="mt-6">
+            <Pagination>
+              <PaginationContent className="flex gap-4">
+
+                {/* PREVIOUS */}
+                <PaginationItem>
+                  <PaginationPrevious
+                    className={`${
+                      page === 1 ? "pointer-events-none opacity-50" : ""
+                    }`}
+                    onClick={() => page > 1 && setPage(page - 1)}
+                  />
+                </PaginationItem>
+
+                {/* PAGE NUMBERS */}
+                {Array.from({ length: totalPages }).map((_, index) => {
+                  const p = index + 1;
+                  return (
+                    <PaginationItem
+                      key={p}
+                      className={`px-3 py-1 rounded-md cursor-pointer ${
+                        page === p
+                          ? "bg-primary text-primary-foreground"
+                          : "hover:bg-accent"
+                      }`}
+                      onClick={() => setPage(p)}
+                    >
+                      {p}
+                    </PaginationItem>
+                  );
+                })}
+
+                {/* NEXT */}
+                <PaginationItem>
+                  <PaginationNext
+                    className={`${
+                      page === totalPages
+                        ? "pointer-events-none opacity-50"
+                        : ""
+                    }`}
+                    onClick={() => page < totalPages && setPage(page + 1)}
+                  />
+                </PaginationItem>
+
+              </PaginationContent>
+            </Pagination>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
