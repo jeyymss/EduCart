@@ -9,6 +9,8 @@ export default function UserWalletPage() {
   const [escrow, setEscrow] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const [transactions, setTransactions] = useState([]);
+
   useEffect(() => {
     async function load() {
       const res = await fetch("/api/wallet/get");
@@ -16,10 +18,12 @@ export default function UserWalletPage() {
 
       setBalance(data.balance);
       setEscrow(data.escrow);
+      setTransactions(data.transactions);
       setLoading(false);
     }
     load();
   }, []);
+
 
   return (
     <main className="min-h-screen bg-background text-foreground p-6 md:p-12">
@@ -40,7 +44,7 @@ export default function UserWalletPage() {
         />
 
         {/* Transaction History */}
-        <WalletHistory />
+        <WalletHistory transactions={transactions} />
       </div>
     </main>
   );

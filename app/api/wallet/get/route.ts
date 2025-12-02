@@ -1,5 +1,3 @@
-"use server";
-
 import { createClient } from "@/utils/supabase/server";
 
 export async function GET() {
@@ -7,24 +5,32 @@ export async function GET() {
 
   const {
     data: { user },
-    error: userError,
   } = await supabase.auth.getUser();
 
-  if (userError || !user) {
-    return Response.json({ error: "Not authenticated" }, { status: 401 });
-  }
+    if (!user) {
+      return Response.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
 
-  const { data: wallet, error } = await supabase
+  // Fetch wallet balances
+  const { data: wallet } = await supabase
     .from("wallets")
     .select("current_balance, escrow_balance")
     .eq("user_id", user.id)
     .single();
 
-  if (error || !wallet) {
-    console.error("Wallet fetch error:", error);
-    return Response.json({ error: "Wallet not found" }, { status: 404 });
-  }
+  // Fetch wallet transactions
+  const { data: transactions } = await supabase
+    .from("wallet_transactions")
+    .select("id, description, amount, type, status, created_at")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false });
 
-  return Response.json({ balance: wallet.current_balance, escrow: wallet.escrow_balance });
+  return Response.json({
+    balance: wallet?.current_balance ?? 0,
+    escrow: wallet?.escrow_balance ?? 0,
+    transactions: transactions ?? [],
+  });
 }
-
