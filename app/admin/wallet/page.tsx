@@ -8,19 +8,24 @@ import { createClient } from "@/utils/supabase/client";
 import { SquareArrowOutUpRight } from "lucide-react";
 import WalletTransactionSheet from "@/components/wallet/wallet-transaction-sheet";
 
-
+// Updated WalletTx type
 type WalletTx = {
   id: number;
   amount: number;
   type: string;
   created_at: string;
   transaction_id: string | null;
+
+  // PLATFORM FIELDS
+  reference_code: string | null;
+  status: string | null;
+
+  // TRANSACTION JOIN (commission transactions)
   transactions: {
     reference_code: string | null;
     status: string | null;
   } | null;
 };
-
 
 export default function WalletPage() {
   const supabase = createClient();
@@ -30,7 +35,6 @@ export default function WalletPage() {
   const [loading, setLoading] = useState(true);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [selectedTx, setSelectedTx] = useState<WalletTx | null>(null);
-
 
   // Fetch platform wallet balance
   useEffect(() => {
@@ -76,6 +80,7 @@ export default function WalletPage() {
 
   return (
     <div className="mx-auto max-w-[95%] space-y-8 p-6">
+
       {/* Wallet Balance */}
       <Card className="border-none shadow-md rounded-2xl overflow-hidden">
         <CardContent className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 p-8 bg-white">
@@ -111,57 +116,10 @@ export default function WalletPage() {
         </CardContent>
       </Card>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="border-none shadow-sm rounded-2xl">
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-gray-600">
-                Invoices Paid
-              </span>
-              <span className="inline-flex items-center gap-1 rounded-full bg-green-100 text-green-700 text-xs px-2 py-1">
-                <FileCheck className="h-4 w-4" />
-                Cleared
-              </span>
-            </div>
-            <div className="mt-3 h-8 w-48 rounded-md bg-black/10" />
-          </CardContent>
-        </Card>
-
-        <Card className="border-none shadow-sm rounded-2xl">
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-gray-600">
-                Invoices Unpaid
-              </span>
-              <span className="inline-flex items-center gap-1 rounded-full bg-red-100 text-red-700 text-xs px-2 py-1">
-                <FileX className="h-4 w-4" />
-                Outstanding
-              </span>
-            </div>
-            <div className="mt-3 h-8 w-48 rounded-md bg-black/10" />
-          </CardContent>
-        </Card>
-
-        <Card className="border-none shadow-sm rounded-2xl">
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-gray-600">
-                Earnings
-              </span>
-              <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 text-blue-700 text-xs px-2 py-1">
-                <Wallet className="h-4 w-4" />
-                Platform Share
-              </span>
-            </div>
-            <div className="mt-3 h-8 w-32 rounded-md bg-black/10" />
-          </CardContent>
-        </Card>
-      </div>
-
       {/* Transactions Table */}
       <Card className="border-none shadow-md rounded-2xl overflow-hidden">
         <CardContent className="p-0">
+
           <div className="px-8 pt-6 pb-4 flex items-center justify-between">
             <h3 className="text-lg font-semibold text-gray-900">
               Platform Wallet Transactions
@@ -180,9 +138,6 @@ export default function WalletPage() {
             <div className="col-span-1 text-center">View</div>
           </div>
 
-
-
-
           {/* Table Rows */}
           <ul className="divide-y">
             {loading ? (
@@ -198,63 +153,68 @@ export default function WalletPage() {
                 </li>
               ))
             ) : transactions.length > 0 ? (
-              transactions.map((tx) => (
-                <li
-                  key={tx.id}
-                  className="grid grid-cols-12 items-center px-8 py-4 bg-white hover:bg-gray-50"
-                >
-                  {/* Reference Code */}
-                  <div className="col-span-4 text-sm text-gray-700 truncate text-left">
-                    {tx.transactions?.reference_code ?? "—"}
-                  </div>
+              transactions.map((tx) => {
+                const ref = tx.reference_code ?? tx.transactions?.reference_code ?? "—";
+                const stat = tx.status ?? tx.transactions?.status ?? "—";
 
-                  {/* Type */}
-                  <div className="col-span-3 text-sm text-gray-600 capitalize text-left">
-                    {tx.type}
-                  </div>
+                return (
+                  <li
+                    key={tx.id}
+                    className="grid grid-cols-12 items-center px-8 py-4 bg-white hover:bg-gray-50"
+                  >
 
-                  {/* Amount */}
-                  <div className="col-span-2 text-right text-gray-800 font-medium">
-                    ₱
-                    {tx.amount.toLocaleString("en-PH", {
-                      minimumFractionDigits: 2,
-                    })}
-                  </div>
+                    {/* Reference Code */}
+                    <div className="col-span-4 text-sm text-gray-700 truncate text-left">
+                      {ref}
+                    </div>
 
-                  {/* STATUS */}
-                  <div className="col-span-2 text-center">
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                        tx.transactions?.status === "Completed"
-                          ? "bg-green-100 text-green-700"
-                          : tx.transactions?.status === "Cancelled"
-                          ? "bg-red-100 text-red-700"
-                          : tx.transactions?.status === "Paid"
-                          ? "bg-blue-100 text-blue-700"
-                          : "bg-gray-200 text-gray-700"
-                      }`}
-                    >
-                      {tx.transactions?.status ?? "—"}
-                    </span>
-                  </div>
+                    {/* Type */}
+                    <div className="col-span-3 text-sm text-gray-600 capitalize text-left">
+                      {tx.type}
+                    </div>
 
-                  {/* View Button */}
-                  {/* View Button */}
-                  <div className="col-span-1 text-center">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="hover:bg-gray-100 rounded-full"
-                      onClick={() => {
-                        setSelectedTx(tx);
-                        setSheetOpen(true);
-                      }}
-                    >
-                      <SquareArrowOutUpRight className="h-4 w-4 text-gray-700" />
-                    </Button>
-                  </div>
-                </li>
-              ))
+                    {/* Amount */}
+                    <div className="col-span-2 text-right text-gray-800 font-medium">
+                      ₱
+                      {tx.amount.toLocaleString("en-PH", {
+                        minimumFractionDigits: 2,
+                      })}
+                    </div>
+
+                    {/* Status */}
+                    <div className="col-span-2 text-center">
+                      <span
+                        className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                          stat === "Completed"
+                            ? "bg-green-100 text-green-700"
+                            : stat === "Cancelled"
+                            ? "bg-red-100 text-red-700"
+                            : stat === "Paid"
+                            ? "bg-blue-100 text-blue-700"
+                            : "bg-gray-200 text-gray-700"
+                        }`}
+                      >
+                        {stat}
+                      </span>
+                    </div>
+
+                    {/* View Button */}
+                    <div className="col-span-1 text-center">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="hover:bg-gray-100 rounded-full"
+                        onClick={() => {
+                          setSelectedTx(tx);
+                          setSheetOpen(true);
+                        }}
+                      >
+                        <SquareArrowOutUpRight className="h-4 w-4 text-gray-700" />
+                      </Button>
+                    </div>
+                  </li>
+                );
+              })
             ) : (
               <li className="px-8 py-6 text-center text-gray-500">
                 No transactions found.

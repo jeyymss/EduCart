@@ -6,36 +6,36 @@ export async function GET() {
     const supabase = await createClient();
 
     const { data, error } = await supabase
-        .from("platform_wallet_transactions")
-        .select(`
+      .from("platform_wallet_transactions")
+      .select(`
+        id,
+        amount,
+        type,
+        created_at,
+        transaction_id,
+        reference_code,
+        status,
+
+        transactions:transaction_id (
+          reference_code,
+          status,
+          price,
+          delivery_fee,
+          payment_method,
+
+          buyer:buyer_id (
             id,
-            amount,
-            type,
-            created_at,
-            transaction_id,
-            transactions (
-                reference_code,
-                status,
-                
-                price,
-                delivery_fee,
-                payment_method,
-                
-                buyer:buyer_id (
-                id,
-                name,
-                email
-                ),
-                seller:seller_id (
-                id,
-                name,
-                email
-                )
-            )
-            `)
-
-        .order("created_at", { ascending: false });
-
+            name,
+            email
+          ),
+          seller:seller_id (
+            id,
+            name,
+            email
+          )
+        )
+      `)
+      .order("created_at", { ascending: false });
 
     if (error) {
       console.error("Fetch wallet tx error:", error);

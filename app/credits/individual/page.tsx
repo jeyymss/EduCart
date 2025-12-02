@@ -5,22 +5,102 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { useState, useEffect } from "react";
 import { createClient } from "@/utils/supabase/client";
+import CreditPaymentDialog from "@/components/credits/CreditPurchaseDialog";
 
 export default function IndividualCreditsPage() {
-  const [loadingId, setLoadingId] = useState<number | null>(null);
-  const [userEmail, setUserEmail] = useState<string | null>(null);
   const supabase = createClient();
 
-  // Fetch user email from session
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [walletBalance, setWalletBalance] = useState(0);
+
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedPkg, setSelectedPkg] = useState<any>(null);
+  const [paymentMethod, setPaymentMethod] = useState("wallet");
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  // Load session + wallet balance
   useEffect(() => {
-    const getSession = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+    const loadUser = async () => {
+      const { data } = await supabase.auth.getSession();
+      const session = data.session;
+
       if (session?.user?.email) setUserEmail(session.user.email);
+
+      const userId = session?.user?.id;
+
+      if (userId) {
+        const { data: w } = await supabase
+          .from("wallets")
+          .select("current_balance")
+          .eq("user_id", userId)
+          .single();
+
+        if (w?.current_balance != null) setWalletBalance(w.current_balance);
+      }
     };
-    getSession();
-  }, [supabase]);
+
+    loadUser();
+  }, []);
+
+  // =======================
+  // WALLET PAYMENT FOR CREDITS
+  // =======================
+  const handleWalletPayment = async () => {
+    if (!selectedPkg || !userEmail) return;
+
+    setIsProcessing(true);
+
+    const res = await fetch("/api/credits/pay", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: userEmail,
+        credits: selectedPkg.credits,
+        amount: selectedPkg.price,
+      }),
+    });
+
+    const json = await res.json();
+    setIsProcessing(false);
+
+    if (json.error) return alert(json.error);
+
+    alert("Credits purchased successfully!");
+    setDialogOpen(false);
+  };
+
+  // =======================
+  // GCASH PAYMENT FOR CREDITS
+  // =======================
+  const handleGCashPayment = async () => {
+    if (!selectedPkg || !userEmail) return;
+
+    setIsProcessing(true);
+
+    const res = await fetch("/api/credits/gcash", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        amount: selectedPkg.price,
+        credits: selectedPkg.credits,
+        email: userEmail,
+      }),
+    });
+
+
+
+    const json = await res.json();
+
+    setIsProcessing(false);
+
+    if (json.checkout_url) {
+      window.location.href = json.checkout_url;
+    } else {
+      alert("Failed to initialize GCash payment.");
+    }
+  };
 
   // Packages
   const packages = [
@@ -44,13 +124,12 @@ export default function IndividualCreditsPage() {
       recommended: true,
       price: 45,
       credits: 10,
-      description:
-        "Most popular choice for regular users who post consistently",
+      description: "Most popular choice among regular users",
       features: [
         "10 additional posts per month",
-        "10% savings vs individual posts",
+        "10% savings",
         "Valid for 30 days",
-        "All platform features included",
+        "All features included",
       ],
       bg: "#C7D9E5",
     },
@@ -59,220 +138,146 @@ export default function IndividualCreditsPage() {
       title: "20 Additional Posts",
       price: 85,
       credits: 20,
-      description: "Maximum value for power users who post frequently",
+      description: "Max value for frequent posters",
       features: [
-        "20 additional posts per month",
-        "15% savings vs individual posts",
+        "20 additional posts",
+        "15% savings",
         "Valid for 30 days",
-        "All platform features included",
+        "All features included",
       ],
       bg: "#FFF1D0",
     },
   ];
 
-  // 💳 Handle PayMongo Purchase Flow
-  const handlePurchase = async (pkg: {
-    id: number;
-    title: string;
-    price: number;
-    credits: number;
-  }) => {
-    if (!userEmail) {
-      alert("You must be logged in to purchase credits.");
-      return;
-    }
-
-    try {
-      setLoadingId(pkg.id);
-
-      // 1️⃣ Create Payment Intent
-      const intentRes = await fetch("/api/paymongo/create-intent", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          amount: pkg.price,
-          description: `EduCart - ${pkg.title}`,
-          email: userEmail,
-        }),
-      });
-      const intentData = await intentRes.json();
-      if (!intentRes.ok || !intentData?.data?.id) {
-        console.error("Intent error:", intentData);
-        alert("Failed to create payment intent.");
-        return;
-      }
-      const intentId = intentData.data.id;
-
-      // 2️⃣ Create Payment Method
-      const methodRes = await fetch("/api/paymongo/create-method", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: "EduCart User",
-          email: userEmail,
-        }),
-      });
-      const methodData = await methodRes.json();
-      if (!methodRes.ok || !methodData?.data?.id) {
-        console.error("Method error:", methodData);
-        alert("Failed to create payment method.");
-        return;
-      }
-      const paymentMethodId = methodData.data.id;
-
-      // 3️⃣ Attach & redirect
-      const attachRes = await fetch("/api/paymongo/attach", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ intentId, paymentMethodId }),
-      });
-      const attachData = await attachRes.json();
-      if (
-        !attachRes.ok ||
-        !attachData?.data?.attributes?.next_action?.redirect?.url
-      ) {
-        console.error("Attach error:", attachData);
-        alert("Failed to attach payment method.");
-        return;
-      }
-
-      // 🚀 Redirect to GCash checkout
-      const checkoutUrl = attachData.data.attributes.next_action.redirect.url;
-      window.location.href = checkoutUrl;
-    } catch (error) {
-      console.error("Payment error:", error);
-      alert("Something went wrong during payment.");
-    } finally {
-      setLoadingId(null);
-    }
-  };
-
-  // 💬 FAQs
-  const faqs = [
-    {
-      q: "What are posting credits?",
-      a: "Posting credits allow you to post items for sale, rent, trade, emergency lending, or pasabuy on our platform. Each credit equals one listing, regardless of the type.",
-    },
-    {
-      q: "How many free posting credits do I get?",
-      a: "Normal users receive 3 free posting credits every month, while businesses and organizations receive 5 free credits monthly.",
-    },
-    {
-      q: "Do unused free credits roll over to the next month?",
-      a: "No, unused free posting credits do not carry over to the next month.",
-    },
-    {
-      q: "Do purchased credits expire?",
-      a: "Yes, purchased credits expire 30 days after purchase. Make sure to use them within this timeframe.",
-    },
-    {
-      q: "Can I get a refund for unused credits?",
-      a: "Strictly no refunds are issued for purchased credits. However, they remain in your account until used.",
-    },
-  ];
+    const faqs = [
+      {
+        q: "What are posting credits?",
+        a: "Posting credits allow you to post items for sale, rent, trade, emergency lending, or pasabuy on our platform. Each credit equals one listing, regardless of the type.",
+      },
+      {
+        q: "How many free posting credits do I get?",
+        a: "Normal users receive 3 free posting credits every month, while businesses and organizations receive 5 free credits monthly.",
+      },
+      {
+        q: "Do unused free credits roll over to the next month?",
+        a: "No, unused free posting credits do not carry over to the next month.",
+      },
+      {
+        q: "Do purchased credits expire?",
+        a: "Yes, purchased credits expire 30 days after purchase. Make sure to use them within this timeframe.",
+      },
+      {
+        q: "Can I get a refund for unused credits?",
+        a: "Strictly no refunds are issued for purchased credits. However, they remain in your account until used.",
+      },
+    ];
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
       {/* Header */}
       <header className="bg-white border-b">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex">
+        <div className="max-w-5xl mx-auto px-4 py-4 flex">
           <Button
             variant="ghost"
-            size="sm"
-            className="flex items-center gap-2 text-[#577C8E] hover:text-[#577C8E] hover:bg-[#577C8E]/10"
+            className="flex items-center gap-2 text-[#577C8E]"
             asChild
           >
             <Link href="/profile#settings">
               <ArrowLeft className="h-4 w-4" />
-              <span className="xs:inline">Back</span>
+              <span>Back</span>
             </Link>
           </Button>
         </div>
       </header>
 
-      {/* Main */}
+      {/* MAIN */}
       <main className="flex-1 w-full">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
-          <h1 className="text-xl sm:text-2xl font-bold mb-2 text-center">
+        <div className="max-w-5xl mx-auto px-4 py-8">
+          <h1 className="text-xl sm:text-2xl font-bold text-center">
             Buy Posting Credits
           </h1>
-          <p className="text-sm sm:text-base text-muted-foreground text-center mb-8">
-            Purchase credits to list your items for sale on EduCart
+
+          <p className="text-center text-sm text-gray-600 mb-8">
+            Purchase credits to list your items on EduCart
           </p>
 
-          {/* Packages */}
-          <div className="grid gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {/* PACKAGES */}
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {packages.map((pkg) => (
               <div
                 key={pkg.id}
-                className="flex flex-col rounded-2xl border border-gray-300 p-4 sm:p-6 shadow-sm h-full"
+                className="rounded-2xl border p-6 shadow-sm flex flex-col"
                 style={{ backgroundColor: pkg.bg }}
               >
-                <h2 className="text-base sm:text-lg font-semibold mb-2">
+                <h2 className="text-lg font-semibold mb-2">
                   {pkg.title}{" "}
                   {pkg.recommended && (
-                    <span className="text-xs sm:text-sm font-medium text-red-500">
-                      (Recommended)
-                    </span>
+                    <span className="text-xs text-red-500">(Recommended)</span>
                   )}
                 </h2>
 
-                <p className="text-2xl sm:text-3xl font-extrabold text-[#577C8E] mb-2">
+                <p className="text-3xl font-extrabold text-[#577C8E] mb-2">
                   ₱{pkg.price}
                 </p>
 
-                <p className="text-xs sm:text-sm text-gray-700 mb-4">
-                  {pkg.description}
-                </p>
+                <p className="text-sm text-gray-700 mb-4">{pkg.description}</p>
 
-                <ul className="text-xs sm:text-sm space-y-2 mb-4 sm:mb-6">
+                <ul className="text-sm space-y-2 mb-6">
                   {pkg.features.map((f, i) => (
                     <li key={i}>✓ {f}</li>
                   ))}
                 </ul>
 
                 <Button
-                  variant="outline"
-                  className="mt-auto w-full bg-white hover:bg-[#E59E2C] hover:text-white transition-colors rounded-md text-sm sm:text-base"
-                  disabled={loadingId === pkg.id}
-                  onClick={() => handlePurchase(pkg)}
+                  className="mt-auto bg-[#E59E2C] border hover:bg-white hover:text-black hover:cursor-pointer"
+                  onClick={() => {
+                    setSelectedPkg(pkg);
+                    setDialogOpen(true);
+                  }}
                 >
-                  {loadingId === pkg.id ? "Processing..." : "Purchase"}
+                  Purchase
                 </Button>
               </div>
             ))}
           </div>
 
-          {/* Bonus Section */}
-          <div className="mt-8 sm:mt-10 border border-gray-300 rounded-2xl bg-white p-4 sm:p-6 shadow-sm">
-            <p className="font-medium text-sm sm:text-base text-red-500">
-              ❤ Earn Free Posts
-            </p>
-            <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-              Get 1 bonus post for each transaction completed through our secure
-              escrow system – encouraging safe trading while rewarding platform
-              participation.
+          {/* BONUS */}
+          <div className="mt-8 border rounded-2xl p-6 bg-white shadow-sm">
+            <p className="text-red-500 font-medium text-sm">❤ Earn Free Posts</p>
+            <p className="text-sm text-gray-600 mt-1">
+              Get 1 bonus post for every completed escrow transaction.
             </p>
           </div>
 
-          {/* FAQ Section */}
-          <div className="mt-8 sm:mt-10 pb-10 sm:pb-12">
-            <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border space-y-4 sm:space-y-6">
-              <h2 className="text-base sm:text-lg font-semibold">
-                Frequently Asked Questions
-              </h2>
+          {/* FAQs */}
+          <div className="mt-10">
+            <div className="bg-white border shadow-sm rounded-xl p-6 space-y-4">
+              <h2 className="text-lg font-semibold">Frequently Asked Questions</h2>
               {faqs.map((item, i) => (
                 <div key={i}>
-                  <h3 className="font-medium text-sm sm:text-base">
-                    {item.q}
-                  </h3>
-                  <p className="text-xs sm:text-sm text-gray-600 mt-1">
-                    {item.a}
-                  </p>
+                  <h3 className="font-medium text-sm">{item.q}</h3>
+                  <p className="text-sm text-gray-600 mt-1">{item.a}</p>
                 </div>
               ))}
             </div>
           </div>
+
+          {/* PAYMENT DIALOG */}
+          {selectedPkg && (
+            <CreditPaymentDialog
+              open={dialogOpen}
+              onOpenChange={setDialogOpen}
+              pkgTitle={selectedPkg.title}
+              pkgPrice={selectedPkg.price}
+              pkgCredits={selectedPkg.credits}
+              balance={walletBalance}
+              paymentMethod={paymentMethod}
+              setPaymentMethod={setPaymentMethod}
+              isProcessing={isProcessing}
+              onWalletPay={handleWalletPayment}
+              onGCashPay={handleGCashPayment}
+            />
+          )}
         </div>
       </main>
     </div>

@@ -42,6 +42,7 @@ export default function AdminDashboard() {
   const router = useRouter();
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
   const [monthlySales, setMonthlySales] = useState<number | null>(null);
+  const [platformEarnings, setPlatformEarnings] = useState<number | null>(null);
 
   const { data, isLoading, isError, error } = useDashboardStats();
 
@@ -79,6 +80,24 @@ export default function AdminDashboard() {
     };
 
     fetchMonthlySales();
+  }, []);
+
+  // fetch platform earnings
+  useEffect(() => {
+    const fetchPlatformEarnings = async () => {
+      try {
+        const res = await fetch("/api/admin/wallet/platform-earnings");
+        const data = await res.json();
+
+        if (res.ok) {
+          setPlatformEarnings(data.totalEarnings);
+        }
+      } catch (error) {
+        console.error("Failed to fetch platform earnings:", error);
+      }
+    };
+
+    fetchPlatformEarnings();
   }, []);
 
 
@@ -122,7 +141,15 @@ export default function AdminDashboard() {
               }
             />
 
-            <KpiCard title="Platform Earnings" />
+            <KpiCard
+              title="Platform Earnings"
+              value={
+                platformEarnings !== null
+                  ? "₱" +
+                    platformEarnings.toLocaleString("en-PH", { minimumFractionDigits: 2 })
+                  : null
+              }
+            />
           </div>
         </div>
 
