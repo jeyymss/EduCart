@@ -8,6 +8,14 @@ import { createClient } from "@/utils/supabase/client";
 import { SquareArrowOutUpRight } from "lucide-react";
 import WalletTransactionSheet from "@/components/wallet/wallet-transaction-sheet";
 
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+
 // Updated WalletTx type
 type WalletTx = {
   id: number;
@@ -15,12 +23,8 @@ type WalletTx = {
   type: string;
   created_at: string;
   transaction_id: string | null;
-
-  // PLATFORM FIELDS
   reference_code: string | null;
   status: string | null;
-
-  // TRANSACTION JOIN (commission transactions)
   transactions: {
     reference_code: string | null;
     status: string | null;
@@ -33,48 +37,36 @@ export default function WalletPage() {
   const [balance, setBalance] = useState<number | null>(null);
   const [transactions, setTransactions] = useState<WalletTx[]>([]);
   const [loading, setLoading] = useState(true);
+
   const [sheetOpen, setSheetOpen] = useState(false);
   const [selectedTx, setSelectedTx] = useState<WalletTx | null>(null);
 
-  // Fetch platform wallet balance
+  // 👉 Pagination states
+  const ITEMS_PER_PAGE = 10;
+  const [page, setPage] = useState(1);
+
+  const totalPages = Math.ceil(transactions.length / ITEMS_PER_PAGE);
+  const startIndex = (page - 1) * ITEMS_PER_PAGE;
+  const currentData = transactions.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
+  // Fetch balance
   useEffect(() => {
     const fetchBalance = async () => {
-      try {
-        const res = await fetch("/api/admin/wallet/balance");
-        const data = await res.json();
-
-        if (res.ok) {
-          setBalance(data.balance);
-        } else {
-          console.error("Failed to load balance:", data.error);
-        }
-      } catch (err) {
-        console.error("Error fetching wallet balance:", err);
-      }
+      const res = await fetch("/api/admin/wallet/balance");
+      const data = await res.json();
+      if (res.ok) setBalance(data.balance);
     };
-
     fetchBalance();
   }, []);
 
   // Fetch platform wallet transactions
   useEffect(() => {
     const fetchTx = async () => {
-      try {
-        const res = await fetch("/api/admin/wallet/transactions");
-        const data = await res.json();
-
-        if (res.ok) {
-          setTransactions(data.transactions);
-        } else {
-          console.error("Failed to fetch transactions:", data.error);
-        }
-      } catch (err) {
-        console.error("Error fetching transactions:", err);
-      } finally {
-        setLoading(false);
-      }
+      const res = await fetch("/api/admin/wallet/transactions");
+      const data = await res.json();
+      if (res.ok) setTransactions(data.transactions);
+      setLoading(false);
     };
-
     fetchTx();
   }, []);
 
@@ -93,10 +85,7 @@ export default function WalletPage() {
               <div className="h-12 w-full max-w-sm rounded-md bg-black/10 animate-pulse" />
             ) : (
               <p className="text-4xl font-extrabold text-[#577C8E]">
-                ₱
-                {balance.toLocaleString("en-PH", {
-                  minimumFractionDigits: 2,
-                })}
+                ₱{balance.toLocaleString("en-PH", { minimumFractionDigits: 2 })}
               </p>
             )}
 
@@ -142,46 +131,30 @@ export default function WalletPage() {
           <ul className="divide-y">
             {loading ? (
               Array.from({ length: 10 }).map((_, i) => (
-                <li
-                  key={i}
-                  className="grid grid-cols-12 items-center px-8 py-5 bg-white"
-                >
+                <li key={i} className="grid grid-cols-12 items-center px-8 py-5 bg-white">
                   <div className="col-span-3 h-5 w-32 rounded bg-black/10" />
                   <div className="col-span-3 h-5 w-24 rounded bg-black/10" />
                   <div className="col-span-3 h-5 w-20 rounded bg-black/10 ml-auto" />
                   <div className="col-span-3 h-5 w-24 rounded bg-black/10 ml-auto" />
                 </li>
               ))
-            ) : transactions.length > 0 ? (
-              transactions.map((tx) => {
+            ) : currentData.length > 0 ? (
+              currentData.map((tx) => {
                 const ref = tx.reference_code ?? tx.transactions?.reference_code ?? "—";
                 const stat = tx.status ?? tx.transactions?.status ?? "—";
 
                 return (
-                  <li
-                    key={tx.id}
-                    className="grid grid-cols-12 items-center px-8 py-4 bg-white hover:bg-gray-50"
-                  >
+                  <li key={tx.id} className="grid grid-cols-12 items-center px-8 py-4 bg-white hover:bg-gray-50">
+                    <div className="col-span-4 text-sm text-gray-700 truncate">{ref}</div>
 
-                    {/* Reference Code */}
-                    <div className="col-span-4 text-sm text-gray-700 truncate text-left">
-                      {ref}
-                    </div>
-
-                    {/* Type */}
-                    <div className="col-span-3 text-sm text-gray-600 capitalize text-left">
+                    <div className="col-span-3 text-sm text-gray-600 capitalize">
                       {tx.type}
                     </div>
 
-                    {/* Amount */}
                     <div className="col-span-2 text-right text-gray-800 font-medium">
-                      ₱
-                      {tx.amount.toLocaleString("en-PH", {
-                        minimumFractionDigits: 2,
-                      })}
+                      ₱{tx.amount.toLocaleString("en-PH", { minimumFractionDigits: 2 })}
                     </div>
 
-                    {/* Status */}
                     <div className="col-span-2 text-center">
                       <span
                         className={`px-3 py-1 rounded-full text-xs font-semibold ${
@@ -198,7 +171,6 @@ export default function WalletPage() {
                       </span>
                     </div>
 
-                    {/* View Button */}
                     <div className="col-span-1 text-center">
                       <Button
                         variant="ghost"
@@ -221,6 +193,52 @@ export default function WalletPage() {
               </li>
             )}
           </ul>
+
+          {/* ⭐ PAGINATION */}
+          {!loading && transactions.length > 0 && (
+            <div className="py-6 flex justify-center">
+              <Pagination>
+                <PaginationContent className="flex gap-4">
+
+                  {/* Prev */}
+                  <PaginationItem>
+                    <PaginationPrevious
+                      className={`${page === 1 ? "opacity-50 pointer-events-none" : ""}`}
+                      onClick={() => page > 1 && setPage(page - 1)}
+                    />
+                  </PaginationItem>
+
+                  {/* Page Numbers */}
+                  {Array.from({ length: totalPages }).map((_, i) => {
+                    const p = i + 1;
+                    return (
+                      <PaginationItem
+                        key={p}
+                        className={`px-3 py-1 rounded-md cursor-pointer ${
+                          page === p
+                            ? "bg-primary text-primary-foreground"
+                            : "hover:bg-accent"
+                        }`}
+                        onClick={() => setPage(p)}
+                      >
+                        {p}
+                      </PaginationItem>
+                    );
+                  })}
+
+                  {/* Next */}
+                  <PaginationItem>
+                    <PaginationNext
+                      className={`${page === totalPages ? "opacity-50 pointer-events-none" : ""}`}
+                      onClick={() => page < totalPages && setPage(page + 1)}
+                    />
+                  </PaginationItem>
+
+                </PaginationContent>
+              </Pagination>
+            </div>
+          )}
+
         </CardContent>
       </Card>
 
@@ -229,7 +247,6 @@ export default function WalletPage() {
         onOpenChange={setSheetOpen}
         tx={selectedTx}
       />
-
     </div>
   );
 }
