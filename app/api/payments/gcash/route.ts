@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
   const body = await req.json();
-  const { amount, transactionId, conversationId, reference } = body;
+  const { amount, transactionId, conversationId, reference, totalPayment } = body;
 
   try {
     const response = await fetch("https://api.paymongo.com/v1/checkout_sessions", {
@@ -32,7 +32,7 @@ export async function POST(req: Request) {
             description: `Payment for transaction ${reference}`,
             reference_number: reference,
 
-            success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/payment/success?txn=${transactionId}&conv=${conversationId}`,
+            success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/payment/success?txn=${transactionId}&conv=${conversationId}&total=${totalPayment}`,
             cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/payment/cancel`,
           },
         },

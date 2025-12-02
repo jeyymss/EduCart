@@ -9,12 +9,17 @@ export default function PaymentSuccessPage() {
 
   const txnId = params.get("txn");
   const convId = params.get("conv");
+  const totalPayment = params.get("total"); 
 
   useEffect(() => {
     const confirm = async () => {
       await fetch("/api/payments/confirm", {
         method: "POST",
-        body: JSON.stringify({ txnId }),
+        body: JSON.stringify({
+          txnId,
+          convId,
+          totalPayment, 
+        }),
       });
 
       router.replace(`/messages/${convId}?paid=true`);

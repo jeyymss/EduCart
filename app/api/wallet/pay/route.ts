@@ -43,6 +43,7 @@ export async function POST(req: Request) {
     .update({
       status: "Paid",
       delivery_fee: deliveryFee ?? null,
+      payment_channel: "Wallet",
     })
     .eq("id", transactionId);
 

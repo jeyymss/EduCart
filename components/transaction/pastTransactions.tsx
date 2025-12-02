@@ -131,6 +131,7 @@ export default function PastTransactionDetails({
         transactionId: transaction_id,
         conversationId: conversation_id,
         reference: `TXN-${transaction_id}`,
+        totalPayment,
       }),
     });
 
