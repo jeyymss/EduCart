@@ -16,11 +16,18 @@ interface PaymentDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 
+  postType: string;
+
   itemTitle?: string;
   txnPrice?: number | string | null;
 
+  // SALE
   distanceKm: number | null;
-  deliveryFee: number | null;
+  deliveryFee?: number | null;
+
+  // RENT
+  rentDays?: number | null;
+
   totalPayment: number | null;
 
   paymentMethod: string;
@@ -39,10 +46,12 @@ interface PaymentDialogProps {
 export default function PaymentDialog({
   open,
   onOpenChange,
+  postType,
   itemTitle,
   txnPrice,
   distanceKm,
   deliveryFee,
+  rentDays,
   totalPayment,
   paymentMethod,
   setPaymentMethod,
@@ -55,6 +64,9 @@ export default function PaymentDialog({
 }: PaymentDialogProps) {
   const formatCurrency = (v?: number | string | null) =>
     v != null ? `₱${Number(v).toLocaleString()}` : "—";
+
+  const isRent = postType === "Rent";
+  const isSale = postType === "Sale";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -81,32 +93,49 @@ export default function PaymentDialog({
           </DialogDescription>
         </DialogHeader>
 
+        {/* PAYMENT SUMMARY */}
         <div className="p-4 border rounded-lg bg-gray-50 space-y-3">
           <p className="font-semibold text-lg">{itemTitle}</p>
 
+          {/* Price */}
           <div className="flex justify-between text-sm">
-            <span>Item Price</span>
+            <span>{isRent ? "Price per Day" : "Item Price"}</span>
             <span>{formatCurrency(txnPrice)}</span>
           </div>
 
-          <div className="flex justify-between text-sm">
-            <span>Delivery Fee</span>
-            <span>
-              {deliveryFee !== null
-                ? formatCurrency(deliveryFee)
-                : "Calculating..."}
-            </span>
-          </div>
+          {/* RENT: Duration */}
+          {isRent && (
+            <div className="flex justify-between text-sm">
+              <span>Duration of Rent</span>
+              <span>{rentDays} day(s)</span>
+            </div>
+          )}
 
-          <div className="flex justify-between text-sm">
-            <span>Distance</span>
-            <span>
-              {distanceKm !== null ? `${distanceKm.toFixed(2)} km` : "Computing..."}
-            </span>
-          </div>
+          {/* SALE: Delivery Fee & Distance */}
+          {isSale && (
+            <>
+              <div className="flex justify-between text-sm">
+                <span>Delivery Fee</span>
+                <span>
+                  {deliveryFee !== null
+                    ? formatCurrency(deliveryFee)
+                    : "Calculating..."}
+                </span>
+              </div>
 
+              <div className="flex justify-between text-sm">
+                <span>Distance</span>
+                <span>
+                  {distanceKm !== null
+                    ? `${Number(distanceKm).toFixed(2)} km`
+                    : "Computing..."}
+                </span>
+              </div>
+            </>
+          )}
+
+          {/* Total */}
           <hr />
-
           <div className="flex justify-between text-base font-semibold">
             <span>Total</span>
             <span className="text-blue-900">
@@ -115,6 +144,8 @@ export default function PaymentDialog({
           </div>
         </div>
 
+
+        {/* PAYMENT METHOD */}
         <div className="space-y-4 p-4 border rounded-xl bg-white">
           <h2 className="text-lg font-semibold">Payment Method</h2>
 
@@ -131,7 +162,9 @@ export default function PaymentDialog({
                 <Wallet width={28} height={28} />
                 <div>
                   <p className="font-medium text-base">Wallet</p>
-                  <p className="text-sm text-gray-500">₱ {balance.toLocaleString()}</p>
+                  <p className="text-sm text-gray-500">
+                    ₱ {balance.toLocaleString()}
+                  </p>
                 </div>
               </div>
               <RadioGroupItem value="wallet" className="h-5 w-5" />

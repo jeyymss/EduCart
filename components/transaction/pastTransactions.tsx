@@ -13,7 +13,7 @@ interface PastTransactionDetailsProps {
   currentUserRole: string;
   createdAt?: string;
   transaction_id: string;
-  conversation_id: string; // IMPORTANT!
+  conversation_id: string;
   txn: any;
 }
 
@@ -37,7 +37,22 @@ export default function PastTransactionDetails({
   const [isPaying, setIsPaying] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
 
-  // Detect successful payment redirect (?paid=true)
+  // ========================
+  // COMPUTE RENT DAYS
+  // ========================
+  const rentDays =
+    txn?.rent_start_date && txn?.rent_end_date
+      ? Math.max(
+          1,
+          Math.ceil(
+            (new Date(txn.rent_end_date).getTime() -
+              new Date(txn.rent_start_date).getTime()) /
+              (1000 * 60 * 60 * 24)
+          )
+        )
+      : null;
+
+  // Detect GCash redirect success
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("paid") === "true") {
@@ -48,7 +63,7 @@ export default function PastTransactionDetails({
     }
   }, []);
 
-  // Load wallet balance
+  // Load Wallet Balance
   useEffect(() => {
     async function load() {
       const res = await fetch("/api/wallet/get");
@@ -58,8 +73,22 @@ export default function PastTransactionDetails({
     load();
   }, []);
 
-  // Fetch delivery fee
+  // ========================
+  // COMPUTE TOTAL PAYMENT
+  // ========================
   useEffect(() => {
+    // RENT
+    if (postType === "Rent") {
+      if (!rentDays || !txn?.price) return;
+
+      const total = Number(txn.price) * rentDays;
+      setTotalPayment(total);
+      setDeliveryFee(null);
+      setDistanceKm(null);
+      return;
+    }
+
+    // SALE
     const fetchData = async () => {
       const supabase = createClient();
       const { data: post } = await supabase
@@ -86,18 +115,16 @@ export default function PastTransactionDetails({
     };
 
     fetchData();
-  }, [txn]);
+  }, [txn, postType, rentDays]);
 
   const insufficientBalance =
     paymentMethod === "wallet" &&
     totalPayment !== null &&
     balance < totalPayment;
 
-  // Wallet Payment
+  // WALLET PAYMENT
   const handleWalletPayment = async () => {
-    if (paymentMethod !== "wallet") return;
     if (!totalPayment) return;
-
     setIsPaying(true);
 
     const res = await fetch("/api/wallet/pay", {
@@ -107,6 +134,7 @@ export default function PastTransactionDetails({
         transactionId: transaction_id,
         amount: totalPayment,
         deliveryFee,
+        rentDays,
       }),
     });
 
@@ -119,7 +147,7 @@ export default function PastTransactionDetails({
     setTimeout(() => setShowPaymentDialog(false), 1500);
   };
 
-  // GCash Payment
+  // GCASH PAYMENT
   const handleGCashPayment = async () => {
     if (!totalPayment) return;
     setIsPaying(true);
@@ -132,6 +160,7 @@ export default function PastTransactionDetails({
         conversationId: conversation_id,
         reference: `TXN-${transaction_id}`,
         totalPayment,
+        rentDays,
       }),
     });
 
@@ -147,7 +176,9 @@ export default function PastTransactionDetails({
 
   return (
     <div className="border rounded-xl p-5 bg-white shadow-md transition-all">
-      <p className="font-semibold text-base mb-4 text-[#102E4A]">Transaction Form Completed</p>
+      <p className="font-semibold text-base mb-4 text-[#102E4A]">
+        Transaction Form Completed
+      </p>
 
       {txn.status === "Accepted" &&
         txn.payment_method === "Online Payment" &&
@@ -160,12 +191,14 @@ export default function PastTransactionDetails({
           >
             Pay Now
           </Button>
-      )}
+        )}
 
       {txn.status !== "Paid" && (
         <PaymentDialog
           open={showPaymentDialog}
           onOpenChange={setShowPaymentDialog}
+          postType={postType}
+          rentDays={rentDays}
           itemTitle={itemTitle}
           txnPrice={txn.price}
           distanceKm={distanceKm}
@@ -181,7 +214,6 @@ export default function PastTransactionDetails({
           successMsg={successMsg}
         />
       )}
-
     </div>
   );
 }
