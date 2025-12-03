@@ -578,7 +578,11 @@ export default function ChatClient({
                 <p>Add Attachment</p>
               </TooltipContent>
             </Tooltip>
-            {currentUserRole === "buyer" && (
+            
+            {(
+              (currentUserRole === "buyer" && postType !== "Giveaway") ||
+              (currentUserRole === "seller" && postType === "Giveaway")
+            ) && (
               <Tooltip>
                 <Dialog open={open} onOpenChange={setOpen}>
                   <TooltipTrigger asChild>
@@ -592,6 +596,7 @@ export default function ChatClient({
                       </button>
                     </DialogTrigger>
                   </TooltipTrigger>
+
                   <DialogContent
                     onOpenAutoFocus={(e) => e.preventDefault()}
                     onInteractOutside={(e) => e.preventDefault()}
@@ -615,6 +620,7 @@ export default function ChatClient({
                       <DialogDescription>Fill up form</DialogDescription>
                     </DialogHeader>
 
+                    {/* Your forms here */}
                     {postType === "Sale" && (
                       <SaleTransacForm
                         conversationId={conversationId}
@@ -692,11 +698,14 @@ export default function ChatClient({
                     )}
                   </DialogContent>
                 </Dialog>
+
                 <TooltipContent>
                   <p>Fill Up Form</p>
                 </TooltipContent>
               </Tooltip>
             )}
+
+
           </div>
 
           <input
