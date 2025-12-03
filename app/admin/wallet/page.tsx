@@ -7,6 +7,7 @@ import { FileCheck, FileX, Wallet } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { SquareArrowOutUpRight } from "lucide-react";
 import WalletTransactionSheet from "@/components/admin/wallet/wallet-transaction-sheet";
+import PlatformCashOutDialog from "@/components/admin/wallet/platform-cashout-dialog";
 
 import {
   Pagination,
@@ -40,6 +41,8 @@ export default function WalletPage() {
 
   const [sheetOpen, setSheetOpen] = useState(false);
   const [selectedTx, setSelectedTx] = useState<WalletTx | null>(null);
+
+  const [cashOutOpen, setCashOutOpen] = useState(false);
 
   
   const ITEMS_PER_PAGE = 10;
@@ -76,6 +79,7 @@ export default function WalletPage() {
       {/* Wallet Balance */}
       <Card className="border-none shadow-md rounded-2xl overflow-hidden">
         <CardContent className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 p-8 bg-white">
+          
           <div className="space-y-2 flex-1">
             <p className="text-lg font-semibold text-[#E59D2C]">
               Current Wallet Balance
@@ -94,16 +98,31 @@ export default function WalletPage() {
             </p>
           </div>
 
+          {/* Actions */}
           <div className="flex items-center gap-3">
+
+            {/* Change GCash Account */}
             <Button
               variant="outline"
               className="rounded-xl px-6 py-6 md:py-3 border border-[#E59D2C] text-[#E59D2C] hover:bg-gray-50 shadow-sm"
             >
               Change GCash Account
             </Button>
+
+            {/* NEW: Admin Cash Out */}
+            <Button
+              className="rounded-xl px-6 py-6 md:py-3 bg-[#577C8E] text-white hover:bg-[#456273] shadow-sm hover:shadow-md transition-all"
+              onClick={() => setCashOutOpen(true)}
+            >
+              Cash Out
+            </Button>
+
+
           </div>
+
         </CardContent>
       </Card>
+
 
       {/* Transactions Table */}
       <Card className="border-none shadow-md rounded-2xl overflow-hidden">
@@ -152,8 +171,13 @@ export default function WalletPage() {
                     </div>
 
                     <div className="col-span-2 text-right text-gray-800 font-medium">
-                      ₱{tx.amount.toLocaleString("en-PH", { minimumFractionDigits: 2 })}
+                      {tx.amount < 0 ? (
+                        <>-₱{Math.abs(tx.amount).toLocaleString("en-PH", { minimumFractionDigits: 2 })}</>
+                      ) : (
+                        <>₱{tx.amount.toLocaleString("en-PH", { minimumFractionDigits: 2 })}</>
+                      )}
                     </div>
+
 
                     <div className="col-span-2 text-center">
                       <span
@@ -247,6 +271,13 @@ export default function WalletPage() {
         onOpenChange={setSheetOpen}
         tx={selectedTx}
       />
+
+      <PlatformCashOutDialog
+        open={cashOutOpen}
+        onOpenChange={setCashOutOpen}
+        currentBalance={balance ?? 0}
+      />
+
     </div>
   );
 }
