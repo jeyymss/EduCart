@@ -19,7 +19,16 @@ const poppins = Poppins({
 export const metadata: Metadata = {
   title: "Educart",
   description: "Marketplace for Universities",
+  icons: {
+    icon: [
+      { url: "/icon.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: "/icon.png",
+  },
 };
+
+
 
 export default function RootLayout({
   children,

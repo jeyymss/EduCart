@@ -11,6 +11,7 @@ export default function IndividualCreditsPage() {
   const supabase = createClient();
 
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null); // ✅ NEW
   const [walletBalance, setWalletBalance] = useState(0);
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -25,14 +26,15 @@ export default function IndividualCreditsPage() {
       const session = data.session;
 
       if (session?.user?.email) setUserEmail(session.user.email);
+      if (session?.user?.id) setUserId(session.user.id); // ✅ store userId
 
-      const userId = session?.user?.id;
+      const id = session?.user?.id;
 
-      if (userId) {
+      if (id) {
         const { data: w } = await supabase
           .from("wallets")
           .select("current_balance")
-          .eq("user_id", userId)
+          .eq("user_id", id)
           .single();
 
         if (w?.current_balance != null) setWalletBalance(w.current_balance);
@@ -46,19 +48,17 @@ export default function IndividualCreditsPage() {
   // WALLET PAYMENT FOR CREDITS
   // =======================
   const handleWalletPayment = async () => {
-    if (!selectedPkg || !userEmail) return;
+    if (!selectedPkg || !userId) return;
 
     setIsProcessing(true);
 
     const res = await fetch("/api/credits/pay", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        email: userEmail,
+        userId, 
         credits: selectedPkg.credits,
-        amount: selectedPkg.price,
+        price: selectedPkg.price, 
       }),
     });
 
@@ -89,10 +89,7 @@ export default function IndividualCreditsPage() {
       }),
     });
 
-
-
     const json = await res.json();
-
     setIsProcessing(false);
 
     if (json.checkout_url) {
@@ -149,32 +146,32 @@ export default function IndividualCreditsPage() {
     },
   ];
 
-    const faqs = [
-      {
-        q: "What are posting credits?",
-        a: "Posting credits allow you to post items for sale, rent, trade, emergency lending, or pasabuy on our platform. Each credit equals one listing, regardless of the type.",
-      },
-      {
-        q: "How many free posting credits do I get?",
-        a: "Normal users receive 3 free posting credits every month, while businesses and organizations receive 5 free credits monthly.",
-      },
-      {
-        q: "Do unused free credits roll over to the next month?",
-        a: "No, unused free posting credits do not carry over to the next month.",
-      },
-      {
-        q: "Do purchased credits expire?",
-        a: "Yes, purchased credits expire 30 days after purchase. Make sure to use them within this timeframe.",
-      },
-      {
-        q: "Can I get a refund for unused credits?",
-        a: "Strictly no refunds are issued for purchased credits. However, they remain in your account until used.",
-      },
-    ];
+  const faqs = [
+    {
+      q: "What are posting credits?",
+      a: "Posting credits allow you to post items for sale, rent, trade, emergency lending, or pasabuy on our platform. Each credit equals one listing, regardless of the type.",
+    },
+    {
+      q: "How many free posting credits do I get?",
+      a: "Normal users receive 3 free posting credits every month, while businesses and organizations receive 5 free credits monthly.",
+    },
+    {
+      q: "Do unused free credits roll over to the next month?",
+      a: "No, unused free posting credits do not carry over to the next month.",
+    },
+    {
+      q: "Do purchased credits expire?",
+      a: "Yes, purchased credits expire 30 days after purchase. Make sure to use them within this timeframe.",
+    },
+    {
+      q: "Can I get a refund for unused credits?",
+      a: "Strictly no refunds are issued for purchased credits. However, they remain in your account until used.",
+    },
+  ];
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
-      {/* Header */}
+      {/* HEADER */}
       <header className="bg-white border-b">
         <div className="max-w-5xl mx-auto px-4 py-4 flex">
           <Button

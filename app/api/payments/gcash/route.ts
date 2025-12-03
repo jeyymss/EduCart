@@ -32,8 +32,8 @@ export async function POST(req: Request) {
             description: `Payment for transaction ${reference}`,
             reference_number: reference,
 
-            success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/payment/success?txn=${transactionId}&conv=${conversationId}&total=${totalPayment}`,
-            cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/payment/cancel`,
+            success_url: `${process.env.NEXT_PUBLIC_BASE_URL || process.env.VERCEL_URL}/payment/success?txn=${transactionId}&conv=${conversationId}&total=${totalPayment}`,
+            cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL || process.env.VERCEL_URL}/payment/cancel`,
           },
         },
       }),

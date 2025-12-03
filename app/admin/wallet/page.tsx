@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { FileCheck, FileX, Wallet } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { SquareArrowOutUpRight } from "lucide-react";
-import WalletTransactionSheet from "@/components/wallet/wallet-transaction-sheet";
+import WalletTransactionSheet from "@/components/admin/wallet/wallet-transaction-sheet";
 
 import {
   Pagination,
@@ -16,7 +16,7 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 
-// Updated WalletTx type
+
 type WalletTx = {
   id: number;
   amount: number;
@@ -41,7 +41,7 @@ export default function WalletPage() {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [selectedTx, setSelectedTx] = useState<WalletTx | null>(null);
 
-  // 👉 Pagination states
+  
   const ITEMS_PER_PAGE = 10;
   const [page, setPage] = useState(1);
 
@@ -194,7 +194,7 @@ export default function WalletPage() {
             )}
           </ul>
 
-          {/* ⭐ PAGINATION */}
+          {/* PAGINATION */}
           {!loading && transactions.length > 0 && (
             <div className="py-6 flex justify-center">
               <Pagination>
