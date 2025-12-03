@@ -1,15 +1,22 @@
 "use client";
 
-import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { useState, useEffect } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { createClient } from "@/utils/supabase/client";
 
 interface CashOutDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  availableBalance: number; 
+  availableBalance: number;
 }
 
 export default function CashOutDialog({
@@ -20,29 +27,56 @@ export default function CashOutDialog({
   const [amount, setAmount] = useState("");
   const [gcashNumber, setGcashNumber] = useState("");
   const [loading, setLoading] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
 
-  const fee = amount ? Math.max(10, Number(amount) * 0.02) : 0; 
-  const total = Number(amount) + fee;
+  // Load logged-in userId
+  useEffect(() => {
+    const loadUser = async () => {
+      const supabase = createClient();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      setUserId(session?.user?.id ?? null);
+    };
+    loadUser();
+  }, []);
+
+  const validateGCash = (num: string) => /^09\d{9}$/.test(num);
 
   const handleCashOut = async () => {
+    if (!userId) return alert("User not logged in.");
     if (!amount || !gcashNumber) return alert("Please fill all fields.");
 
     if (Number(amount) > availableBalance)
       return alert("Insufficient wallet balance.");
 
+    if (!validateGCash(gcashNumber))
+      return alert("Please enter a valid GCash number (09xxxxxxxxx).");
+
     setLoading(true);
 
-    // 🔧 BACKEND API (to be implemented)
-    // await fetch("/api/wallet/cashout", {
-    //   method: "POST",
-    //   body: JSON.stringify({ amount, gcashNumber }),
-    // });
+    const res = await fetch("/api/wallet/cashout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        userId,
+        amount: Number(amount),
+        gcash_number: gcashNumber,
+      }),
+    });
 
-    setTimeout(() => {
-      setLoading(false);
-      alert("Cash Out request submitted!");
-      onOpenChange(false);
-    }, 1200);
+    const json = await res.json();
+    setLoading(false);
+
+    if (json.error) {
+      alert(json.error);
+      return;
+    }
+
+    alert("Cash Out request submitted!");
+    onOpenChange(false);
+    setAmount("");
+    setGcashNumber("");
   };
 
   return (
@@ -55,11 +89,12 @@ export default function CashOutDialog({
         </DialogHeader>
 
         <div className="space-y-4 mt-4">
-          {/* AMOUNT */}
+          {/* AMOUNT INPUT */}
           <div>
             <Label>Amount to Withdraw</Label>
             <Input
               type="number"
+              min="1"
               placeholder="Enter amount"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
@@ -75,27 +110,18 @@ export default function CashOutDialog({
             <Input
               type="tel"
               placeholder="09xxxxxxxxx"
+              maxLength={11}
               value={gcashNumber}
               onChange={(e) => setGcashNumber(e.target.value)}
             />
           </div>
 
-          {/* FEE BREAKDOWN */}
+          {/* SUMMARY */}
           {amount && (
             <div className="bg-gray-100 p-3 rounded-lg text-sm">
-              <div className="flex justify-between">
-                <span>Withdrawal Amount:</span>
-                <span>₱{Number(amount).toLocaleString()}</span>
-              </div>
-
-              <div className="flex justify-between">
-                <span>Service Fee:</span>
-                <span>₱{fee.toFixed(2)}</span>
-              </div>
-
-              <div className="flex justify-between font-semibold mt-2">
+              <div className="flex justify-between font-semibold">
                 <span>Total Deducted:</span>
-                <span>₱{total.toFixed(2)}</span>
+                <span>₱{Number(amount).toLocaleString()}</span>
               </div>
             </div>
           )}
@@ -105,7 +131,7 @@ export default function CashOutDialog({
           <Button
             className="bg-[#E59E2C] text-white px-6 py-2 rounded-lg"
             onClick={handleCashOut}
-            disabled={loading || Number(amount) <= 0}
+            disabled={loading || Number(amount) <= 0 || !userId}
           >
             {loading ? "Processing..." : "Confirm Cash Out"}
           </Button>
