@@ -17,6 +17,7 @@ import { Heart, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { getRelativeTime } from "@/utils/getRelativeTime";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useUserProfile } from "@/hooks/useUserProfile";
+import CommentItem from "../giveawayPost/comment-item";
 
 /* Full-screen modal portal */
 function Portal({ children }: { children: React.ReactNode }) {
@@ -93,7 +94,6 @@ export function GiveawayPostCard({ post }: { post: GiveawayPost }) {
     };
   }, [isModalOpen, goPrev, goNext]);
 
-  // show 1 comment by default
   const visibleComments = showAllComments ? comments || [] : (comments || []).slice(0, 1);
   const hasMoreThanOne = (comments?.length || 0) > 1;
 
@@ -188,7 +188,12 @@ export function GiveawayPostCard({ post }: { post: GiveawayPost }) {
       {/* Comments */}
       <div className="px-4 py-2">
         {visibleComments.map((c) => (
-          <CommentItem key={c.id} comment={c} postId={post.id} />
+          <CommentItem
+            key={c.id}
+            comment={c}
+            postId={post.id}
+            sellerId={post.post_user_id}   
+          />
         ))}
 
         {!showAllComments && hasMoreThanOne && (
@@ -268,7 +273,6 @@ function ModalWithResponsiveGestures({
   goNext: () => void;
   count: number;
 }) {
-  // Strong scroll lock 
   useEffect(() => {
     const scrollY = window.scrollY || document.documentElement.scrollTop;
     const { style } = document.body;
@@ -291,7 +295,6 @@ function ModalWithResponsiveGestures({
     };
   }, []);
 
-  // swipe 
   const startX = useRef<number | null>(null);
   const startY = useRef<number | null>(null);
   const lastX = useRef<number>(0);
@@ -300,9 +303,9 @@ function ModalWithResponsiveGestures({
   const isSwiping = useRef(false);
   const imgWrapRef = useRef<HTMLDivElement | null>(null);
 
-  const TOUCH_THRESHOLD = 30; 
-  const ANGLE_LOCK = 25; 
-  const FLICK_VELOCITY = 0.45; 
+  const TOUCH_THRESHOLD = 30;
+  const ANGLE_LOCK = 25;
+  const FLICK_VELOCITY = 0.45;
 
   const setTranslate = (x: number, withTransition = false) => {
     if (!imgWrapRef.current) return;
@@ -331,16 +334,17 @@ function ModalWithResponsiveGestures({
     if (angle < ANGLE_LOCK || angle > 180 - ANGLE_LOCK) {
       isSwiping.current = true;
       deltaX.current = dx;
-      setTranslate(dx * 0.15, false); 
+      setTranslate(dx * 0.15, false);
       lastX.current = t.clientX;
       lastT.current = e.timeStamp;
-      e.preventDefault(); 
+      e.preventDefault();
     }
   };
 
   const onTouchEnd = (e: React.TouchEvent) => {
     const dt = Math.max(1, e.timeStamp - lastT.current);
-    const vx = (lastX.current - (startX.current ?? lastX.current)) / dt; // px/ms
+    const vx = (lastX.current - (startX.current ?? lastX.current)) / dt;
+
     const shouldFlickNext = vx < -FLICK_VELOCITY;
     const shouldFlickPrev = vx > FLICK_VELOCITY;
 
@@ -367,7 +371,7 @@ function ModalWithResponsiveGestures({
   return (
     <div
       className="fixed inset-0 z-[9999] bg-black/80 flex items-center justify-center"
-      onClick={onClose} 
+      onClick={onClose}
     >
       <div
         className="relative w-full h-full flex items-center justify-center p-4 md:p-8"
@@ -396,7 +400,6 @@ function ModalWithResponsiveGestures({
             )}
           </div>
 
-          {/* Arrows outside image ; hidden on mobile */}
           {count > 1 && (
             <>
               <button
@@ -416,7 +419,6 @@ function ModalWithResponsiveGestures({
             </>
           )}
 
-          {/* Close button */}
           <button
             className="absolute right-2 top-2 md:-top-4 md:-right-14 bg-white/95 hover:bg-white rounded-full p-2 shadow"
             onClick={onClose}
@@ -430,83 +432,4 @@ function ModalWithResponsiveGestures({
   );
 }
 
-/* Comment Component */
-function CommentItem({ comment, postId }: { comment: GiveawayComment; postId: string }) {
-  const [showReply, setShowReply] = useState(false);
-  const [replyText, setReplyText] = useState("");
-  const [showReplies, setShowReplies] = useState(false);
-  const addComment = useAddGiveawayComment(postId);
 
-  const handleReply = () => {
-    if (!replyText.trim()) return;
-    addComment.mutate({ body: replyText, parentId: comment.id });
-    setReplyText("");
-    setShowReply(false);
-  };
-
-  return (
-    <div className="flex items-start gap-2 py-2">
-      <Avatar>
-        <AvatarImage src={comment.avatar_url || ""} />
-        <AvatarFallback>{comment.full_name?.[0]}</AvatarFallback>
-      </Avatar>
-      <div className="flex-1">
-        <p className="text-sm font-medium">{comment.full_name}</p>
-        <p className="text-sm text-gray-700">{comment.content}</p>
-        <p className="text-xs text-gray-500">{getRelativeTime(comment.created_at)}</p>
-
-        <div className="flex gap-3 mt-1 text-xs text-gray-600">
-          <button onClick={() => setShowReply(!showReply)}>
-            {showReply ? "Cancel" : "Reply"}
-          </button>
-        </div>
-
-        {showReply && (
-          <div className="mt-2 flex gap-2">
-            <input
-              value={replyText}
-              onChange={(e) => setReplyText(e.target.value)}
-              className="border rounded px-2 py-1 text-sm flex-1"
-              placeholder="Write a reply..."
-            />
-            <button
-              onClick={handleReply}
-              disabled={addComment.isPending || !replyText.trim()}
-              className="text-sm px-3 py-1 rounded bg-[#F3D58D] hover:bg-[#E8C26A] text-[#102E4A]"
-            >
-              Post
-            </button>
-          </div>
-        )}
-
-        {/* replies */}
-        {comment.replies?.length > 0 && (
-          <div className="ml-8 mt-2 border-l pl-3">
-            {!showReplies && (
-              <button
-                onClick={() => setShowReplies(true)}
-                className="text-sm text-[#102E4A] hover:underline mt-1"
-              >
-                View {comment.replies.length}{" "}
-                {comment.replies.length > 1 ? "replies" : "reply"}
-              </button>
-            )}
-            {showReplies && (
-              <>
-                {comment.replies.map((r) => (
-                  <CommentItem key={r.id} comment={r} postId={postId} />
-                ))}
-                <button
-                  onClick={() => setShowReplies(false)}
-                  className="text-sm text-[#102E4A] hover:underline mt-1"
-                >
-                  Hide replies
-                </button>
-              </>
-            )}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
