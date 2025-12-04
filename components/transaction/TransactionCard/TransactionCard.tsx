@@ -55,6 +55,7 @@ export default function TransactionCard({
 }: TransactionCardProps) {
   const [sellerId, setSellerId] = useState(null);
   const [buyerId, setBuyerId] = useState(null);
+  const [paymentMethod, setPaymentMethod] = useState<string | null>(null);
   const [openReview, setOpenReview] = useState(false);
   const supabase = createClient();
 
@@ -63,7 +64,7 @@ export default function TransactionCard({
   // Determine label
   function resolveActionLabel() {
     const clean = postType?.toLowerCase();
-    if (clean === "sale") return computeSaleActionLabel(type, status);
+    if (clean === "sale") return computeSaleActionLabel(type, status, paymentMethod ?? undefined);
     if (clean === "rent") return computeRentActionLabel(type, status);
     return "";
   }
@@ -75,12 +76,13 @@ export default function TransactionCard({
     const load = async () => {
       const { data } = await supabase
         .from("transactions")
-        .select("buyer_id, seller_id")
+        .select("buyer_id, seller_id, payment_method")
         .eq("id", transactionId)
         .single();
 
       setBuyerId(data?.buyer_id);
       setSellerId(data?.seller_id);
+      setPaymentMethod(data?.payment_method);
     };
     load();
   }, []);

@@ -62,9 +62,14 @@ export default function SaleActions({
 
     if (action === "Order Received")
       return updateSaleStatus("Completed", "Transaction completed.");
+
+    // NEW: CASH ON HAND → Buyer marks as completed
+    if (action === "Item Received")
+      return updateSaleStatus("Completed", "Transaction completed.");
   };
 
-  const disabledStates = ["Waiting for Delivery", "On Hold", "Completed", "Cancelled"];
+
+  const disabledStates = ["Waiting for Confirmation", "On Hold", "Completed", "Cancelled"];
 
   if (disabledStates.includes(action)) {
     return (
@@ -94,6 +99,9 @@ export default function SaleActions({
         <AlertDialogHeader>
           <AlertDialogTitle>{action}</AlertDialogTitle>
           <AlertDialogDescription>
+            {action === "Item Received" &&
+              "Confirm that you have received the item. This will complete the transaction."}
+
             {action === "Order Picked Up" &&
               "Confirm that the buyer or courier picked up the order."}
 
