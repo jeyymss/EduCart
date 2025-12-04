@@ -27,21 +27,21 @@ export type UserPost = {
   status: "Listed" | "Sold" | "Unlisted";
 
   item_description?: string | null;
-  item_trade?: string | null;          
+  item_trade?: string | null;
   item_service_fee?: number | null;
   item_pasabuy_location?: string | null;
   item_pasabuy_cutoff?: string | null;
-  quantity?: number | null;            
+  quantity?: number | null;
 
   university_abbreviation?: string | null;
   role?: string | null;
   post_user_id?: string;
 };
 
-
 type UserPostsProps = {
   userId: string;
   status?: "Listed" | "Sold" | "Unlisted";
+  excludeSold?: boolean; // ⭐ Added
   postType?: string | null;
   search?: string;
   filters?: Partial<AdvancedFilterValue>;
@@ -81,6 +81,7 @@ function byTime(a: UserPost, b: UserPost, dir: "newest" | "oldest") {
 export function UserPosts({
   userId,
   status,
+  excludeSold = false, // ⭐ default false
   postType,
   search,
   filters = {},
@@ -125,7 +126,8 @@ export function UserPosts({
       ? [postType]
       : null;
 
-  const filtered = posts.filter((item: UserPost) => {
+  // FIRST FILTER LAYER
+  let filtered = posts.filter((item: UserPost) => {
     const matchesPostType = allowedPostTypes
       ? allowedPostTypes.includes(item.post_type_name ?? "")
       : true;
@@ -154,6 +156,11 @@ export function UserPosts({
 
     return matchesPostType && matchesSearch && matchesAdv;
   });
+
+  // ⭐ EXCLUDE SOLD — applies ONLY for ALL tab
+  if (excludeSold) {
+    filtered = filtered.filter((p: any) => p.status !== "Sold");
+  }
 
   if (filtered.length === 0) {
     return (
