@@ -9,7 +9,7 @@ export async function TradeTransaction(
   itemPrice: number | null,
   itemTitle: string | null,
   selectedType: string,
-  selectPayment: string,
+  selectPayment: string | null,
   sellerId: string,
   post_id: string,
   postType: string
@@ -17,7 +17,6 @@ export async function TradeTransaction(
   return await withErrorHandling(async () => {
     const supabase = await createClient();
 
-    //get user session
     const {
       data: { session },
     } = await supabase.auth.getSession();
@@ -25,19 +24,20 @@ export async function TradeTransaction(
     if (!session) throw new Error("User not authenticated");
     if (!session.user.email) return { error: "User email is missing." };
 
-    //set user id
-    const userID = session.user.id
-
+    const userID = session.user.id;
     if (!userID) return { error: "User ID is missing." };
 
-    // Get values from the form
-    const cashAdded = formData.get("cashAdded") as number | null;
+    // Read form values
+    let cashAddedRaw = formData.get("cashAdded");
+    let cashAdded =
+      cashAddedRaw && cashAddedRaw !== "" ? Number(cashAddedRaw) : 0;
+
     const offeredItem = formData.get("offeredItem") as string;
     const inputDate = formData.get("inputDate") as string;
     const inputTime = formData.get("inputTime") as string;
     const location = formData.get("inputLocation") as string | null;
 
-    // Fetch post_type id
+    // Fetch post_type ID
     const { data: post_type } = await supabase
       .from("post_types")
       .select("id")
@@ -48,11 +48,28 @@ export async function TradeTransaction(
       return { error: "Preferred method is required." };
     }
 
-    if (!selectPayment) {
-      return { error: "Payment method is required." };
+    // 🔥 FIX PAYMENT METHOD RULES FOR TRADE 🔥
+
+    // Case 1: Trade WITHOUT price → MUST NOT have payment_method
+    if (postType === "Trade" && (!itemPrice || Number(itemPrice) === 0)) {
+      selectPayment = null;
     }
 
-    // ✅ Insert transaction and RETURN id
+    // Case 2: Trade WITH price → MUST have payment_method
+    if (postType === "Trade" && itemPrice && Number(itemPrice) > 0) {
+      if (!selectPayment || selectPayment.trim() === "") {
+        return {
+          error: "Payment method is required when trade includes additional cash.",
+        };
+      }
+    }
+
+    // Clean empty string
+    if (selectPayment === "" || selectPayment === undefined) {
+      selectPayment = null;
+    }
+
+    // INSERT TRANSACTION
     const { data: insertedTransaction, error: insertError } = await supabase
       .from("transactions")
       .insert([
@@ -67,28 +84,26 @@ export async function TradeTransaction(
           item_title: itemTitle,
           price: itemPrice,
           fulfillment_method: selectedType,
-          payment_method: selectPayment,
+          payment_method: selectPayment, // <-- NOW FIXED
           meetup_location: location,
           meetup_date: inputDate || null,
           meetup_time: inputTime || null,
           status: "Pending",
         },
       ])
-      .select("id") // 👈 return the transaction ID
+      .select("id")
       .single();
 
     if (insertError) {
       console.error("Insert Failed:", insertError);
-      return {
-        error: insertError.message,
-      };
+      return { error: insertError.message };
     }
 
-    // ✅ Insert system message linked to this transaction
+    // SYSTEM MESSAGE
     const { error: messageError } = await supabase.from("messages").insert([
       {
         conversation_id: conversationId,
-        sender_user_id: userID, // buyer is sender
+        sender_user_id: userID,
         transaction_id: insertedTransaction.id,
         type: "system",
         body: "Transaction Created",

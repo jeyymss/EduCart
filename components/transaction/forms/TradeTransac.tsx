@@ -46,7 +46,17 @@ export default function TradeTransacForm({
 
     const handleValidation = () => {
       const formValid = form?.checkValidity() ?? false;
-      const isValid = formValid && selectPayment !== "" && selectedType !== "";
+
+      // NEW RULE: Offered Item must not be empty
+      const offeredItemValue =
+        form?.querySelector<HTMLInputElement>("input[name='offeredItem']")
+          ?.value ?? "";
+
+      const isOfferedItemValid = offeredItemValue.trim() !== "";
+
+      const isValid =
+        formValid && selectedType !== "" && isOfferedItemValid;
+
       setIsFormValid(isValid);
     };
 
@@ -83,6 +93,7 @@ export default function TradeTransacForm({
         postType
       );
 
+
       setLoading(false);
       if (result?.error) {
         setError(result.error);
@@ -95,18 +106,33 @@ export default function TradeTransacForm({
     }
   };
 
+  const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000)
+    .toISOString()
+    .split("T")[0];
+
   return (
     <form className="space-y-3" ref={formRef} onSubmit={handleSubmit}>
       <Label>Item</Label>
-      <Input
-        value={`${itemTitle} for ₱${itemPrice} + ${itemTrade}`}
-        disabled
-        name="itemTitle"
-      />
+
+      {itemPrice !== null ? (
+        <Input
+          value={`${itemTitle} for ₱${itemPrice} + ${itemTrade}`}
+          disabled
+          name="itemTitle"
+        />
+      ) : (
+        <Input
+          value={`${itemTitle} for ${itemTrade}`}
+          disabled
+          name="itemTitle"
+        />
+      )}
 
       <Label>Price ₱ </Label>
       <Input
-        value={itemPrice ? `${itemPrice.toLocaleString()}` : "No additional Cash"}
+        value={
+          itemPrice ? `${itemPrice.toLocaleString()}` : "No additional Cash"
+        }
         disabled
         readOnly
       />
@@ -115,7 +141,11 @@ export default function TradeTransacForm({
       <Input type="number" placeholder="0.00" name="cashAdded" />
 
       <Label>Offered Item</Label>
-      <Input placeholder="Add your offered item" name="offeredItem" />
+      <Input
+        placeholder="Add your offered item"
+        name="offeredItem"
+        required // So browser validation works too
+      />
 
       <Label>Preferred Method</Label>
       <Select value={selectedType} onValueChange={setSelectedType}>
@@ -124,7 +154,6 @@ export default function TradeTransacForm({
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="Meetup">Meetup</SelectItem>
-          <SelectItem value="Delivery">Delivery</SelectItem>
         </SelectContent>
       </Select>
 
@@ -141,6 +170,7 @@ export default function TradeTransacForm({
                 type="date"
                 id="date"
                 className="w-full"
+                min={tomorrow}
                 name="inputDate"
               />
             </div>
@@ -152,16 +182,20 @@ export default function TradeTransacForm({
         </div>
       )}
 
-      <Label>Payment Method</Label>
-      <Select value={selectPayment} onValueChange={setSelectPayment}>
-        <SelectTrigger className="w-full">
-          <SelectValue placeholder="Select Payment Method" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="Cash on Hand">Cash on Hand</SelectItem>
-          <SelectItem value="Online Payment">Online Payment</SelectItem>
-        </SelectContent>
-      </Select>
+      {itemPrice !== null && itemPrice > 0 && (
+        <>
+          <Label>Payment Method</Label>
+          <Select value={selectPayment} onValueChange={setSelectPayment}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select Payment Method" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Cash on Hand">Cash on Hand</SelectItem>
+              <SelectItem value="Online Payment">Online Payment</SelectItem>
+            </SelectContent>
+          </Select>
+        </>
+      )}
 
       {error && <p className="text-sm text-red-600 text-center">{error}</p>}
 
