@@ -28,6 +28,8 @@ interface PaymentDialogProps {
   // RENT
   rentDays?: number | null;
 
+  cash_added: number | null;
+
   totalPayment: number | null;
 
   fulfillmentMethod: string; // "Delivery" | "Meetup"
@@ -54,6 +56,7 @@ export default function PaymentDialog({
   distanceKm,
   deliveryFee,
   rentDays,
+  cash_added,
   totalPayment,
   fulfillmentMethod,
   paymentMethod,
@@ -70,10 +73,18 @@ export default function PaymentDialog({
 
   const isRent = postType === "Rent";
   const isSale = postType === "Sale";
+  const isTrade = postType === "Trade";
 
-  const isDelivery = fulfillmentMethod === "Delivery";
-  const isMeetup = fulfillmentMethod === "Meetup";
+  const isDelivery =
+    fulfillmentMethod === "Delivery" && !isTrade; 
 
+  const isMeetup =
+    fulfillmentMethod === "Meetup" || isTrade; 
+
+
+  if (postType === "Trade") {
+    totalPayment = cash_added ?? 0;
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -106,7 +117,7 @@ export default function PaymentDialog({
 
           {/* Price */}
           <div className="flex justify-between text-sm">
-            <span>{isRent ? "Price per Day" : "Item Price"}</span>
+            <span>{isRent ? "Price per Day" : isTrade ? "Trade Value" : "Item Price"}</span>
             <span>{formatCurrency(txnPrice)}</span>
           </div>
 
@@ -119,7 +130,7 @@ export default function PaymentDialog({
           )}
 
           {/* SALE: Delivery Fee & Distance */}
-          {isSale && isDelivery && (
+          {isSale && isDelivery && !isTrade && (
             <>
               <div className="flex justify-between text-sm">
                 <span>Delivery Fee</span>
@@ -151,17 +162,20 @@ export default function PaymentDialog({
 
           {/* Total */}
           <hr />
-          <div className="flex justify-between text-base font-semibold">
-            <span>Total</span>
+            <div className="flex justify-between text-base font-semibold">
+              <span>Total</span>
 
-            <span className="text-blue-900">
-              {isSale && isMeetup
-                ? formatCurrency(txnPrice) 
-                : totalPayment !== null
-                  ? formatCurrency(totalPayment)
-                  : "—"}
-            </span>
-          </div>
+              <span className="text-blue-900">
+                {isTrade
+                  ? formatCurrency(totalPayment)    
+                  : isSale && isMeetup
+                    ? formatCurrency(txnPrice)
+                    : totalPayment !== null
+                      ? formatCurrency(totalPayment)
+                      : "—"}
+              </span>
+            </div>
+
 
         </div>
 

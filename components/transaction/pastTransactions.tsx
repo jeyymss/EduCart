@@ -88,6 +88,18 @@ export default function PastTransactionDetails({
       return;
     }
 
+    // ========================
+    // TRADE (cash only)
+    // ========================
+    if (postType === "Trade") {
+      const total = Number(txn.cash_added ?? 0);
+      setTotalPayment(total);
+      setDeliveryFee(null);
+      setDistanceKm(null);
+      return;
+    }
+
+
     // ======================
     // SALE + MEETUP
     // ======================
@@ -137,7 +149,8 @@ export default function PastTransactionDetails({
 
   // WALLET PAYMENT
   const handleWalletPayment = async () => {
-    if (!totalPayment) return;
+    if (totalPayment === null) return;
+
     setIsPaying(true);
 
     const res = await fetch("/api/wallet/pay", {
@@ -158,11 +171,14 @@ export default function PastTransactionDetails({
 
     setSuccessMsg("Payment successful!");
     setTimeout(() => setShowPaymentDialog(false), 1500);
+
+    window.location.reload();
   };
 
   // GCASH PAYMENT
   const handleGCashPayment = async () => {
-    if (!totalPayment) return;
+    if (totalPayment === null) return;
+
     setIsPaying(true);
 
     const res = await fetch("/api/payments/gcash", {
@@ -213,6 +229,7 @@ export default function PastTransactionDetails({
           onOpenChange={setShowPaymentDialog}
           postType={postType}
           rentDays={rentDays}
+          cash_added={txn.cash_added}
           itemTitle={itemTitle}
           txnPrice={txn.price}
           distanceKm={distanceKm}

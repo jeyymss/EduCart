@@ -52,6 +52,8 @@ export default function TradeActions({
 
       toast.success(successMsg);
       onPrimary?.(transactionId);
+
+      window.location.reload();
     } catch (e) {
       toast.error("Failed to update transaction.");
     } finally {
@@ -90,6 +92,7 @@ export default function TradeActions({
   // ================================
   const disabledStates = [
     "Waiting for Buyer",
+    "Waiting for Seller",
     "Waiting for Confirmation",
     "Waiting for Payment",
     "On Hold",

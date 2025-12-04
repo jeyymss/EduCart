@@ -34,10 +34,6 @@ export function TradeForm({ selectedType, onClose }: FormProps) {
   const [condition, setCondition] = useState<string>("");
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
-  // Pickup
-  const [pickupLat, setPickupLat] = useState<number | null>(null);
-  const [pickupLng, setPickupLng] = useState<number | null>(null);
-  const [pickupAddress, setPickupAddress] = useState("");
 
   const formRef = useRef<HTMLFormElement | null>(null);
   const [isFormValid, setIsFormValid] = useState(false);
@@ -53,8 +49,7 @@ export function TradeForm({ selectedType, onClose }: FormProps) {
         (form?.checkValidity() ?? false) &&
         selectedFiles.length > 0 &&
         selectedCategory !== "" &&
-        condition !== "" &&
-        pickupAddress !== "";
+        condition !== "";
 
       setIsFormValid(valid);
     };
@@ -62,7 +57,7 @@ export function TradeForm({ selectedType, onClose }: FormProps) {
     form?.addEventListener("input", validate);
     validate();
     return () => form?.removeEventListener("input", validate);
-  }, [selectedFiles, condition, selectedCategory, pickupAddress]);
+  }, [selectedFiles, condition, selectedCategory]);
 
   /* SUBMIT */
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -226,47 +221,6 @@ export function TradeForm({ selectedType, onClose }: FormProps) {
               setSelectedFiles={setSelectedFiles}
             />
           </div>
-        </div>
-
-        {/* Pickup Location */}
-        <div>
-          <div className="flex items-center gap-1">
-            <Label className="text-sm font-medium">
-              Pickup Location <span className="text-red-600">*</span>
-            </Label>
-
-            <Popover>
-              <PopoverTrigger asChild>
-                <CircleQuestionMark className="w-4 h-4 text-gray-600" />
-              </PopoverTrigger>
-
-              <PopoverContent className="text-xs max-w-[200px]">
-                Buyers may request delivery; location is for calculating fees.
-              </PopoverContent>
-            </Popover>
-          </div>
-
-          <div className="mt-1">
-            <AddressPickerWithMap
-              onSelect={(lat, lng, addr) => {
-                setPickupLat(lat);
-                setPickupLng(lng);
-                setPickupAddress(addr);
-              }}
-            />
-          </div>
-
-          <Input
-            readOnly
-            value={pickupAddress}
-            placeholder="Selected address will appear here"
-            className="bg-gray-100 mt-2"
-          />
-
-          {/* Hidden */}
-          <input type="hidden" name="pickup_lat" value={pickupLat ?? ""} />
-          <input type="hidden" name="pickup_lng" value={pickupLng ?? ""} />
-          <input type="hidden" name="pickup_address" value={pickupAddress} />
         </div>
 
         {/* Error */}

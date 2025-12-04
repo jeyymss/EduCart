@@ -137,8 +137,13 @@ export default function TradeTransacForm({
         readOnly
       />
 
-      <Label>Added Cash</Label>
-      <Input type="number" placeholder="0.00" name="cashAdded" />
+      {itemPrice !== null && itemPrice > 0 && (
+        <>
+          <Label>Added Cash</Label>
+          <Input type="number" placeholder="0.00" name="cashAdded" />
+        </>
+      )}
+      
 
       <Label>Offered Item</Label>
       <Input

@@ -47,7 +47,7 @@ export function computeTradeActionLabel(
     // ⭐ TRADE — ONLINE PAYMENT (Buyer pays cash top-up first)
     if (isOnline) {
       if (s === "accepted") return "Pay Now";
-      if (s === "paid") return "Waiting for Meet Up";
+      if (s === "paid") return "Waiting for Seller";
       if (s === "pickedup") return "Confirm Exchange";
       if (s === "completed") return "Completed";
       if (s === "cancelled") return "Cancelled";
