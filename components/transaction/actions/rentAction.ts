@@ -13,35 +13,64 @@ export type RentStatus =
   | "Returned"
   | string;
 
-
 export function computeRentActionLabel(
   type: RentUserType,
-  status?: RentStatus
+  status?: RentStatus,
+  paymentMethod?: string // 👈 added payment method
 ): string {
   if (!status) return "";
 
   const s = status.toLowerCase();
 
-  // --------------------------
+  const isCash = paymentMethod === "Cash on Hand";
+  const isOnline = paymentMethod === "Online Payment";
+
+  // =====================================================
   // BUYER VIEW
-  // --------------------------
+  // =====================================================
+
   if (type === "Purchases") {
-    if (s === "paid") return "Waiting for Pickup";
-    if (s === "pickedup") return "Return Item";
-    if (s === "returned") return "Waiting for Review";
-    if (s === "completed") return "Completed";
-    return "";
+    // ⭐ CASH ON HAND FLOW
+    if (isCash) {
+      if (s === "accepted") return "Waiting for Pickup"; // instead of 'paid'
+      if (s === "pickedup") return "Return Item";
+      if (s === "returned") return "Waiting for Review";
+      if (s === "completed") return "Completed";
+      return "";
+    }
+
+    // ⭐ ONLINE PAYMENT FLOW (original)
+    if (isOnline) {
+      if (s === "paid") return "Waiting for Pickup";
+      if (s === "pickedup") return "Return Item";
+      if (s === "returned") return "Waiting for Review";
+      if (s === "completed") return "Completed";
+      return "";
+    }
   }
 
-  // --------------------------
+  // =====================================================
   // SELLER VIEW
-  // --------------------------
+  // =====================================================
+
   if (type === "Sales") {
-    if (s === "paid") return "Mark as Picked Up";
-    if (s === "pickedup") return "On Rent";
-    if (s === "returned") return "Confirm Return";
-    if (s === "completed") return "Completed";
-    return "";
+    // ⭐ CASH ON HAND FLOW
+    if (isCash) {
+      if (s === "accepted") return "Mark as Picked Up"; // replaces 'paid'
+      if (s === "pickedup") return "On Rent";
+      if (s === "returned") return "Confirm Return";
+      if (s === "completed") return "Completed";
+      return "";
+    }
+
+    // ⭐ ONLINE PAYMENT FLOW (original)
+    if (isOnline) {
+      if (s === "paid") return "Mark as Picked Up";
+      if (s === "pickedup") return "On Rent";
+      if (s === "returned") return "Confirm Return";
+      if (s === "completed") return "Completed";
+      return "";
+    }
   }
 
   return "";

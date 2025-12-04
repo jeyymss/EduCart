@@ -67,7 +67,7 @@ export default function TransactionCard({
   function resolveActionLabel() {
     const clean = postType?.toLowerCase();
     if (clean === "sale") return computeSaleActionLabel(type, status, paymentMethod ?? undefined, fulfillment ?? undefined);
-    if (clean === "rent") return computeRentActionLabel(type, status);
+    if (clean === "rent") return computeRentActionLabel(type, status, paymentMethod ?? undefined);
     return "";
   }
 
