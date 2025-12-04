@@ -27,9 +27,9 @@ export async function TradeTransaction(
     const userID = session.user.id;
     if (!userID) return { error: "User ID is missing." };
 
-    // Read form values
-    let cashAddedRaw = formData.get("cashAdded");
-    let cashAdded =
+    // Read form values (use const — no reassignment)
+    const cashAddedRaw = formData.get("cashAdded");
+    const cashAdded =
       cashAddedRaw && cashAddedRaw !== "" ? Number(cashAddedRaw) : 0;
 
     const offeredItem = formData.get("offeredItem") as string;
@@ -48,25 +48,26 @@ export async function TradeTransaction(
       return { error: "Preferred method is required." };
     }
 
-    // 🔥 FIX PAYMENT METHOD RULES FOR TRADE 🔥
+    // 🔥 TRADE PAYMENT RULES 🔥
+    let cleanedPaymentMethod = selectPayment;
 
-    // Case 1: Trade WITHOUT price → MUST NOT have payment_method
+    // Case 1: Trade WITHOUT price → MUST NOT have a payment method
     if (postType === "Trade" && (!itemPrice || Number(itemPrice) === 0)) {
-      selectPayment = null;
+      cleanedPaymentMethod = null;
     }
 
-    // Case 2: Trade WITH price → MUST have payment_method
+    // Case 2: Trade WITH price → MUST HAVE payment method
     if (postType === "Trade" && itemPrice && Number(itemPrice) > 0) {
-      if (!selectPayment || selectPayment.trim() === "") {
+      if (!cleanedPaymentMethod || cleanedPaymentMethod.trim() === "") {
         return {
           error: "Payment method is required when trade includes additional cash.",
         };
       }
     }
 
-    // Clean empty string
-    if (selectPayment === "" || selectPayment === undefined) {
-      selectPayment = null;
+    // Normalize empty string → null
+    if (cleanedPaymentMethod === "" || cleanedPaymentMethod === undefined) {
+      cleanedPaymentMethod = null;
     }
 
     // INSERT TRANSACTION
@@ -84,7 +85,7 @@ export async function TradeTransaction(
           item_title: itemTitle,
           price: itemPrice,
           fulfillment_method: selectedType,
-          payment_method: selectPayment, // <-- NOW FIXED
+          payment_method: cleanedPaymentMethod,
           meetup_location: location,
           meetup_date: inputDate || null,
           meetup_time: inputTime || null,
