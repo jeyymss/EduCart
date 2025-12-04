@@ -25,12 +25,19 @@ export type UserPost = {
   image_urls: string[];
   full_name: string;
   status: "Listed" | "Sold" | "Unlisted";
+
   item_description?: string | null;
+  item_trade?: string | null;          
+  item_service_fee?: number | null;
+  item_pasabuy_location?: string | null;
+  item_pasabuy_cutoff?: string | null;
+  quantity?: number | null;            
+
   university_abbreviation?: string | null;
   role?: string | null;
   post_user_id?: string;
-  item_service_fee?: number | null; 
 };
+
 
 type UserPostsProps = {
   userId: string;
@@ -175,6 +182,10 @@ export function UserPosts({
               id={item.post_id}
               title={item.item_title}
               price={item.item_price ?? undefined}
+              description={item.item_description ?? ""}
+              item_trade={item.item_trade ?? ""}
+              item_service_fee={item.item_service_fee ?? null}
+              quantity={item.quantity ?? null}
               condition={item.item_condition ?? ""}
               category_name={item.category_name ?? ""}
               post_type={item.post_type_name ?? ""}
@@ -183,11 +194,7 @@ export function UserPosts({
               seller={item.full_name}
               isOwner={true}
               status={item.status}
-              onEdit={(id) => console.log("Edit", id)}
-              onDelete={(id) => console.log("Delete", id)}
-              onOpenSpecialModal={() => {
-                setSelectedSpecial(item);
-              }}
+              onOpenSpecialModal={() => setSelectedSpecial(item)}
             />
           </div>
         ))}

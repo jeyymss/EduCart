@@ -16,6 +16,8 @@ import {
   markAsUnlisted,
 } from "@/app/user-posts/editPostStatus/actions";
 import PostTypeBadge from "@/components/postTypeBadge";
+import EditPostDialog from "../edit/EditPostDialog";
+import { useState } from "react";
 
 type Props = {
   id: string;
@@ -30,6 +32,11 @@ type Props = {
   status: "Listed" | "Sold" | "Unlisted";
   isOwner?: boolean;
   isFav?: boolean;
+  description?: string;
+  item_trade?: string;
+  item_service_fee?: number | null;
+  quantity?: number | null;
+
   onEdit?: (id: string) => void;
   onDelete?: (id: string) => void;
 
@@ -49,10 +56,20 @@ export function ItemCard({
   status,
   isOwner = false,
   isFav = false,
+  description,
+  item_trade,
+  item_service_fee,
+  quantity,
   onToggleFavorite,
   onEdit,
   onOpenSpecialModal,
 }: Props) {
+  const [openEdit, setOpenEdit] = useState(false);
+  const [editingPost, setEditingPost] = useState<any | null>(null);
+
+
+
+
   const firstValid = image_urls?.find((u) => u && u.trim() !== "");
   const imageSrc =
     firstValid ??
@@ -111,9 +128,26 @@ export function ItemCard({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => onEdit?.(id)}>
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.preventDefault();
+                  setEditingPost({
+                    post_id: id,
+                    item_price: price ?? null,
+                    item_description: description ?? "",
+                    item_trade: item_trade ?? "",
+                    item_service_fee: item_service_fee ?? null,
+                    quantity: quantity ?? null,
+                    post_type_name: post_type,
+                  });
+                  setOpenEdit(true);
+                }}
+              >
                 ✏️ Edit Post
               </DropdownMenuItem>
+
+
+
 
               {status === "Listed" && (
                 <DropdownMenuItem onClick={() => handleMarkUnlisted(id)}>
@@ -216,6 +250,25 @@ export function ItemCard({
           </div>
         </div>
       </Link>
+
+      {editingPost && (
+          <EditPostDialog
+            open={openEdit}
+            onOpenChange={setOpenEdit}
+            post={editingPost}
+            onSave={async (updated) => {
+              await fetch(`/api/posts/update/${editingPost.post_id}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(updated),
+              });
+
+              window.location.reload();
+            }}
+          />
+        )}
+
+
     </div>
   );
 }

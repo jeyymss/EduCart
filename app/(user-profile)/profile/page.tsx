@@ -28,7 +28,6 @@ import { UserPosts } from "@/components/profile/UserPosts";
 import UserReviews from "@/components/profile/UserReviews";
 import MobileTopNav from "@/components/mobile/MobileTopNav";
 
-/* ⭐ NEW IMPORT */
 import AddBusinessModal from "@/components/profile/AddBusinessModal";
 
 const AVATAR_DIM = 96;

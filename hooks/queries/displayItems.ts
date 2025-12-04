@@ -139,7 +139,7 @@ export function useUserPosts(userId: string | undefined, status?: string) {
         window.location.origin
       );
       url.searchParams.set("userId", userId);
-      if (status) url.searchParams.set("status", status); // ✅ add status filter
+      if (status) url.searchParams.set("status", status); // status filter
 
       const res = await fetch(url.toString());
       const data = await res.json();
