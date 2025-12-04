@@ -22,8 +22,8 @@ export function WalletBalances({
               <CardTitle className="text-lg">Current Balance</CardTitle>
               <CardDescription>Available funds</CardDescription>
             </div>
-            <div className="p-2 bg-gray-200 rounded-lg">
-              <TrendingUp className="w-5 h-5" />
+            <div className="p-2 bg-[#577C8E] rounded-lg">
+              <TrendingUp className="w-5 h-5 text-white" />
             </div>
           </div>
         </CardHeader>

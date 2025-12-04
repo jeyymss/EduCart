@@ -88,7 +88,19 @@ export default function PastTransactionDetails({
       return;
     }
 
-    // SALE
+    // ======================
+    // SALE + MEETUP
+    // ======================
+    if (postType === "Sale" && txn.fulfillment_method === "Meetup") {
+      setTotalPayment(Number(txn.price));   // FIX
+      setDeliveryFee(null);
+      setDistanceKm(null);
+      return;
+    }
+
+    // ======================
+    // SALE + DELIVERY
+    // ======================
     const fetchData = async () => {
       const supabase = createClient();
       const { data: post } = await supabase
@@ -116,6 +128,7 @@ export default function PastTransactionDetails({
 
     fetchData();
   }, [txn, postType, rentDays]);
+
 
   const insufficientBalance =
     paymentMethod === "wallet" &&
@@ -191,7 +204,8 @@ export default function PastTransactionDetails({
           >
             Pay Now
           </Button>
-        )}
+      )}
+
 
       {txn.status !== "Paid" && (
         <PaymentDialog
@@ -204,6 +218,7 @@ export default function PastTransactionDetails({
           distanceKm={distanceKm}
           deliveryFee={deliveryFee}
           totalPayment={totalPayment}
+          fulfillmentMethod={txn.fulfillment_method}
           paymentMethod={paymentMethod}
           setPaymentMethod={setPaymentMethod}
           balance={balance}

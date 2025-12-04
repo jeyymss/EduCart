@@ -30,6 +30,8 @@ interface PaymentDialogProps {
 
   totalPayment: number | null;
 
+  fulfillmentMethod: string; // "Delivery" | "Meetup"
+
   paymentMethod: string;
   setPaymentMethod: (value: string) => void;
 
@@ -53,6 +55,7 @@ export default function PaymentDialog({
   deliveryFee,
   rentDays,
   totalPayment,
+  fulfillmentMethod,
   paymentMethod,
   setPaymentMethod,
   balance,
@@ -67,6 +70,10 @@ export default function PaymentDialog({
 
   const isRent = postType === "Rent";
   const isSale = postType === "Sale";
+
+  const isDelivery = fulfillmentMethod === "Delivery";
+  const isMeetup = fulfillmentMethod === "Meetup";
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -112,7 +119,7 @@ export default function PaymentDialog({
           )}
 
           {/* SALE: Delivery Fee & Distance */}
-          {isSale && (
+          {isSale && isDelivery && (
             <>
               <div className="flex justify-between text-sm">
                 <span>Delivery Fee</span>
@@ -134,14 +141,28 @@ export default function PaymentDialog({
             </>
           )}
 
+          {/* SALE: MEETUP — No delivery fee or distance */}
+          {isSale && isMeetup && (
+            <div className="text-sm text-gray-600 italic">
+              Meetup Transaction — No delivery fees.
+            </div>
+          )}
+
+
           {/* Total */}
           <hr />
           <div className="flex justify-between text-base font-semibold">
             <span>Total</span>
+
             <span className="text-blue-900">
-              {totalPayment !== null ? formatCurrency(totalPayment) : "—"}
+              {isSale && isMeetup
+                ? formatCurrency(txnPrice) 
+                : totalPayment !== null
+                  ? formatCurrency(totalPayment)
+                  : "—"}
             </span>
           </div>
+
         </div>
 
 
@@ -188,6 +209,8 @@ export default function PaymentDialog({
             onClick={() => {
               if (paymentMethod === "wallet") handleWalletPayment();
               else if (paymentMethod === "gcash") handleGCashPayment();
+            
+            console.log("totalPayment:", totalPayment);
             }}
           >
             {isPaying ? "Processing..." : "Continue Payment"}
