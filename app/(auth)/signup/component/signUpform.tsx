@@ -141,7 +141,7 @@ export default function SignUpForm() {
       fd.append("image", idImage);
 
       const res = await fetch(
-        "https://ocr-verification.up.railway.app/api/ocr",
+        "https://ocr-verification2.up.railway.app/api/ocr",
         { method: "POST", body: fd }
       );
 
