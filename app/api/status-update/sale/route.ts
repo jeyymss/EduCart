@@ -3,12 +3,13 @@ import { createClient } from "@/utils/supabase/server";
 
 export async function POST(req: Request) {
   try {
-    const { transactionId } = await req.json();
+    const { transactionId, newStatus } = await req.json();
+
     const supabase = await createClient();
 
     const { error } = await supabase
       .from("transactions")
-      .update({ status: "Returned" })
+      .update({ status: newStatus })
       .eq("id", transactionId);
 
     if (error) throw error;
@@ -17,7 +18,7 @@ export async function POST(req: Request) {
 
   } catch (err: any) {
     return NextResponse.json(
-      { error: err.message || "Failed to return item." },
+      { error: err.message },
       { status: 500 }
     );
   }

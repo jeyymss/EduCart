@@ -158,7 +158,6 @@ export default function Transactions({ userId }: { userId: string }) {
                   title={tx.title}
                   price={tx.price}
                   total={tx.total}
-                  // 👇 use REAL DB STATUS; fallback to tab status for safety
                   status={(tx as any).raw_status ?? tx.status}
                   postType={tx.post_type}
                   image={tx.image_url}

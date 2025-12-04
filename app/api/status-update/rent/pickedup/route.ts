@@ -4,7 +4,6 @@ import { createClient } from "@/utils/supabase/server";
 export async function POST(req: Request) {
   try {
     const { transactionId } = await req.json();
-
     const supabase = await createClient();
 
     const { error } = await supabase
@@ -15,9 +14,10 @@ export async function POST(req: Request) {
     if (error) throw error;
 
     return NextResponse.json({ success: true });
-  } catch (e: any) {
+
+  } catch (err: any) {
     return NextResponse.json(
-      { error: e.message ?? "Failed to update to PickedUp" },
+      { error: err.message || "Failed to update status." },
       { status: 500 }
     );
   }
