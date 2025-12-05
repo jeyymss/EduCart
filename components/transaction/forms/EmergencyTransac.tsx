@@ -44,7 +44,7 @@ export default function EmergencyTransacForm({
 
     const handleValidation = () => {
       const formValid = form?.checkValidity() ?? false;
-      const isValid = formValid && selectPayment !== "" && selectedType !== "";
+      const isValid = formValid && selectedType !== "";
       setIsFormValid(isValid);
     };
 
@@ -72,10 +72,8 @@ export default function EmergencyTransacForm({
       const result = await EmergencyTransaction(
         formData,
         conversationId,
-        itemPrice,
         itemTitle,
         selectedType,
-        selectPayment,
         sellerId,
         post_id,
         postType
@@ -93,6 +91,11 @@ export default function EmergencyTransacForm({
     }
   };
 
+    const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000)
+    .toISOString()
+    .split("T")[0];
+
+
   return (
     <form className="space-y-3" ref={formRef} onSubmit={handleSubmit}>
       <Label>Item</Label>
@@ -102,9 +105,6 @@ export default function EmergencyTransacForm({
         name="itemTitle"
       />
 
-      <Label>PasaBuy Fee</Label>
-      <Input type="number" placeholder="0.00" name="pasabuyFee" />
-
       <Label>Preferred Method</Label>
       <Select value={selectedType} onValueChange={setSelectedType}>
         <SelectTrigger className="w-full">
@@ -112,7 +112,6 @@ export default function EmergencyTransacForm({
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="Meetup">Meetup</SelectItem>
-          <SelectItem value="Delivery">Delivery</SelectItem>
         </SelectContent>
       </Select>
 
@@ -120,7 +119,7 @@ export default function EmergencyTransacForm({
         <div className="space-y-3">
           <div className="flex flex-col space-y-3 max-w-full">
             <Label>Location</Label>
-            <Input placeholder="Location" name="inputLocation" />
+            <Input placeholder="Location" name="inputLocation" required/>
           </div>
           <div className="flex justify-between gap-4">
             <div className="space-y-3 w-1/2">
@@ -130,26 +129,17 @@ export default function EmergencyTransacForm({
                 id="date"
                 className="w-full"
                 name="inputDate"
+                min={tomorrow}
+                required
               />
             </div>
             <div className="space-y-3 w-1/2">
               <Label htmlFor="time">Time</Label>
-              <Input type="time" id="time" step="60" name="inputTime" />
+              <Input type="time" id="time" step="60" name="inputTime" required/>
             </div>
           </div>
         </div>
       )}
-
-      <Label>Payment Method</Label>
-      <Select value={selectPayment} onValueChange={setSelectPayment}>
-        <SelectTrigger className="w-full">
-          <SelectValue placeholder="Select Payment Method" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="Cash on Hand">Cash on Hand</SelectItem>
-          <SelectItem value="Online Payment">Online Payment</SelectItem>
-        </SelectContent>
-      </Select>
 
       {error && <p className="text-sm text-red-600 text-center">{error}</p>}
 

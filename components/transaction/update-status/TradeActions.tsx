@@ -53,7 +53,6 @@ export default function TradeActions({
       toast.success(successMsg);
       onPrimary?.(transactionId);
 
-      window.location.reload();
     } catch (e) {
       toast.error("Failed to update transaction.");
     } finally {

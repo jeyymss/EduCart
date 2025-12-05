@@ -6,10 +6,8 @@ import { withErrorHandling } from "@/hooks/withErrorHandling";
 export async function EmergencyTransaction(
   formData: FormData,
   conversationId: number,
-  itemPrice: number | null,
   itemTitle: string | null,
   selectedType: string,
-  selectPayment: string,
   sellerId: string,
   post_id: string,
   postType: string
@@ -48,9 +46,6 @@ export async function EmergencyTransaction(
       return { error: "Preferred method is required." };
     }
 
-    if (!selectPayment) {
-      return { error: "Payment method is required." };
-    }
 
     // ✅ Insert transaction and RETURN id
     const { data: insertedTransaction, error: insertError } = await supabase
@@ -65,9 +60,7 @@ export async function EmergencyTransaction(
           cash_added: cashAdded,
           post_type_id: post_type?.id,
           item_title: itemTitle,
-          price: itemPrice,
           fulfillment_method: selectedType,
-          payment_method: selectPayment,
           meetup_location: location,
           meetup_date: inputDate || null,
           meetup_time: inputTime || null,

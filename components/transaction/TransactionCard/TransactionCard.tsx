@@ -7,8 +7,10 @@ import { createClient } from "@/utils/supabase/client";
 import { computeSaleActionLabel } from "../actions/saleAction";
 import { computeRentActionLabel } from "../actions/rentAction";
 import { computeTradeActionLabel } from "../actions/tradeAction";
+import { computeEmergencyActionLabel } from "../actions/emergencyAction";
 import SaleActions from "../update-status/SaleActions";
 import RentActions from "../update-status/RentActions";
+import EmergencyActions from "../update-status/EmergencyActions";
 import LeaveReviewDialog from "../LeaveReviewDialog";
 import TradeActions from "../update-status/TradeActions";
 
@@ -71,6 +73,7 @@ export default function TransactionCard({
     if (clean === "sale") return computeSaleActionLabel(type, status, paymentMethod ?? undefined, fulfillment ?? undefined);
     if (clean === "rent") return computeRentActionLabel(type, status, paymentMethod ?? undefined);
     if (clean === "trade") return computeTradeActionLabel(type, status, paymentMethod ?? undefined);
+    if (clean === "emergency lending") return computeEmergencyActionLabel(type, status as any);
 
     return "";
   }
@@ -139,6 +142,16 @@ export default function TransactionCard({
 
           {postType === "Trade" && (
             <TradeActions
+              action={action}
+              transactionId={transactionId}
+              type={type}
+              onPrimary={onPrimary}
+            />
+          )}
+
+          {/* EMERGENCY LENDING */}
+          {postType === "Emergency Lending" && (
+            <EmergencyActions
               action={action}
               transactionId={transactionId}
               type={type}

@@ -137,9 +137,14 @@ export default function PublicProfilePage() {
   const filteredListings = useMemo(() => {
     return (listings.data ?? [])
       .filter((item: PublicListing) => {
+
+        // 🚫 HIDE SOLD POSTS
+        if (item.status === "Sold") return false;
+
         const matchesSearch = (item.item_title ?? "")
           .toLowerCase()
           .includes(searchTerm.toLowerCase());
+
         const matchesPostType = allowedPostTypes
           ? allowedPostTypes.includes(item.post_type_name ?? "")
           : true;
@@ -147,15 +152,9 @@ export default function PublicProfilePage() {
         let matchesAdv = true;
         if (adv.category && item.category_name !== adv.category)
           matchesAdv = false;
-        if (
-          adv.minPrice != null &&
-          Number(item.item_price ?? 0) < Number(adv.minPrice)
-        )
+        if (adv.minPrice != null && Number(item.item_price ?? 0) < Number(adv.minPrice))
           matchesAdv = false;
-        if (
-          adv.maxPrice != null &&
-          Number(item.item_price ?? 0) > Number(adv.maxPrice)
-        )
+        if (adv.maxPrice != null && Number(item.item_price ?? 0) > Number(adv.maxPrice))
           matchesAdv = false;
 
         return matchesSearch && matchesPostType && matchesAdv;
@@ -166,6 +165,7 @@ export default function PublicProfilePage() {
         return 0;
       });
   }, [listings.data, searchTerm, allowedPostTypes, adv]);
+
 
   if (isLoading) return <div className="p-6 text-center">Loading…</div>;
 

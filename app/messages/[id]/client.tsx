@@ -28,6 +28,7 @@ import RentTransacForm from "@/components/transaction/forms/RentTransac";
 import LiveTransactionCard from "@/components/transaction/liveTransaction";
 import PastTransactionDetails from "@/components/transaction/pastTransactions";
 import PasaBuyTransacForm from "@/components/transaction/forms/PasaBuyTransac";
+import EmergencyTransacForm from "@/components/transaction/forms/EmergencyTransac";
 
 type ChatMessage = {
   id: number;
@@ -683,7 +684,7 @@ export default function ChatClient({
                     )}
 
                     {postType === "Emergency Lending" && (
-                      <PasaBuyTransacForm
+                      <EmergencyTransacForm
                         conversationId={conversationId}
                         itemPrice={itemPrice}
                         itemTitle={itemTitle}

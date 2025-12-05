@@ -49,7 +49,7 @@ export function SettingsPanel() {
         </ul>
       </section>
 
-      {/* Security */}
+      {/* CHANGE PASSWORD */}
       <section className="space-y-3">
         <h3 className="font-semibold text-lg">Security</h3>
         <p className="text-sm text-muted-foreground">Change Password</p>
