@@ -263,6 +263,7 @@ export default function SignUpForm() {
       })}
     </div>
   );
+
   return (
     <>
       <div className="w-full min-h-screen flex items-start justify-center px-3 md:px-6 py-6 md:py-14 bg-white">
@@ -270,7 +271,6 @@ export default function SignUpForm() {
         {/* MOBILE VERSION */}
         <div className="md:hidden w-full flex justify-center">
           <div className="w-[92%] max-w-xs scale-[1.1] origin-top">
-
             <Card className="rounded-2xl border border-slate-200 shadow-xl bg-white animate-[fadeIn_0.5s_ease]">
               <CardContent className="p-3 flex flex-col min-h-[500px]">
 
@@ -324,10 +324,7 @@ export default function SignUpForm() {
                             value={selectedUniversityId ?? undefined}
                             onValueChange={setSelectedUniversityId}
                           >
-                            <SelectTrigger
-                              className="
-                                rounded-xl border-slate-300 text-xs h-8 px-2
-                              ">
+                            <SelectTrigger className="rounded-xl border-slate-300 text-xs h-8 px-2">
                               <SelectValue placeholder="Select University" />
                             </SelectTrigger>
 
@@ -389,7 +386,7 @@ export default function SignUpForm() {
                       </div>
                     )}
 
-                    {/* STEP 1 */}
+                    {/* STEP 1 — MOBILE */}
                     {activeStep === 1 && (
                       <div className="space-y-2">
                         <Label className="text-xs">Upload Valid ID</Label>
@@ -400,35 +397,12 @@ export default function SignUpForm() {
                         >
                           {previewUrl ? (
                             <div className="relative h-full w-full overflow-hidden rounded-2xl">
-                              <Image src={previewUrl} alt="ID Preview" fill className="object-cover" />
-                              <div className="absolute bottom-1 right-1">
-                                {isVerifying ? (
-                                  <span className="text-[10px] bg-white/80 px-2 py-0.5 rounded">
-                                    Verifying…
-                                  </span>
-                                ) : verificationStatus ? (
-                                  <span
-                                    className={`text-[10px] px-2 py-0.5 rounded ${
-                                      verificationStatus === "Verified"
-                                        ? "bg-green-100 text-green-700"
-                                        : "bg-red-100 text-red-700"
-                                    }`}
-                                  >
-                                    {verificationStatus === "Verified" ? "✔ Verified" : "✖ Failed"}
-                                  </span>
-                                ) : (
-                                  <Button
-                                    size="sm"
-                                    className="text-[10px] h-6"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      verifyID();
-                                    }}
-                                  >
-                                    Verify ID
-                                  </Button>
-                                )}
-                              </div>
+                              <Image
+                                src={previewUrl}
+                                alt="ID Preview"
+                                fill
+                                className="object-cover"
+                              />
                             </div>
                           ) : (
                             <div className="text-slate-500 text-xs">
@@ -445,10 +419,43 @@ export default function SignUpForm() {
                           className="hidden"
                           onChange={onFileChange}
                         />
+
+                        {previewUrl && (
+                          <div className="flex justify-end items-center gap-2 mt-1">
+                            {isVerifying && (
+                              <span className="text-[10px] bg-white/80 px-2 py-0.5 rounded">
+                                Verifying…
+                              </span>
+                            )}
+
+                            {!isVerifying && verificationStatus === "Verified" && (
+                              <span className="text-[10px] px-2 py-0.5 rounded bg-green-100 text-green-700">
+                                ✔ Verified
+                              </span>
+                            )}
+
+                            {!isVerifying && verificationStatus === "Failed" && (
+                              <span className="text-[10px] px-2 py-0.5 rounded bg-red-100 text-red-700">
+                                ✖ Failed
+                              </span>
+                            )}
+
+                            {!isVerifying && !verificationStatus && (
+                              <Button
+                                type="button"
+                                size="sm"
+                                className="text-[10px] h-6"
+                                onClick={verifyID}
+                              >
+                                Verify ID
+                              </Button>
+                            )}
+                          </div>
+                        )}
                       </div>
                     )}
 
-                    {/* STEP 2 */}
+                    {/* STEP 2 — MOBILE */}
                     {activeStep === 2 && (
                       <div className="space-y-4">
 
@@ -500,13 +507,15 @@ export default function SignUpForm() {
                             onChange={(e) => setAgree(e.target.checked)}
                             className="mt-0.5 scale-[0.85]"
                           />
-                          <span>I agree with the <TermsPrivacyDialog /></span>
+                          <span>
+                            I agree with the <TermsPrivacyDialog />
+                          </span>
                         </label>
 
                       </div>
                     )}
 
-                    {/* STEP 3 */}
+                    {/* STEP 3 — MOBILE */}
                     {activeStep === 3 && (
                       <div className="space-y-2 text-xs">
                         <div className="rounded-xl border p-3 shadow-sm bg-white">
@@ -538,7 +547,7 @@ export default function SignUpForm() {
 
                   </div>
 
-                  {/* BUTTONS */}
+                  {/* MOBILE BUTTONS */}
                   <div className="mt-4 flex justify-between items-center">
                     {activeStep > 0 ? (
                       <button
@@ -581,17 +590,17 @@ export default function SignUpForm() {
                 </form>
               </CardContent>
             </Card>
-         
-          {/* MOBILE LINK */}
-          <p className="md:hidden mt-4 text-center text-slate-600 text-xs">
-            Register an Organization?{" "}
+
+            {/* MOBILE LINK */}
+            <p className="md:hidden mt-4 text-center text-slate-600 text-xs">
+              Register an Organization?{" "}
               <Link href="/organization-signup" className="font-medium text-[#577C8E]">
                 Create
               </Link>
-          </p>
+            </p>
           </div>
         </div>
-        
+
         {/* DESKTOP VERSION */}
         <div className="hidden md:block w-full max-w-4xl">
           <Card className="rounded-3xl border border-slate-200 shadow-xl bg-white animate-[fadeIn_0.5s_ease]">
@@ -721,37 +730,6 @@ export default function SignUpForm() {
                               fill
                               className="object-cover"
                             />
-                            <div className="absolute bottom-2 right-2">
-                              {isVerifying ? (
-                                <span className="text-xs bg-white/80 px-2 py-1 rounded">
-                                  Verifying…
-                                </span>
-                              ) : verificationStatus ? (
-                                <span
-                                  className={`text-xs px-2 py-1 rounded ${
-                                    verificationStatus === "Verified"
-                                      ? "bg-green-100 text-green-700"
-                                      : "bg-red-100 text-red-700"
-                                  }`}
-                                >
-                                  {verificationStatus === "Verified"
-                                    ? "✔ Verified"
-                                    : "✖ Failed"}
-                                </span>
-                              ) : (
-                                <Button
-                                  size="sm"
-                                  variant="secondary"
-                                  className="text-xs"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    verifyID();
-                                  }}
-                                >
-                                  Verify ID
-                                </Button>
-                              )}
-                            </div>
                           </div>
                         ) : (
                           <div className="text-slate-500">
@@ -769,12 +747,46 @@ export default function SignUpForm() {
                         className="hidden"
                         onChange={onFileChange}
                       />
+
+                      {previewUrl && (
+                        <div className="mt-2 flex items-center justify-end gap-3">
+                          {isVerifying && (
+                            <span className="text-xs bg-white/80 px-2 py-1 rounded">
+                              Verifying…
+                            </span>
+                          )}
+
+                          {!isVerifying && verificationStatus === "Verified" && (
+                            <span className="text-xs px-2 py-1 rounded bg-green-100 text-green-700">
+                              ✔ Verified
+                            </span>
+                          )}
+
+                          {!isVerifying && verificationStatus === "Failed" && (
+                            <span className="text-xs px-2 py-1 rounded bg-red-100 text-red-700">
+                              ✖ Failed
+                            </span>
+                          )}
+
+                          {!isVerifying && !verificationStatus && (
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="secondary"
+                              className="text-xs"
+                              onClick={verifyID}
+                            >
+                              Verify ID
+                            </Button>
+                          )}
+                        </div>
+                      )}
                     </div>
                   )}
 
-                  {/* STEP 2 — DESKTOP */}
+                  {/* STEP 2 — DESKTOP (PASSWORD ALIGNMENT FIX) */}
                   {activeStep === 2 && (
-                    <div className="space-y-6">
+                    <div className="space-y-4">
                       <div className="grid gap-4 md:grid-cols-2">
 
                         <div className="grid gap-2">
@@ -795,9 +807,6 @@ export default function SignUpForm() {
                               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                             </button>
                           </div>
-                          <p className="text-xs text-slate-500">
-                            At least 8 characters
-                          </p>
                         </div>
 
                         <div className="grid gap-2">
@@ -826,6 +835,11 @@ export default function SignUpForm() {
                           </div>
                         </div>
                       </div>
+
+                      {/* helper text UNDER both fields */}
+                      <p className="text-xs text-slate-500">
+                        At least 8 characters
+                      </p>
 
                       <label className="flex items-start gap-3 text-sm text-slate-700">
                         <input
@@ -930,6 +944,7 @@ export default function SignUpForm() {
           </p>
         </div>
       </div>
+
       {/* LOADING MODAL */}
       {showLoadingModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 animate-[fadeIn_0.3s_ease]">
