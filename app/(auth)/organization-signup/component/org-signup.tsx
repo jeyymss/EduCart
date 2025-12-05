@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Eye, EyeOff } from "lucide-react";
+import TermsPrivacyDialog from "@/components/auth/TermsPrivacyDialog";
 
 const COLOR_DONE = "#577C8E";
 const COLOR_CURRENT = "#102E4A";
@@ -56,11 +57,13 @@ function emailLooksValid(val: string) {
 
   return true;
 }
+
 function normalizeDomain(d?: string) {
   const v = (d || "").trim().toLowerCase();
   if (!v) return "";
   return v.startsWith("@") ? v : `@${v}`;
 }
+
 function cleanDomainForExample(d?: string) {
   const v = normalizeDomain(d);
   return v.startsWith("@") ? v.slice(1) : v;
@@ -184,6 +187,7 @@ export default function OrgSignUpForm() {
     setError(null);
     if (activeStep < steps.length - 1) setActiveStep((s) => s + 1);
   }
+
   function prev() {
     setError(null);
     if (activeStep > 0) setActiveStep((s) => s - 1);
@@ -268,7 +272,8 @@ export default function OrgSignUpForm() {
               </div>
 
               <h1 className="text-xl font-semibold text-[#102E4A]">
-                <span className="font-bold text-[#E59E2C]">Create</span> Organization
+                <span className="font-bold text-[#E59E2C]">Create</span>{" "}
+                Organization
               </h1>
               <p className="mt-1 text-slate-600 text-xs">
                 Get started in less than 5 minutes
@@ -383,13 +388,10 @@ export default function OrgSignUpForm() {
                     </div>
                   )}
 
-                  {/* STEP 1 — DESCRIPTION */}
+                  {/* STEP 1 — DESCRIPTION (MOBILE) */}
                   {activeStep === 1 && (
                     <div className="space-y-2">
-                      <Label
-                        className="text-xs"
-                        htmlFor="OrgDescription"
-                      >
+                      <Label className="text-xs" htmlFor="OrgDescription">
                         Organization Description
                       </Label>
                       <Textarea
@@ -409,9 +411,10 @@ export default function OrgSignUpForm() {
                     </div>
                   )}
 
-                  {/* STEP 2 — SECURITY */}
+                  {/* STEP 2 — SECURITY (MOBILE, aligned) */}
                   {activeStep === 2 && (
                     <div className="space-y-4">
+                      {/* PASSWORD */}
                       <div className="grid gap-2">
                         <Label className="text-xs" htmlFor="OrgPassword">
                           Password
@@ -431,16 +434,20 @@ export default function OrgSignUpForm() {
                             type="button"
                             onClick={() => setShowPassword((s) => !s)}
                             className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-600"
-                            aria-label={showPassword ? "Hide password" : "Show password"}
+                            aria-label={
+                              showPassword ? "Hide password" : "Show password"
+                            }
                           >
-                            {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                            {showPassword ? (
+                              <EyeOff size={16} />
+                            ) : (
+                              <Eye size={16} />
+                            )}
                           </button>
                         </div>
-                        <p className="text-[10px] text-slate-500">
-                          At least 8 characters
-                        </p>
                       </div>
 
+                      {/* CONFIRM PASSWORD */}
                       <div className="grid gap-2">
                         <Label
                           className="text-xs"
@@ -463,13 +470,25 @@ export default function OrgSignUpForm() {
                             type="button"
                             onClick={() => setShowConfirm((s) => !s)}
                             className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-600"
-                            aria-label={showConfirm ? "Hide password" : "Show password"}
+                            aria-label={
+                              showConfirm ? "Hide password" : "Show password"
+                            }
                           >
-                            {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
+                            {showConfirm ? (
+                              <EyeOff size={16} />
+                            ) : (
+                              <Eye size={16} />
+                            )}
                           </button>
                         </div>
                       </div>
 
+                      {/* SHARED PASSWORD HELP TEXT */}
+                      <p className="text-[10px] text-slate-500 -mt-1">
+                        At least 8 characters
+                      </p>
+
+                      {/* TERMS */}
                       <label className="flex items-start gap-2 text-xs text-slate-600">
                         <input
                           type="checkbox"
@@ -478,15 +497,13 @@ export default function OrgSignUpForm() {
                           onChange={(e) => setAgree(e.target.checked)}
                         />
                         <span>
-                          I agree with the{" "}
-                          <span className="underline">Terms of Service</span> and{" "}
-                          <span className="underline">Privacy Policy</span>
+                          I agree with the <TermsPrivacyDialog />
                         </span>
                       </label>
                     </div>
                   )}
 
-                  {/* STEP 3 — REVIEW */}
+                  {/* STEP 3 — REVIEW (MOBILE) */}
                   {activeStep === 3 && (
                     <div className="space-y-2 text-xs">
                       <div className="rounded-xl border p-3 shadow-sm bg-white">
@@ -592,19 +609,19 @@ export default function OrgSignUpForm() {
               </form>
             </CardContent>
           </Card>
-                  <p className="mt-4 text-center text-slate-600 text-xs">
-          Register an individual account?{" "}
-          <Link
-            href="/signup"
-            className="font-medium"
-            style={{ color: COLOR_DONE }}
-          >
-            Create
-          </Link>
-        </p>
+
+          <p className="mt-4 text-center text-slate-600 text-xs">
+            Register an individual account?{" "}
+            <Link
+              href="/signup"
+              className="font-medium"
+              style={{ color: COLOR_DONE }}
+            >
+              Create
+            </Link>
+          </p>
         </div>
       </div>
-
       {/* DESKTOP VERSION */}
       <div className="hidden md:block w-full max-w-4xl">
         <Card className="rounded-3xl border border-slate-200 shadow-xl bg-white animate-[fadeIn_0.5s_ease]">
@@ -735,10 +752,11 @@ export default function OrgSignUpForm() {
                   </div>
                 )}
 
-                {/* STEP 2 — SECURITY DESKTOP */}
+                {/* STEP 2 — SECURITY DESKTOP (aligned) */}
                 {activeStep === 2 && (
                   <div className="space-y-6">
                     <div className="grid gap-4 md:grid-cols-2">
+                      {/* PASSWORD */}
                       <div className="grid gap-2">
                         <Label htmlFor="OrgPasswordDesk">Password</Label>
                         <div className="relative">
@@ -756,16 +774,20 @@ export default function OrgSignUpForm() {
                             type="button"
                             onClick={() => setShowPassword((s) => !s)}
                             className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-600 hover:text-[#102E4A] transition"
-                            aria-label={showPassword ? "Hide password" : "Show password"}
+                            aria-label={
+                              showPassword ? "Hide password" : "Show password"
+                            }
                           >
-                            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                            {showPassword ? (
+                              <EyeOff size={18} />
+                            ) : (
+                              <Eye size={18} />
+                            )}
                           </button>
-                          <p className="text-xs text-slate-500 mt-1">
-                            At least 8 characters
-                          </p>
                         </div>
                       </div>
 
+                      {/* CONFIRM PASSWORD */}
                       <div className="grid gap-2">
                         <Label htmlFor="OrgConfirmPasswordDesk">
                           Confirm Password
@@ -785,14 +807,26 @@ export default function OrgSignUpForm() {
                             type="button"
                             onClick={() => setShowConfirm((s) => !s)}
                             className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-600 hover:text-[#102E4A] transition"
-                            aria-label={showConfirm ? "Hide password" : "Show password"}
+                            aria-label={
+                              showConfirm ? "Hide password" : "Show password"
+                            }
                           >
-                            {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
+                            {showConfirm ? (
+                              <EyeOff size={18} />
+                            ) : (
+                              <Eye size={18} />
+                            )}
                           </button>
                         </div>
                       </div>
                     </div>
 
+                    {/* SHARED PASSWORD HELP TEXT */}
+                    <p className="text-xs text-slate-500 -mt-2">
+                      At least 8 characters
+                    </p>
+
+                    {/* TERMS */}
                     <label className="flex items-start gap-3 text-sm text-slate-700">
                       <input
                         type="checkbox"
@@ -801,9 +835,7 @@ export default function OrgSignUpForm() {
                         onChange={(e) => setAgree(e.target.checked)}
                       />
                       <span>
-                        I agree with the{" "}
-                        <span className="underline">Terms of Service</span> and{" "}
-                        <span className="underline">Privacy Policy</span>
+                        I agree with the <TermsPrivacyDialog />
                       </span>
                     </label>
                   </div>
