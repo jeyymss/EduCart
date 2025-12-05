@@ -16,7 +16,6 @@ import { EmergencyTransaction } from "@/app/api/transacForm/EmergencyTransac/rou
 interface FormProps {
   conversationId: number;
   itemTitle: string | null;
-  itemPrice: number | null;
   sellerId: string;
   post_id: string;
   postType: string;
@@ -26,7 +25,6 @@ interface FormProps {
 export default function EmergencyTransacForm({
   conversationId,
   itemTitle,
-  itemPrice,
   sellerId,
   post_id,
   postType,

@@ -29,6 +29,7 @@ import LiveTransactionCard from "@/components/transaction/liveTransaction";
 import PastTransactionDetails from "@/components/transaction/pastTransactions";
 import PasaBuyTransacForm from "@/components/transaction/forms/PasaBuyTransac";
 import EmergencyTransacForm from "@/components/transaction/forms/EmergencyTransac";
+import GiveawayTransacForm from "@/components/transaction/forms/GiveawayTransac";
 
 type ChatMessage = {
   id: number;
@@ -686,7 +687,20 @@ export default function ChatClient({
                     {postType === "Emergency Lending" && (
                       <EmergencyTransacForm
                         conversationId={conversationId}
-                        itemPrice={itemPrice}
+                        itemTitle={itemTitle}
+                        sellerId={otherUserId}
+                        post_id={postId}
+                        postType={postType || ""}
+                        onClose={() => {
+                          setOpen(false);
+                          setShowSuccess(true);
+                        }}
+                      />
+                    )}
+
+                    {postType === "Giveaway" && (
+                      <GiveawayTransacForm
+                        conversationId={conversationId}
                         itemTitle={itemTitle}
                         sellerId={otherUserId}
                         post_id={postId}

@@ -122,7 +122,7 @@ export default function LiveTransactionCard({
       {/* BUTTONS */}
       {txn.status === "Pending" && (
         <div className="mt-4 flex flex-col gap-3">
-          {currentUserRole === "seller" ? (
+          {post_type === "Giveaway" && currentUserRole === "buyer" ? (
             <>
               <Button
                 onClick={() =>
@@ -142,16 +142,42 @@ export default function LiveTransactionCard({
                 Cancel
               </Button>
             </>
-          ) : (
-            <Button
-              onClick={() =>
-                handleUpdateTransaction(txn.id, "Cancelled")
-              }
-              className="bg-red-600 text-white hover:bg-red-700 w-full"
-            >
-              Cancel
-            </Button>
+          ): (
+            <>
+              {post_type !== "Giveaway" && currentUserRole === "seller" ? (
+              <>
+                <Button
+                  onClick={() =>
+                    handleUpdateTransaction(txn.id, "Accepted")
+                  }
+                  className="bg-green-600 text-white hover:bg-green-700 w-full"
+                >
+                  Accept
+                </Button>
+
+                <Button
+                  onClick={() =>
+                    handleUpdateTransaction(txn.id, "Cancelled")
+                  }
+                  className="bg-red-600 text-white hover:bg-red-700 w-full"
+                >
+                  Cancel
+                </Button>
+              </>
+            ) : (
+              <Button
+                onClick={() =>
+                  handleUpdateTransaction(txn.id, "Cancelled")
+                }
+                className="bg-red-600 text-white hover:bg-red-700 w-full"
+              >
+                Cancel
+              </Button>
+            )}
+            </>              
           )}
+
+          
         </div>
       )}
 

@@ -10,31 +10,28 @@ export type GiveawayStatus =
 export function computeGiveawayActionLabel(
   type: GiveawayUserType,
   status?: GiveawayStatus,
-  fulfillmentMethod?: string // "Delivery" | "Meetup"
-): string {
+  fulfillmentMethod?: string
+) {
   if (!status) return "";
   const s = status.toLowerCase();
 
-  // -------------------------------
   // BUYER VIEW
-  // -------------------------------
   if (type === "Purchases") {
-    if (s === "pickedup") return "Received";
+    if (s === "accepted") return "Waiting for Pickup";
+    if (s === "pickedup") return "Mark as Received";
     if (s === "shipped") return "Received";
     if (s === "completed") return "Completed";
     return "";
   }
 
-  // -------------------------------
   // SELLER VIEW
-  // -------------------------------
   if (type === "Sales") {
-    // Accepted → Seller chooses based on method
     if (s === "accepted") {
-      if (fulfillmentMethod === "Meetup") return "Item PickedUp";
-      if (fulfillmentMethod === "Delivery") return "Shipped";
+      if (fulfillmentMethod === "Meetup") return "Mark as Picked Up";
+      if (fulfillmentMethod === "Delivery") return "Mark as Shipped";
     }
 
+    if (s === "pickedup") return "Waiting for Buyer"; // seller waits for buyer
     if (s === "completed") return "Completed";
     return "";
   }

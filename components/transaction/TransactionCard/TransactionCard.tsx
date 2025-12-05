@@ -8,11 +8,13 @@ import { computeSaleActionLabel } from "../actions/saleAction";
 import { computeRentActionLabel } from "../actions/rentAction";
 import { computeTradeActionLabel } from "../actions/tradeAction";
 import { computeEmergencyActionLabel } from "../actions/emergencyAction";
+import { computeGiveawayActionLabel } from "../actions/giveawayAction";
 import SaleActions from "../update-status/SaleActions";
 import RentActions from "../update-status/RentActions";
 import EmergencyActions from "../update-status/EmergencyActions";
 import LeaveReviewDialog from "../LeaveReviewDialog";
 import TradeActions from "../update-status/TradeActions";
+import GiveawayActions from "../update-status/GiveawayActions";
 
 export type TxMethod = "Meetup" | "Delivery";
 export type TxSide = "Purchases" | "Sales";
@@ -74,6 +76,7 @@ export default function TransactionCard({
     if (clean === "rent") return computeRentActionLabel(type, status, paymentMethod ?? undefined);
     if (clean === "trade") return computeTradeActionLabel(type, status, paymentMethod ?? undefined);
     if (clean === "emergency lending") return computeEmergencyActionLabel(type, status as any);
+    if (clean === "giveaway") return computeGiveawayActionLabel(type, status as any, fulfillment ?? undefined);
 
     return "";
   }
@@ -155,6 +158,14 @@ export default function TransactionCard({
               action={action}
               transactionId={transactionId}
               type={type}
+              onPrimary={onPrimary}
+            />
+          )}
+
+          {postType === "Giveaway" && (
+            <GiveawayActions
+              action={action}
+              transactionId={transactionId}
               onPrimary={onPrimary}
             />
           )}
