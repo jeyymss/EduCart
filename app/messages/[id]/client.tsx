@@ -121,7 +121,7 @@ export default function ChatClient({
 
   // Realtime subscription
   useEffect(() => {
-    const subscriptionChannel = supabase
+    const channel = supabase
       .channel(`conversation_${conversationId}`)
       .on(
         "postgres_changes",
@@ -129,13 +129,16 @@ export default function ChatClient({
           event: "INSERT",
           schema: "public",
           table: "messages",
-          filter: `conversation_id=eq.${conversationId}`,
+          filter: `conversation_id=eq.${conversationId.toString()}`,
         },
         async (payload) => {
-          const { data } = await supabase
+          console.log("📡 New realtime message:", payload);
+
+          // Fetch the complete message with relationships
+          const { data, error } = await supabase
             .from("messages")
-            .select(
-              `*,
+            .select(`
+              *,
               transactions (
                 id,
                 item_title,
@@ -151,26 +154,31 @@ export default function ChatClient({
                 meetup_date,
                 meetup_time,
                 status,
-                post_types (id, name),
-                post_id (
-                  item_trade
-                )
-              )`
-            )
-            .eq("id", (payload.new as any).id)
+                post_types (id, name)
+              )
+            `)
+            .eq("id", payload.new.id)
             .single();
 
+          if (error) {
+            console.error("❌ Error fetching realtime message:", error);
+            return;
+          }
+
           if (data) {
-            setMessages((prev) => [...prev, data as ChatMessage]);
+            setMessages((prev) => [...prev, data]);
           }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log("🔔 Realtime status:", status);
+      });
 
     return () => {
-      supabase.removeChannel(subscriptionChannel);
+      supabase.removeChannel(channel);
     };
-  }, [conversationId, supabase]);
+  }, [conversationId]);
+
 
   // Send normal user message
   async function sendMessage() {
@@ -278,7 +286,6 @@ export default function ChatClient({
       });
     }
 
-    window.location.reload();
   }
 
   return (
