@@ -121,7 +121,7 @@ export default function ChatClient({
 
   // Realtime subscription
   useEffect(() => {
-    const channel = supabase
+    const subscriptionChannel = supabase
       .channel(`conversation_${conversationId}`)
       .on(
         "postgres_changes",
@@ -129,16 +129,13 @@ export default function ChatClient({
           event: "INSERT",
           schema: "public",
           table: "messages",
-          filter: `conversation_id=eq.${conversationId.toString()}`,
+          filter: `conversation_id=eq.${conversationId}`,
         },
         async (payload) => {
-          console.log(" New realtime message:", payload);
-
-          // Fetch the complete message with relationships
-          const { data, error } = await supabase
+          const { data } = await supabase
             .from("messages")
-            .select(`
-              *,
+            .select(
+              `*,
               transactions (
                 id,
                 item_title,
@@ -154,31 +151,105 @@ export default function ChatClient({
                 meetup_date,
                 meetup_time,
                 status,
-                post_types (id, name)
-              )
-            `)
-            .eq("id", payload.new.id)
+                post_types (id, name),
+                post_id (
+                  item_trade
+                )
+              )`
+            )
+            .eq("id", (payload.new as any).id)
             .single();
 
-          if (error) {
-            console.error("❌ Error fetching realtime message:", error);
-            return;
-          }
-
           if (data) {
-            setMessages((prev) => [...prev, data]);
+            setMessages((prev) => [...prev, data as ChatMessage]);
           }
         }
       )
-      .subscribe((status) => {
-        console.log("🔔 Realtime status:", status);
-      });
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "messages",
+          filter: `conversation_id=eq.${conversationId}`,
+        },
+        async (payload) => {
+          const { data } = await supabase
+            .from("messages")
+            .select(
+              `*,
+              transactions (
+                id,
+                item_title,
+                price,
+                rent_start_date,
+                rent_end_date,
+                offered_item,
+                cash_added,
+                created_at,
+                fulfillment_method,
+                payment_method,
+                meetup_location,
+                meetup_date,
+                meetup_time,
+                status,
+                post_types (id, name),
+                post_id (
+                  item_trade
+                )
+              )`
+            )
+            .eq("id", (payload.new as any).id)
+            .single();
+
+          if (data) {
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === data.id ? (data as ChatMessage) : msg
+              )
+            );
+          }
+        }
+      )
+      .subscribe();
+
+    // Subscribe to transaction updates
+    const transactionChannel = supabase
+      .channel(`transactions_${conversationId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "transactions",
+        },
+        async (payload) => {
+          const updatedTransaction = payload.new as any;
+
+          // Update messages that reference this transaction
+          setMessages((prev) =>
+            prev.map((msg) => {
+              if (msg.transaction_id === updatedTransaction.id && msg.transactions) {
+                return {
+                  ...msg,
+                  transactions: {
+                    ...msg.transactions,
+                    status: updatedTransaction.status,
+                  },
+                };
+              }
+              return msg;
+            })
+          );
+        }
+      )
+      .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(subscriptionChannel);
+      supabase.removeChannel(transactionChannel);
     };
-  }, [conversationId]);
-
+  }, [conversationId, supabase]);
 
   // Send normal user message
   async function sendMessage() {
@@ -248,7 +319,29 @@ export default function ChatClient({
     transactionId: string,
     newStatus: string
   ) {
-    // Update transaction status
+    // Store the original status for potential rollback
+    const originalMessage = messages.find(
+      (msg) => msg.transaction_id === transactionId
+    );
+    const originalStatus = originalMessage?.transactions?.status;
+
+    // Optimistically update the UI
+    setMessages((prev) =>
+      prev.map((msg) => {
+        if (msg.transaction_id === transactionId && msg.transactions) {
+          return {
+            ...msg,
+            transactions: {
+              ...msg.transactions,
+              status: newStatus,
+            },
+          };
+        }
+        return msg;
+      })
+    );
+
+    // Update transaction status in database
     const { error: updateError } = await supabase
       .from("transactions")
       .update({ status: newStatus })
@@ -256,6 +349,23 @@ export default function ChatClient({
 
     if (updateError) {
       console.error("Failed to update transaction:", updateError.message);
+      // Revert optimistic update on error
+      if (originalStatus) {
+        setMessages((prev) =>
+          prev.map((msg) => {
+            if (msg.transaction_id === transactionId && msg.transactions) {
+              return {
+                ...msg,
+                transactions: {
+                  ...msg.transactions,
+                  status: originalStatus,
+                },
+              };
+            }
+            return msg;
+          })
+        );
+      }
       return;
     }
 
@@ -285,7 +395,6 @@ export default function ChatClient({
         body: `Transaction ${newStatus}`,
       });
     }
-
   }
 
   return (
