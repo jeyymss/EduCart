@@ -132,7 +132,7 @@ export default function ChatClient({
           filter: `conversation_id=eq.${conversationId.toString()}`,
         },
         async (payload) => {
-          console.log("📡 New realtime message:", payload);
+          console.log(" New realtime message:", payload);
 
           // Fetch the complete message with relationships
           const { data, error } = await supabase
