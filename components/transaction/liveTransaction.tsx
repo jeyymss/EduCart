@@ -36,10 +36,19 @@ export default function LiveTransactionCard({
   handleUpdateTransaction,
 }: LiveTransactionCard) {
   return (
-    <div className="border rounded-xl p-5 bg-white shadow-md transition-all max-w-md">
+    <div className={`border rounded-xl p-5 shadow-md transition-all max-w-md ${
+      txn.status === "Accepted"
+        ? "bg-green-50 border-green-300"
+        : txn.status === "Cancelled"
+        ? "bg-red-50 border-red-300"
+        : "bg-white"
+    }`}>
       {/* TITLE */}
       <p className="font-semibold text-base mb-4 text-[#102E4A]">
-        Transaction Form Completed
+        {txn.status === "Accepted" && "✅ Transaction Accepted"}
+        {txn.status === "Cancelled" && "❌ Transaction Cancelled"}
+        {txn.status === "Pending" && "⏳ Transaction Pending"}
+        {!["Accepted", "Cancelled", "Pending"].includes(txn.status) && "Transaction Form Completed"}
       </p>
 
       {/* DETAILS */}
