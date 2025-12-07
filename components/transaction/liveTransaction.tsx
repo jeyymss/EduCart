@@ -36,119 +36,112 @@ export default function LiveTransactionCard({
   handleUpdateTransaction,
 }: LiveTransactionCard) {
   return (
-    <div className={`border rounded-xl p-5 shadow-md transition-all max-w-md ${
-      txn.status === "Accepted"
-        ? "bg-green-50 border-green-300"
-        : txn.status === "Cancelled"
-        ? "bg-red-50 border-red-300"
-        : "bg-white"
-    }`}>
-      {/* TITLE */}
-      <p className="font-semibold text-base mb-4 text-[#102E4A]">
-        {txn.status === "Accepted" && "✅ Transaction Accepted"}
-        {txn.status === "Cancelled" && "❌ Transaction Cancelled"}
-        {txn.status === "Pending" && "⏳ Transaction Pending"}
-        {!["Accepted", "Cancelled", "Pending"].includes(txn.status) && "Transaction Form Completed"}
-      </p>
+    <div className="border border-gray-200 rounded-2xl p-6 bg-gradient-to-br from-white to-gray-50 shadow-lg hover:shadow-xl transition-all max-w-md">
+      {/* HEADER */}
+      <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
+          <p className="font-bold text-lg text-[#102E4A]">
+            Pending Transaction
+          </p>
+        </div>
+        <span className="px-3 py-1 bg-amber-100 text-amber-700 text-xs font-semibold rounded-full">
+          {txn.status}
+        </span>
+      </div>
 
       {/* DETAILS */}
-      <div className="space-y-2 text-[15px] leading-relaxed text-gray-800">
-        <p>
-          <strong>Transaction type:</strong> {post_type}
-        </p>
+      <div className="space-y-3 text-sm">
+        {/* Item Title - Highlighted */}
+        <div className="bg-blue-50 border border-blue-100 rounded-lg p-3">
+          <p className="text-xs text-blue-600 font-medium mb-1">ITEM</p>
+          <p className="font-semibold text-gray-900">{txn.item_title || "—"}</p>
+        </div>
 
-        <p>
-          <strong>Item:</strong> {txn.item_title || "—"}
-        </p>
+        <div className="grid grid-cols-2 gap-3">
+          {/* Transaction Type */}
+          <div className="bg-white border border-gray-100 rounded-lg p-3">
+            <p className="text-xs text-gray-500 mb-1">Type</p>
+            <p className="font-medium text-gray-900">{post_type}</p>
+          </div>
 
-        {/* PRICE */}
-        {post_type === "Rent" ? (
-          <p>
-            <strong>Price:</strong> ₱
-            {txn.price?.toLocaleString() || "—"} / day
-          </p>
-        ) : (
-          <p>
-            <strong>Price:</strong> ₱
-            {txn.price?.toLocaleString() || "—"}
-          </p>
-        )}
-
-        <p>
-          <strong>Preferred method:</strong>{" "}
-          {txn.fulfillment_method || "—"}
-        </p>
+          {/* Price */}
+          <div className="bg-white border border-gray-100 rounded-lg p-3">
+            <p className="text-xs text-gray-500 mb-1">Price</p>
+            <p className="font-semibold text-[#E59E2C]">
+              ₱{txn.price?.toLocaleString() || "—"}
+              {post_type === "Rent" && <span className="text-xs"> /day</span>}
+            </p>
+          </div>
+        </div>
 
         {/* RENT DURATION */}
-        {post_type === "Rent" && (
-          <p>
-            <strong>Rent Duration:</strong>{" "}
-            {formatDate(txn.rent_start_date)} →{" "}
-            {formatDate(txn.rent_end_date)}
-          </p>
+        {post_type === "Rent" && txn.rent_start_date && txn.rent_end_date && (
+          <div className="bg-white border border-gray-100 rounded-lg p-3">
+            <p className="text-xs text-gray-500 mb-1">Rent Duration</p>
+            <p className="font-medium text-gray-900">
+              {formatDate(txn.rent_start_date)} → {formatDate(txn.rent_end_date)}
+            </p>
+          </div>
         )}
 
-        {/* LOCATION */}
-        {txn.meetup_location && (
-          <p>
-            <strong>Location:</strong> {txn.meetup_location}
-          </p>
+        {/* Fulfillment & Payment */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="bg-white border border-gray-100 rounded-lg p-3">
+            <p className="text-xs text-gray-500 mb-1">Fulfillment</p>
+            <p className="font-medium text-gray-900">{txn.fulfillment_method || "—"}</p>
+          </div>
+
+          <div className="bg-white border border-gray-100 rounded-lg p-3">
+            <p className="text-xs text-gray-500 mb-1">Payment</p>
+            <p className="font-medium text-gray-900">{txn.payment_method || "—"}</p>
+          </div>
+        </div>
+
+        {/* LOCATION DETAILS */}
+        {(txn.meetup_location || txn.meetup_date || txn.meetup_time) && (
+          <div className="bg-white border border-gray-100 rounded-lg p-3 space-y-2">
+            <p className="text-xs text-gray-500 font-medium">MEETUP DETAILS</p>
+            {txn.meetup_location && (
+              <p className="text-sm text-gray-700">
+                <span className="font-medium">📍</span> {txn.meetup_location}
+              </p>
+            )}
+            {txn.meetup_date && (
+              <p className="text-sm text-gray-700">
+                <span className="font-medium">📅</span> {formatDate(txn.meetup_date)}
+              </p>
+            )}
+            {txn.meetup_time && (
+              <p className="text-sm text-gray-700">
+                <span className="font-medium">🕐</span> {formatTime(txn.meetup_time)}
+              </p>
+            )}
+          </div>
         )}
-
-        {txn.meetup_date && (
-          <p>
-            <strong>Date:</strong> {formatDate(txn.meetup_date)}
-          </p>
-        )}
-
-        {txn.meetup_time && (
-          <p>
-            <strong>Time:</strong> {formatTime(txn.meetup_time)}
-          </p>
-        )}
-
-        <p>
-          <strong>Payment method:</strong> {txn.payment_method || "—"}
-        </p>
-
-        {/* STATUS WITH COLORS */}
-        <p>
-          <strong>Status:</strong>{" "}
-          <span
-            className={
-              txn.status === "Accepted"
-                ? "text-green-600 font-semibold"
-                : txn.status === "Cancelled"
-                ? "text-red-500 font-semibold"
-                : "text-gray-600"
-            }
-          >
-            {txn.status}
-          </span>
-        </p>
       </div>
 
       {/* BUTTONS */}
       {txn.status === "Pending" && (
-        <div className="mt-4 flex flex-col gap-3">
+        <div className="mt-5 flex flex-col gap-2">
           {post_type === "Giveaway" && currentUserRole === "buyer" ? (
             <>
               <Button
                 onClick={() =>
                   handleUpdateTransaction(txn.id, "Accepted")
                 }
-                className="bg-green-600 text-white hover:bg-green-700 w-full"
+                className="bg-gradient-to-r from-green-600 to-green-700 text-white hover:from-green-700 hover:to-green-800 w-full rounded-lg font-semibold shadow-md hover:shadow-lg transition-all"
               >
-                Accept
+                ✓ Accept Transaction
               </Button>
 
               <Button
                 onClick={() =>
                   handleUpdateTransaction(txn.id, "Cancelled")
                 }
-                className="bg-red-600 text-white hover:bg-red-700 w-full"
+                className="bg-gray-100 text-gray-700 hover:bg-gray-200 w-full rounded-lg font-medium border border-gray-300 transition-all"
               >
-                Cancel
+                ✕ Cancel
               </Button>
             </>
           ): (
@@ -159,18 +152,18 @@ export default function LiveTransactionCard({
                   onClick={() =>
                     handleUpdateTransaction(txn.id, "Accepted")
                   }
-                  className="bg-green-600 text-white hover:bg-green-700 w-full"
+                  className="bg-gradient-to-r from-green-600 to-green-700 text-white hover:from-green-700 hover:to-green-800 w-full rounded-lg font-semibold shadow-md hover:shadow-lg transition-all"
                 >
-                  Accept
+                  ✓ Accept Transaction
                 </Button>
 
                 <Button
                   onClick={() =>
                     handleUpdateTransaction(txn.id, "Cancelled")
                   }
-                  className="bg-red-600 text-white hover:bg-red-700 w-full"
+                  className="bg-gray-100 text-gray-700 hover:bg-gray-200 w-full rounded-lg font-medium border border-gray-300 transition-all"
                 >
-                  Cancel
+                  ✕ Cancel
                 </Button>
               </>
             ) : (
@@ -178,20 +171,18 @@ export default function LiveTransactionCard({
                 onClick={() =>
                   handleUpdateTransaction(txn.id, "Cancelled")
                 }
-                className="bg-red-600 text-white hover:bg-red-700 w-full"
+                className="bg-gray-100 text-gray-700 hover:bg-gray-200 w-full rounded-lg font-medium border border-gray-300 transition-all"
               >
-                Cancel
+                ✕ Cancel Transaction
               </Button>
             )}
-            </>              
+            </>
           )}
-
-          
         </div>
       )}
 
       {/* TIMESTAMP */}
-      <p className="text-xs text-gray-500 text-right mt-3">
+      <p className="text-xs text-gray-400 text-right mt-4">
         {formattedTime}
       </p>
     </div>

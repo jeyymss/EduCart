@@ -1,7 +1,9 @@
 // hooks/queries/useTransactions.ts
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useMemo } from "react";
+import { createClient } from "@/utils/supabase/client";
 
 export type TxStatus = "active" | "completed" | "cancelled";
 export type TxType = "Sales" | "Purchases";
@@ -38,9 +40,40 @@ async function fetchTransactions(userId: string): Promise<Tx[]> {
 }
 
 export function useTransactions(userId: string) {
-  return useQuery({
+  const queryClient = useQueryClient();
+  const supabase = useMemo(() => createClient(), []);
+
+  const query = useQuery({
     queryKey: ["transactions", userId],
     queryFn: () => fetchTransactions(userId),
     enabled: !!userId,
   });
+
+  // Real-time subscription for transaction updates
+  useEffect(() => {
+    if (!userId) return;
+
+    const channel = supabase
+      .channel(`transactions_${userId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "transactions",
+        },
+        (payload) => {
+          // Invalidate and refetch transactions when any transaction is updated
+          queryClient.invalidateQueries({ queryKey: ["transactions", userId] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
+
+  return query;
 }

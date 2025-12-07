@@ -109,6 +109,11 @@ export async function GET(req: Request) {
       // Cancelled items should not show for seller
       if (statusTab === "cancelled" && !isBuyer) return null;
 
+      // Calculate delivery fee from snapshot
+      const itemPrice = txn.price || snap.price || 0;
+      const totalAmount = snap.total_amount || itemPrice;
+      const deliveryFee = totalAmount > itemPrice ? totalAmount - itemPrice : null;
+
       return {
         id: row.id,
         transaction_id: row.transaction_id,
@@ -124,8 +129,9 @@ export async function GET(req: Request) {
         method: txn.fulfillment_method || snap.fulfillment_method || "Meetup",
         payment_method: txn.payment_method || snap.payment_method,
         title: post.item_title || snap.item_title || "Untitled Item",
-        price: txn.price || snap.price || 0,
-        total: snap.total_amount || snap.price || 0,
+        price: itemPrice,
+        total: totalAmount,
+        delivery_fee: deliveryFee,
         created_at: snap.created_at,
         post_type: postType.name || snap.post_type || "Buy",
         image_url: imageUrl,
@@ -137,6 +143,7 @@ export async function GET(req: Request) {
         seller_id: row.seller_id,
 
         post_id: post.id,
+        address: snap.delivery_address,
       };
     })
     .filter(Boolean);

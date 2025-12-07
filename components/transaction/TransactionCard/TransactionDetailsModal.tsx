@@ -32,6 +32,7 @@ type TransactionDetailsModalProps = {
     title: string;
     price: number;
     total: number;
+    delivery_fee?: number | null;
     payment_method: string;
     method: string;
     type: string;
@@ -201,19 +202,54 @@ export default function TransactionDetailsModal({
             />
           </div>
 
-          {/* PRICE BOXES */}
-          <div className="grid grid-cols-2 gap-3 mb-4">
-            <div className="rounded-xl border border-slate-200 bg-white p-3">
-              <p className="text-xs font-medium text-slate-500">Price</p>
-              <p className="text-sm font-semibold text-slate-900">
-                {peso(data.price)}
-              </p>
+          {/* RECEIPT-STYLE BREAKDOWN */}
+          <div className="rounded-2xl border-2 border-slate-200 bg-gradient-to-br from-white to-slate-50 p-5 mb-4">
+            <div className="flex items-center gap-2 mb-4">
+              <ReceiptText className="h-5 w-5 text-slate-600" />
+              <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wide">
+                Payment Breakdown
+              </h3>
             </div>
-            <div className="rounded-xl border border-amber-200 bg-amber-50 p-3">
-              <p className="text-xs font-medium text-amber-700">Total</p>
-              <p className="text-sm font-extrabold text-amber-700">
-                {peso(data.total)}
-              </p>
+
+            <div className="space-y-3">
+              {/* Item Price */}
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-slate-600">Item Price</span>
+                <span className="text-sm font-semibold text-slate-900">
+                  {peso(data.price)}
+                </span>
+              </div>
+
+              {/* Delivery Fee (if applicable) */}
+              {data.delivery_fee && data.delivery_fee > 0 && (
+                <>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-slate-600">Delivery Fee</span>
+                    <span className="text-sm font-semibold text-slate-900">
+                      {peso(data.delivery_fee)}
+                    </span>
+                  </div>
+                  <Separator className="my-2" />
+                </>
+              )}
+
+              {/* Total */}
+              <div className="flex justify-between items-center pt-2 pb-1">
+                <span className="text-base font-bold text-slate-800">Total Amount</span>
+                <span className="text-xl font-extrabold text-emerald-600">
+                  {peso(data.total)}
+                </span>
+              </div>
+            </div>
+
+            {/* Payment Method Badge */}
+            <div className="mt-4 pt-4 border-t border-slate-200">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-slate-500">Payment Method</span>
+                <span className="px-3 py-1.5 rounded-full bg-blue-50 text-blue-700 text-xs font-semibold border border-blue-200">
+                  {data.payment_method}
+                </span>
+              </div>
             </div>
           </div>
 
@@ -226,9 +262,6 @@ export default function TransactionDetailsModal({
               <Tag>{data.type}</Tag>
               <span className="inline-flex items-center text-xs px-3 py-1 rounded-full border bg-gray-50 text-gray-700">
                 {data.method}
-              </span>
-              <span className="inline-flex items-center text-xs px-3 py-1 rounded-full border bg-gray-50 text-gray-700">
-                {data.payment_method}
               </span>
             </div>
 

@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 
 type Row = {
   conversation_id: number;
@@ -23,7 +23,7 @@ export default function SidebarList({
   const pathname = usePathname();
   const currentId = pathname.split("/").pop();
   const router = useRouter();
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   const [conversations, setConversations] = useState(initialConvos);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
@@ -37,7 +37,8 @@ export default function SidebarList({
       setCurrentUserId(session?.user.id ?? null);
     }
     getUser();
-  }, [supabase]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Listen for new messages
   useEffect(() => {
@@ -78,6 +79,7 @@ export default function SidebarList({
                 (c) => c.conversation_id !== newMessage.conversation_id
               );
 
+              // Put the updated conversation at the top (most recent)
               return [updated, ...others];
             }
 
@@ -90,7 +92,8 @@ export default function SidebarList({
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [supabase, currentUserId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUserId]);
 
   if (conversations.length === 0) {
     return <div className="p-6 text-sm text-slate-500">No messages yet.</div>;
@@ -118,18 +121,25 @@ export default function SidebarList({
     router.push(`/messages/${conversationId}`);
   }
 
+  // Sort conversations by most recent first
+  const sortedConversations = [...conversations].sort((a, b) => {
+    const dateA = a.last_message_created_at ? new Date(a.last_message_created_at).getTime() : 0;
+    const dateB = b.last_message_created_at ? new Date(b.last_message_created_at).getTime() : 0;
+    return dateB - dateA; // Most recent first
+  });
+
   return (
-    <ul className="divide-y divide-slate-300">
-      {conversations.map((row) => {
+    <ul className="divide-y divide-slate-200">
+      {sortedConversations.map((row) => {
         const isActive = String(row.conversation_id) === currentId;
 
         return (
           <li key={row.conversation_id}>
             <button
               onClick={() => handleClick(row.conversation_id)}
-              className={`flex gap-3 items-center w-full text-left p-4 hover:bg-slate-50 rounded-lg transition-all duration-200
-                ${isActive ? "bg-slate-100" : ""}
-                ${row.has_unread && !isActive ? "bg-blue-50" : ""}`}
+              className={`flex gap-3 items-center w-full text-left p-4 transition-all duration-200
+                ${isActive ? "bg-blue-100 border-l-4 border-blue-500 shadow-sm" : "hover:bg-slate-100"}
+                ${row.has_unread && !isActive ? "bg-blue-50 border-l-4 border-blue-300" : ""}`}
             >
               <Avatar url={row.other_user_avatar_url} />
 

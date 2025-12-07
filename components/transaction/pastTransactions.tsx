@@ -63,10 +63,10 @@ export default function PastTransactionDetails({
     }
   }, []);
 
-  // Load Wallet Balance
+  // Load Wallet Balance - optimized endpoint
   useEffect(() => {
     async function load() {
-      const res = await fetch("/api/wallet/get");
+      const res = await fetch("/api/wallet/balance");
       const data = await res.json();
       setBalance(data.balance);
     }
@@ -203,24 +203,160 @@ export default function PastTransactionDetails({
     }
   };
 
-  return (
-    <div className="border rounded-xl p-5 bg-white shadow-md transition-all">
-      <p className="font-semibold text-base mb-4 text-[#102E4A]">
-        Transaction Form Completed
-      </p>
+  const formatCurrency = (v?: number | null) =>
+    v != null ? `₱${v.toLocaleString()}` : "—";
 
+  function formatDate(dateStr: string) {
+    if (!dateStr) return "—";
+    const date = new Date(dateStr);
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  }
+
+  function formatTime(timeStr: string) {
+    if (!timeStr) return "—";
+    const date = new Date(`1970-01-01T${timeStr}`);
+    return date.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
+  }
+
+  // Determine status badge color
+  const getStatusColor = () => {
+    switch (txn.status) {
+      case "Accepted":
+        return "bg-green-100 text-green-700";
+      case "Paid":
+        return "bg-blue-100 text-blue-700";
+      case "PickedUp":
+        return "bg-purple-100 text-purple-700";
+      case "Completed":
+        return "bg-gray-100 text-gray-700";
+      default:
+        return "bg-gray-100 text-gray-600";
+    }
+  };
+
+  return (
+    <div className="border border-gray-200 rounded-2xl p-6 bg-gradient-to-br from-white to-gray-50 shadow-lg hover:shadow-xl transition-all">
+      {/* HEADER */}
+      <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full bg-green-500"></div>
+          <p className="font-bold text-lg text-[#102E4A]">
+            Transaction Accepted
+          </p>
+        </div>
+        <span className={`px-3 py-1 text-xs font-semibold rounded-full ${getStatusColor()}`}>
+          {txn.status}
+        </span>
+      </div>
+
+      {/* PAY NOW BUTTON - Prominent placement for Online Payment */}
       {txn.status === "Accepted" &&
         txn.payment_method === "Online Payment" &&
-        currentUserRole === "buyer" &&
-        txn.status !== "Paid" && (
+        currentUserRole === "buyer" && (
           <Button
-            className="mt-4 w-full rounded-lg py-2"
-            style={{ backgroundColor: "#C7D9E5" }}
+            className="w-full mb-5 rounded-xl py-6 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold text-lg shadow-lg hover:shadow-xl transition-all"
             onClick={() => setShowPaymentDialog(true)}
           >
-            Pay Now
+            💳 Pay Now - {formatCurrency(totalPayment)}
           </Button>
       )}
+
+      {/* DETAILS */}
+      <div className="space-y-3 text-sm">
+        {/* Item Title - Highlighted */}
+        <div className="bg-blue-50 border border-blue-100 rounded-lg p-3">
+          <p className="text-xs text-blue-600 font-medium mb-1">ITEM</p>
+          <p className="font-semibold text-gray-900">{itemTitle || "—"}</p>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          {/* Transaction Type */}
+          <div className="bg-white border border-gray-100 rounded-lg p-3">
+            <p className="text-xs text-gray-500 mb-1">Type</p>
+            <p className="font-medium text-gray-900">{postType}</p>
+          </div>
+
+          {/* Price */}
+          <div className="bg-white border border-gray-100 rounded-lg p-3">
+            <p className="text-xs text-gray-500 mb-1">Price</p>
+            <p className="font-semibold text-[#E59E2C]">
+              {formatCurrency(txn.price)}
+              {postType === "Rent" && <span className="text-xs"> /day</span>}
+            </p>
+          </div>
+        </div>
+
+        {/* RENT DURATION */}
+        {postType === "Rent" && txn.rent_start_date && txn.rent_end_date && (
+          <div className="bg-white border border-gray-100 rounded-lg p-3">
+            <p className="text-xs text-gray-500 mb-1">Rent Duration</p>
+            <p className="font-medium text-gray-900">
+              {formatDate(txn.rent_start_date)} → {formatDate(txn.rent_end_date)}
+              {rentDays && <span className="text-xs text-gray-500"> ({rentDays} days)</span>}
+            </p>
+          </div>
+        )}
+
+        {/* Fulfillment & Payment */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="bg-white border border-gray-100 rounded-lg p-3">
+            <p className="text-xs text-gray-500 mb-1">Fulfillment</p>
+            <p className="font-medium text-gray-900">{txn.fulfillment_method || "—"}</p>
+          </div>
+
+          <div className="bg-white border border-gray-100 rounded-lg p-3">
+            <p className="text-xs text-gray-500 mb-1">Payment</p>
+            <p className="font-medium text-gray-900">{txn.payment_method || "—"}</p>
+          </div>
+        </div>
+
+        {/* LOCATION DETAILS */}
+        {(txn.meetup_location || txn.meetup_date || txn.meetup_time) && (
+          <div className="bg-white border border-gray-100 rounded-lg p-3 space-y-2">
+            <p className="text-xs text-gray-500 font-medium">MEETUP DETAILS</p>
+            {txn.meetup_location && (
+              <p className="text-sm text-gray-700">
+                <span className="font-medium">📍</span> {txn.meetup_location}
+              </p>
+            )}
+            {txn.meetup_date && (
+              <p className="text-sm text-gray-700">
+                <span className="font-medium">📅</span> {formatDate(txn.meetup_date)}
+              </p>
+            )}
+            {txn.meetup_time && (
+              <p className="text-sm text-gray-700">
+                <span className="font-medium">🕐</span> {formatTime(txn.meetup_time)}
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* TOTAL PAYMENT - If delivery or rent */}
+        {totalPayment !== null && totalPayment !== txn.price && (
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-3">
+            <div className="flex justify-between items-center">
+              <p className="text-sm font-semibold text-gray-700">Total Payment</p>
+              <p className="text-lg font-bold text-blue-700">
+                {formatCurrency(totalPayment)}
+              </p>
+            </div>
+            {deliveryFee !== null && (
+              <p className="text-xs text-gray-600 mt-1">
+                Includes delivery fee of {formatCurrency(deliveryFee)} ({distanceKm?.toFixed(2)} km)
+              </p>
+            )}
+          </div>
+        )}
+      </div>
 
 
       {txn.status !== "Paid" && (

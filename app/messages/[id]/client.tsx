@@ -26,6 +26,7 @@ import SaleTransacForm from "@/components/transaction/forms/SaleTransac";
 import TradeTransacForm from "@/components/transaction/forms/TradeTransac";
 import RentTransacForm from "@/components/transaction/forms/RentTransac";
 import LiveTransactionCard from "@/components/transaction/liveTransaction";
+import PastTransactionDetails from "@/components/transaction/pastTransactions";
 import PasaBuyTransacForm from "@/components/transaction/forms/PasaBuyTransac";
 import EmergencyTransacForm from "@/components/transaction/forms/EmergencyTransac";
 import GiveawayTransacForm from "@/components/transaction/forms/GiveawayTransac";
@@ -73,12 +74,13 @@ export default function ChatClient({
   itemImage,
   itemTitle,
   postType,
+  postStatus,
   itemPrice,
   itemTrade,
   itemServiceFee,
   itemPasabuyLocation,
   itemPasabuyCutoff,
-  transactionHistory,
+  transactionHistory: initialTransactionHistory,
 }: {
   conversationId: number;
   currentUserId: string;
@@ -91,6 +93,7 @@ export default function ChatClient({
   itemImage: string | null;
   itemTitle: string | null;
   postType: string | null;
+  postStatus: string | null;
   itemPrice: number | null;
   itemTrade: string;
   itemServiceFee: number;
@@ -98,23 +101,17 @@ export default function ChatClient({
   itemPasabuyCutoff: string;
   transactionHistory?: any[];
 }) {
-  const supabase = useMemo(() => createClient(), []); // Stable instance
+  const supabase = useMemo(() => createClient(), []);
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
+  const [transactionHistory, setTransactionHistory] = useState<any[]>(initialTransactionHistory || []);
   const [pendingText, setPendingText] = useState("");
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const transactionPollingRef = useRef<NodeJS.Timeout | null>(null);
-  const lastMessageIdRef = useRef<number>(
-    initialMessages.length > 0 ? Math.max(...initialMessages.map((m) => m.id)) : 0
-  );
-  const previousMessagesLengthRef = useRef(initialMessages.length);
-  const isUserScrolledUpRef = useRef(false);
-  const userJustSentMessageRef = useRef(false);
 
+  // Auto scroll to bottom when messages change
   useEffect(() => {
     const el = scrollContainerRef.current;
     if (!el) return;
@@ -125,238 +122,186 @@ export default function ChatClient({
     });
   }, [messages]);
 
-  // Track if user has scrolled up
+  // Realtime subscription
   useEffect(() => {
-    const el = scrollContainerRef.current;
-    if (!el) return;
-
-    const handleScroll = () => {
-      const isAtBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 100;
-      isUserScrolledUpRef.current = !isAtBottom;
-    };
-
-    el.addEventListener("scroll", handleScroll);
-    return () => el.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  // Auto scroll to bottom with smart behavior
-  useEffect(() => {
-    const el = scrollContainerRef.current;
-    if (!el) return;
-
-    const hasNewMessages = messages.length > previousMessagesLengthRef.current;
-
-    // Always scroll if:
-    // 1. User just sent a message (like Messenger/Facebook)
-    // OR
-    // 2. New messages arrived AND user is at the bottom
-    const shouldScroll =
-      userJustSentMessageRef.current ||
-      (hasNewMessages && !isUserScrolledUpRef.current);
-
-    if (shouldScroll) {
-      el.scrollTo({
-        top: el.scrollHeight,
-        behavior: "smooth",
-      });
-      // Reset the flag after scrolling
-      userJustSentMessageRef.current = false;
-      isUserScrolledUpRef.current = false;
-    }
-
-    // Update refs
-    previousMessagesLengthRef.current = messages.length;
-    if (messages.length > 0) {
-      const maxId = Math.max(...messages.map((m) => m.id));
-      if (maxId > lastMessageIdRef.current) {
-        lastMessageIdRef.current = maxId;
-      }
-    }
-  }, [messages]);
-
-  // Polling for new messages - always active for reliability
-  useEffect(() => {
-    // Poll every 1 second for new messages
-    const pollMessages = async () => {
-      const { data, error } = await supabase
-        .from("messages")
-        .select(
-          `*,
-          transactions (
-            id,
-            item_title,
-            price,
-            rent_start_date,
-            rent_end_date,
-            offered_item,
-            cash_added,
-            created_at,
-            fulfillment_method,
-            payment_method,
-            meetup_location,
-            meetup_date,
-            meetup_time,
-            status,
-            post_types (id, name),
-            post_id (
-              item_trade
+    const subscriptionChannel = supabase
+      .channel(`conversation_${conversationId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+          filter: `conversation_id=eq.${conversationId}`,
+        },
+        async (payload) => {
+          const { data } = await supabase
+            .from("messages")
+            .select(
+              `*,
+              transactions (
+                id,
+                item_title,
+                price,
+                rent_start_date,
+                rent_end_date,
+                offered_item,
+                cash_added,
+                created_at,
+                fulfillment_method,
+                payment_method,
+                meetup_location,
+                meetup_date,
+                meetup_time,
+                status,
+                post_types (id, name),
+                post_id (
+                  item_trade
+                )
+              )`
             )
-          )`
-        )
-        .eq("conversation_id", conversationId)
-        .gt("id", lastMessageIdRef.current)
-        .order("created_at", { ascending: true });
+            .eq("id", (payload.new as any).id)
+            .single();
 
-      if (!error && data && data.length > 0) {
-        setMessages((prev) => {
-          // Prevent duplicates
-          const newMessages = data.filter(
-            (newMsg) => !prev.some((existingMsg) => existingMsg.id === newMsg.id)
-          );
-          if (newMessages.length > 0) {
-            lastMessageIdRef.current = Math.max(...data.map((m) => m.id));
-            return [...prev, ...(newMessages as ChatMessage[])];
+          if (data) {
+            setMessages((prev) => [...prev, data as ChatMessage]);
           }
-          return prev;
-        });
-      }
-    };
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "transactions",
+        },
+        async (payload) => {
+          const updatedTransaction = payload.new as any;
 
-    // Poll immediately on mount
-    pollMessages();
-
-    // Then poll every 1.5 seconds
-    pollingIntervalRef.current = setInterval(pollMessages, 1500);
-
-    return () => {
-      if (pollingIntervalRef.current) {
-        clearInterval(pollingIntervalRef.current);
-      }
-    };
-  }, [conversationId, supabase]);
-
-  // Poll for transaction status updates
-  useEffect(() => {
-    const pollTransactions = async () => {
-      // Fetch all transactions for this conversation
-      const { data: transactions, error } = await supabase
-        .from("transactions")
-        .select("id, status, fulfillment_method, payment_method, meetup_location, meetup_date, meetup_time")
-        .eq("conversation_id", conversationId);
-
-      if (!error && transactions && transactions.length > 0) {
-        // Update messages with latest transaction status
-        setMessages((prev) =>
-          prev.map((msg) => {
-            if (msg.transaction_id && msg.transactions) {
-              const updatedTxn = transactions.find((t) => t.id === msg.transaction_id);
-              if (updatedTxn && updatedTxn.status !== msg.transactions.status) {
+          // Update messages with the new transaction data
+          setMessages((prevMessages) =>
+            prevMessages.map((msg) => {
+              if (msg.transactions?.id === updatedTransaction.id) {
                 return {
                   ...msg,
                   transactions: {
                     ...msg.transactions,
-                    status: updatedTxn.status,
-                    fulfillment_method: updatedTxn.fulfillment_method ?? msg.transactions.fulfillment_method,
-                    payment_method: updatedTxn.payment_method ?? msg.transactions.payment_method,
-                    meetup_location: updatedTxn.meetup_location ?? msg.transactions.meetup_location,
-                    meetup_date: updatedTxn.meetup_date ?? msg.transactions.meetup_date,
-                    meetup_time: updatedTxn.meetup_time ?? msg.transactions.meetup_time,
+                    ...updatedTransaction,
                   },
                 };
               }
+              return msg;
+            })
+          );
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "transaction_records",
+        },
+        async (payload) => {
+          const newRecord = payload.new as any;
+
+          // Check if this record belongs to this conversation
+          if (
+            (newRecord.buyer_id === currentUserId && newRecord.seller_id === otherUserId) ||
+            (newRecord.buyer_id === otherUserId && newRecord.seller_id === currentUserId)
+          ) {
+            // Fetch the complete record
+            const { data: fullRecord } = await supabase
+              .from("transaction_records")
+              .select("*")
+              .eq("id", newRecord.id)
+              .single();
+
+            if (fullRecord) {
+              setTransactionHistory((prev) => [...prev, fullRecord]);
             }
-            return msg;
-          })
-        );
-      }
-    };
+          }
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "transaction_records",
+        },
+        async (payload) => {
+          const updatedRecord = payload.new as any;
 
-    // Poll immediately
-    pollTransactions();
-
-    // Then poll every 2 seconds for transaction updates
-    transactionPollingRef.current = setInterval(pollTransactions, 2000);
+          // Update transaction history
+          setTransactionHistory((prev) =>
+            prev.map((record) =>
+              record.id === updatedRecord.id ? { ...record, ...updatedRecord } : record
+            )
+          );
+        }
+      )
+      .subscribe();
 
     return () => {
-      if (transactionPollingRef.current) {
-        clearInterval(transactionPollingRef.current);
-      }
+      supabase.removeChannel(subscriptionChannel);
     };
-  }, [conversationId, supabase]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conversationId, currentUserId, otherUserId]);
 
   // Send normal user message
   async function sendMessage() {
     const trimmedBody = pendingText.trim();
     if (!trimmedBody && selectedFiles.length === 0) return;
 
-    try {
-      const uploadedUrls: string[] = [];
+    const uploadedUrls: string[] = [];
 
-      // Upload files if any
-      for (const file of selectedFiles) {
-        const ext = file.name.split(".").pop();
-        const filePath = `${conversationId}/${Date.now()}-${Math.random()
-          .toString(36)
-          .substring(2)}.${ext}`;
+    for (const file of selectedFiles) {
+      const ext = file.name.split(".").pop();
+      const filePath = `${conversationId}/${Date.now()}-${Math.random()
+        .toString(36)
+        .substring(2)}.${ext}`;
 
-        const { error: uploadError } = await supabase.storage
-          .from("chat-uploads")
-          .upload(filePath, file);
+      const { error: uploadError } = await supabase.storage
+        .from("chat-uploads")
+        .upload(filePath, file);
 
-        if (uploadError) {
-          alert("Upload failed: " + uploadError.message);
-          continue;
-        }
-
-        const { data: urlData } = supabase.storage
-          .from("chat-uploads")
-          .getPublicUrl(filePath);
-
-        if (urlData?.publicUrl) {
-          uploadedUrls.push(urlData.publicUrl);
-        }
+      if (uploadError) {
+        alert("Upload failed: " + uploadError.message);
+        continue;
       }
 
-      // Send text message if there is one
-      if (trimmedBody) {
-        const { error: textError } = await supabase
-          .from("messages")
-          .insert({
-            conversation_id: conversationId,
-            sender_user_id: currentUserId,
-            body: trimmedBody,
-            attachments: null,
-            type: "user",
-          });
+      const { data: urlData } = supabase.storage
+        .from("chat-uploads")
+        .getPublicUrl(filePath);
 
-        if (textError) {
-          alert("Failed to send message. Please try again.");
-          return;
-        }
+      if (urlData?.publicUrl) {
+        uploadedUrls.push(urlData.publicUrl);
       }
-
-      // Send image messages
-      for (const url of uploadedUrls) {
-        await supabase
-          .from("messages")
-          .insert({
-            conversation_id: conversationId,
-            sender_user_id: currentUserId,
-            body: null,
-            attachments: [url],
-            type: "user",
-          });
-      }
-
-      // Mark that user just sent a message - will trigger auto-scroll
-      userJustSentMessageRef.current = true;
-
-      // Clear input fields only after successful send
-      setPendingText("");
-      setSelectedFiles([]);
-    } catch (error) {
-      alert("An error occurred while sending the message.");
     }
+
+    if (trimmedBody) {
+      await supabase.from("messages").insert({
+        conversation_id: conversationId,
+        sender_user_id: currentUserId,
+        body: trimmedBody,
+        attachments: null,
+        type: "user",
+      });
+    }
+
+    for (const url of uploadedUrls) {
+      await supabase.from("messages").insert({
+        conversation_id: conversationId,
+        sender_user_id: currentUserId,
+        body: null,
+        attachments: [url],
+        type: "user",
+      });
+    }
+
+    setPendingText("");
+    setSelectedFiles([]);
   }
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -372,75 +317,61 @@ export default function ChatClient({
     transactionId: string,
     newStatus: string
   ) {
-    try {
-      // Store the original status for potential rollback
-      const originalMessage = messages.find(
-        (msg) => msg.transaction_id === transactionId
-      );
-      const originalStatus = originalMessage?.transactions?.status;
+    // Update transaction status
+    const { error: updateError } = await supabase
+      .from("transactions")
+      .update({ status: newStatus })
+      .eq("id", transactionId);
 
-      // Optimistically update the UI immediately
-      setMessages((prev) =>
-        prev.map((msg) => {
-          if (msg.transaction_id === transactionId && msg.transactions) {
-            return {
-              ...msg,
-              transactions: {
-                ...msg.transactions,
-                status: newStatus,
-              },
-            };
-          }
-          return msg;
-        })
-      );
+    if (updateError) {
+      console.error("Failed to update transaction:", updateError.message);
+      return;
+    }
 
-      // Update transaction status in database
-      const { error: updateError } = await supabase
-        .from("transactions")
-        .update({ status: newStatus })
-        .eq("id", transactionId);
-
-      if (updateError) {
-        // Revert optimistic update on error
-        if (originalStatus) {
-          setMessages((prev) =>
-            prev.map((msg) => {
-              if (msg.transaction_id === transactionId && msg.transactions) {
-                return {
-                  ...msg,
-                  transactions: {
-                    ...msg.transactions,
-                    status: originalStatus,
-                  },
-                };
-              }
-              return msg;
-            })
-          );
+    // Optimistically update local state
+    setMessages((prevMessages) =>
+      prevMessages.map((msg) => {
+        if (msg.transactions?.id === transactionId) {
+          return {
+            ...msg,
+            transactions: {
+              ...msg.transactions,
+              status: newStatus,
+            },
+          };
         }
-        alert("Failed to update transaction status. Please try again.");
-        return;
-      }
+        return msg;
+      })
+    );
 
-      // Insert a NEW system message with the updated transaction
-      // This will make the transaction card appear at the bottom as a new message
+    // Check if a system message already exists for this transaction
+    const { data: existingMessage } = await supabase
+      .from("messages")
+      .select("id")
+      .eq("transaction_id", transactionId)
+      .eq("type", "system")
+      .single();
+
+    if (existingMessage) {
+      // Update the existing system message
+      await supabase
+        .from("messages")
+        .update({
+          body: `Transaction ${newStatus}`,
+        })
+        .eq("id", existingMessage.id);
+    } else {
+      // If no system message yet, insert a new one
       await supabase.from("messages").insert({
         conversation_id: conversationId,
         sender_user_id: currentUserId,
         transaction_id: transactionId,
         type: "system",
         body: `Transaction ${newStatus}`,
-        attachments: null,
       });
-
-      // Mark that user just sent a message - will trigger auto-scroll
-      userJustSentMessageRef.current = true;
-
-      // The polling will handle updating the UI for both users
-    } catch (error) {
-      alert("An error occurred while updating the transaction.");
     }
+
+    // No reload needed - realtime subscription will handle updates
   }
 
   return (
@@ -472,67 +403,69 @@ export default function ChatClient({
             </Link>
           </div>
 
-          {/* Item Preview */}
-          <Link
-            href={`/product/${postId}`}
-            className="flex items-center gap-3 p-4 border-t bg-white"
-          >
-            {itemImage && (
-              <Image
-                src={itemImage}
-                alt={itemTitle ?? "Item"}
-                width={56}
-                height={56}
-                className="h-20 w-20 rounded-md object-fill"
-              />
-            )}
+          {/* Item Preview - Only show if post is not Sold */}
+          {postStatus !== "Sold" && (
+            <Link
+              href={`/product/${postId}`}
+              className="flex items-center gap-3 p-4 border-t bg-white"
+            >
+              {itemImage && (
+                <Image
+                  src={itemImage}
+                  alt={itemTitle ?? "Item"}
+                  width={56}
+                  height={56}
+                  className="h-20 w-20 rounded-md object-fill"
+                />
+              )}
 
-            <div className="space-y-2">
-              <PostTypeBadge
-                type={postType as any}
-                className="text-xs text-slate-500"
-              />
+              <div className="space-y-2">
+                <PostTypeBadge
+                  type={postType as any}
+                  className="text-xs text-slate-500"
+                />
 
-              {postType === "Sale" && (
-                <>
+                {postType === "Sale" && (
+                  <>
+                    <p className="text-sm font-medium truncate">{itemTitle}</p>
+                    {itemPrice && (
+                      <p className="text-xs text-[#E59E2C]">
+                        ₱{itemPrice.toLocaleString()}
+                      </p>
+                    )}
+                  </>
+                )}
+
+                {postType === "Rent" && (
+                  <>
+                    <p className="text-sm font-medium truncate">{itemTitle}</p>
+                    {itemPrice && (
+                      <p className="text-xs text-[#E59E2C]">
+                        ₱{itemPrice.toLocaleString()} / Day
+                      </p>
+                    )}
+                  </>
+                )}
+
+                {postType === "Trade" && (
+                  <>
+                    <p className="text-sm font-medium truncate">{itemTitle}</p>
+                    {itemPrice && (
+                      <p className="text-xs text-[#E59E2C]">
+                        ₱{itemPrice.toLocaleString()} + Trade for{" "}
+                        <b>{itemTrade}</b>
+                      </p>
+                    )}
+                  </>
+                )}
+
+                {(postType === "PasaBuy" ||
+                  postType === "Emergency Lending") && (
                   <p className="text-sm font-medium truncate">{itemTitle}</p>
-                  {itemPrice && (
-                    <p className="text-xs text-[#E59E2C]">
-                      ₱{itemPrice.toLocaleString()}
-                    </p>
-                  )}
-                </>
-              )}
-
-              {postType === "Rent" && (
-                <>
-                  <p className="text-sm font-medium truncate">{itemTitle}</p>
-                  {itemPrice && (
-                    <p className="text-xs text-[#E59E2C]">
-                      ₱{itemPrice.toLocaleString()} / Day
-                    </p>
-                  )}
-                </>
-              )}
-
-              {postType === "Trade" && (
-                <>
-                  <p className="text-sm font-medium truncate">{itemTitle}</p>
-                  {itemPrice && (
-                    <p className="text-xs text-[#E59E2C]">
-                      ₱{itemPrice.toLocaleString()} + Trade for{" "}
-                      <b>{itemTrade}</b>
-                    </p>
-                  )}
-                </>
-              )}
-
-              {(postType === "PasaBuy" ||
-                postType === "Emergency Lending") && (
-                <p className="text-sm font-medium truncate">{itemTitle}</p>
-              )}
-            </div>
-          </Link>
+                )}
+              </div>
+            </Link>
+          )}
         </div>
 
         {/* Messages */}
@@ -540,45 +473,26 @@ export default function ChatClient({
           ref={scrollContainerRef}
           className="flex-1 overflow-y-auto p-4 space-y-2 bg-slate-50"
         >
-          {(() => {
-            // Find the most recent message for each transaction_id
-            const latestTransactionMessages = new Map<string, number>();
-            messages.forEach((msg) => {
-              if (msg.type === "system" && msg.transaction_id) {
-                const existingMsgId = latestTransactionMessages.get(msg.transaction_id);
-                if (!existingMsgId || msg.id > existingMsgId) {
-                  latestTransactionMessages.set(msg.transaction_id, msg.id);
-                }
-              }
+          {messages.map((messageRow) => {
+            const formattedTime = new Date(
+              messageRow.created_at
+            ).toLocaleString("en-US", {
+              month: "short",
+              day: "numeric",
+              hour: "numeric",
+              minute: "2-digit",
+              hour12: true,
             });
 
-            return messages.map((messageRow) => {
-              const formattedTime = new Date(
-                messageRow.created_at
-              ).toLocaleString("en-US", {
-                month: "short",
-                day: "numeric",
-                hour: "numeric",
-                minute: "2-digit",
-                hour12: true,
-              });
+            // SYSTEM MESSAGES (transaction forms)
+            if (messageRow.type === "system" && messageRow.transactions) {
+              const txn = messageRow.transactions;
 
-              // SYSTEM MESSAGES (transaction forms)
-              if (messageRow.type === "system" && messageRow.transactions) {
-                // Only show the most recent system message for each transaction
-                if (
-                  messageRow.transaction_id &&
-                  latestTransactionMessages.get(messageRow.transaction_id) !== messageRow.id
-                ) {
-                  return null; // Skip old transaction messages
-                }
-
-                const txn = messageRow.transactions;
-
-                return (
-                  <div key={messageRow.id} className="flex justify-center w-full">
-                    <div className="bg-slate-100 border rounded-lg p-4 text-sm max-w-md">
-                      {/* Always show LiveTransactionCard for all statuses */}
+              return (
+                <div key={messageRow.id} className="flex justify-center w-full">
+                  <div className="bg-slate-100 border rounded-lg p-4 text-sm max-w-md">
+                    {messageRow.transactions.status === "Pending" ? (
+                      // Current Transaction
                       <LiveTransactionCard
                         key={messageRow.id}
                         post_type={postType ?? "Unknown"}
@@ -587,10 +501,64 @@ export default function ChatClient({
                         currentUserRole={currentUserRole}
                         handleUpdateTransaction={handleUpdateTransaction}
                       />
-                    </div>
+                    ) : (
+                      <>
+                        {/* 🧾 Show only the transaction record for this transaction_id */}
+                        {transactionHistory &&
+                          transactionHistory.some(
+                            (record) => record.transaction_id === txn.id
+                          ) && (
+                            <div className="border-t bg-white p-4 mt-3">
+                              {transactionHistory
+                                .filter(
+                                  (record) => record.transaction_id === txn.id
+                                )
+                                .map((record) => {
+                                  const snapshot = record.snapshot;
+                                  return (
+                                    <PastTransactionDetails
+                                      key={record.id}
+                                      conversation_id={conversationId.toString()}
+                                      postType={record.post_type || "Unknown"}
+                                      itemTitle={snapshot.item_title}
+                                      currentUserRole={currentUserRole}
+                                      createdAt={record.created_at}
+                                      transaction_id={record.transaction_id}
+                                      txn={{
+                                        price: snapshot.price,
+                                        post_id: snapshot.post_id,
+                                        delivery_lat: snapshot.delivery_lat,
+                                        delivery_lng: snapshot.delivery_lng,
+                                        rent_start_date:
+                                          snapshot.rent_start_date,
+                                        rent_end_date: snapshot.rent_end_date,
+                                        fulfillment_method:
+                                          snapshot.fulfillment_method,
+                                        meetup_location:
+                                          snapshot.meetup_location,
+                                        meetup_date: snapshot.meetup_date,
+                                        meetup_time: snapshot.meetup_time,
+                                        payment_method:
+                                          snapshot.payment_method,
+                                        status: snapshot.status,
+                                        cash_added: snapshot.cash_added,
+                                        offered_item: snapshot.offered_item,
+                                        pasabuy_location:
+                                          snapshot.pasabuy_location,
+                                        pasabuy_cutoff: snapshot.pasabuy_cutoff,
+                                        service_fee: snapshot.service_fee,
+                                      }}
+                                    />
+                                  );
+                                })}
+                            </div>
+                          )}
+                      </>
+                    )}
                   </div>
-                );
-              }
+                </div>
+              );
+            }
 
             // REGULAR TEXT / IMAGE MESSAGES
             const isFromCurrentUser =
@@ -657,8 +625,7 @@ export default function ChatClient({
                 </div>
               </div>
             );
-            });
-          })()}
+          })}
         </div>
 
         {selectedFiles.length > 0 && (
@@ -708,8 +675,9 @@ export default function ChatClient({
                 <p>Add Attachment</p>
               </TooltipContent>
             </Tooltip>
-            
-            {(
+
+            {/* Only show form button if post is not Sold */}
+            {postStatus !== "Sold" && (
               (currentUserRole === "buyer" && postType !== "Giveaway") ||
               (currentUserRole === "seller" && postType === "Giveaway")
             ) && (
@@ -864,12 +832,7 @@ export default function ChatClient({
             value={pendingText}
             onChange={(e) => setPendingText(e.target.value)}
             placeholder="Type a message…"
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                sendMessage();
-              }
-            }}
+            onKeyDown={(e) => e.key === "Enter" && sendMessage()}
           />
           <Button className="bg-[#E59E2C]" onClick={sendMessage}>
             Send
@@ -917,4 +880,3 @@ export default function ChatClient({
     </>
   );
 }
-
