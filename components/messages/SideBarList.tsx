@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 
 type Row = {
   conversation_id: number;
@@ -23,7 +23,7 @@ export default function SidebarList({
   const pathname = usePathname();
   const currentId = pathname.split("/").pop();
   const router = useRouter();
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   const [conversations, setConversations] = useState(initialConvos);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
@@ -37,7 +37,8 @@ export default function SidebarList({
       setCurrentUserId(session?.user.id ?? null);
     }
     getUser();
-  }, [supabase]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Listen for new messages
   useEffect(() => {
@@ -90,7 +91,8 @@ export default function SidebarList({
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [supabase, currentUserId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUserId]);
 
   if (conversations.length === 0) {
     return <div className="p-6 text-sm text-slate-500">No messages yet.</div>;

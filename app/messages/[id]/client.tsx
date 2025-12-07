@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -99,7 +99,7 @@ export default function ChatClient({
   itemPasabuyCutoff: string;
   transactionHistory?: any[];
 }) {
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
   const [pendingText, setPendingText] = useState("");
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -170,7 +170,8 @@ export default function ChatClient({
     return () => {
       supabase.removeChannel(subscriptionChannel);
     };
-  }, [conversationId, supabase]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conversationId]);
 
   // Send normal user message
   async function sendMessage() {
