@@ -15,6 +15,7 @@ import type { AdvancedFilterValue } from "@/components/profile/AdvancedFilters";
 import TransactionCard from "@/components/transaction/TransactionCard/TransactionCard";
 import { useTransactions, Tx } from "@/hooks/queries/useTransactions";
 import TransactionDetailsModal from "@/components/transaction/TransactionCard/TransactionDetailsModal";
+import { useQueryClient } from "@tanstack/react-query";
 
 type TxStatus = "active" | "completed" | "cancelled";
 type TxType = "All" | "Sales" | "Purchases";
@@ -29,6 +30,7 @@ const EMPTY_ADV: AdvancedFilterValue = {
 };
 
 export default function Transactions({ userId }: { userId: string }) {
+  const queryClient = useQueryClient();
   const [statusTab, setStatusTab] = React.useState<TxStatus>("active");
   const [typeFilter, setTypeFilter] = React.useState<TxType>("All");
   const [search, setSearch] = React.useState("");
@@ -61,6 +63,14 @@ export default function Transactions({ userId }: { userId: string }) {
       setIsModalOpen(Boolean(found));
     },
     [transactions]
+  );
+
+  const handleActionComplete = React.useCallback(
+    (transactionId: string) => {
+      // Invalidate the transactions query to refetch the data
+      queryClient.invalidateQueries({ queryKey: ["transactions", userId] });
+    },
+    [queryClient, userId]
   );
 
   const Header = (
@@ -162,7 +172,7 @@ export default function Transactions({ userId }: { userId: string }) {
                   postType={tx.post_type}
                   image={tx.image_url}
                   onView={handleView}
-                  onPrimary={(id) => console.log("primary action", id)}
+                  onPrimary={handleActionComplete}
                 />
               ))}
             </tbody>

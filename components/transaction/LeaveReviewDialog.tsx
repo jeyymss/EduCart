@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { createClient } from "@/utils/supabase/client";
 import {
   Dialog,
@@ -20,6 +20,7 @@ type LeaveReviewDialogProps = {
   transactionId: string;
   sellerId: string;
   buyerId: string;
+  onReviewSubmitted?: () => void;
 };
 
 export default function LeaveReviewDialog({
@@ -28,12 +29,13 @@ export default function LeaveReviewDialog({
   transactionId,
   sellerId,
   buyerId,
+  onReviewSubmitted,
 }: LeaveReviewDialogProps) {
   const [rating, setRating] = useState<number>(0);
   const [hoverRating, setHoverRating] = useState<number | null>(null);
   const [comment, setComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   const handleSubmit = async () => {
     if (!rating) {
@@ -52,16 +54,21 @@ export default function LeaveReviewDialog({
     if (error) {
       console.error(error);
       toast.error("Failed to submit review.");
+      setIsSubmitting(false);
     } else {
       toast.success("Review submitted successfully!");
-      onOpenChange(false);
 
-        
-    setTimeout(() => {
-        window.location.reload(); //Reload the page
-    }, 800)
+      // Reset form
+      setRating(0);
+      setComment("");
+      setIsSubmitting(false);
+
+      // Notify parent component
+      onReviewSubmitted?.();
+
+      // Close dialog
+      onOpenChange(false);
     }
-    setIsSubmitting(false);
   };
 
   return (

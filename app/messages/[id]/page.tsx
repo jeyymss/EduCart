@@ -102,6 +102,18 @@ export default async function ConversationPage({
     console.error("❌ Failed to fetch convoMeta:", metaError.message);
   }
 
+  // ✅ Fetch post status
+  let postStatus: string | null = null;
+  if (convoMeta?.post_id) {
+    const { data: postData } = await supabase
+      .from("posts")
+      .select("status")
+      .eq("id", convoMeta.post_id)
+      .single();
+
+    postStatus = postData?.status ?? null;
+  }
+
   // ✅ Fetch all past transactions between the two users
   let transactionHistory: any[] = [];
 
@@ -137,6 +149,7 @@ export default async function ConversationPage({
       itemImage={convoMeta?.image_urls?.[0] ?? null}
       itemTitle={convoMeta?.item_title ?? null}
       postType={convoMeta?.post_type ?? null}
+      postStatus={postStatus}
       itemPrice={convoMeta?.item_price ?? null}
       itemTrade={convoMeta?.item_trade ?? null}
       itemServiceFee={convoMeta?.item_service_fee ?? null}

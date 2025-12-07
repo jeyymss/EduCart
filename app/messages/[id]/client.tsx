@@ -74,6 +74,7 @@ export default function ChatClient({
   itemImage,
   itemTitle,
   postType,
+  postStatus,
   itemPrice,
   itemTrade,
   itemServiceFee,
@@ -92,6 +93,7 @@ export default function ChatClient({
   itemImage: string | null;
   itemTitle: string | null;
   postType: string | null;
+  postStatus: string | null;
   itemPrice: number | null;
   itemTrade: string;
   itemServiceFee: number;
@@ -311,67 +313,69 @@ export default function ChatClient({
             </Link>
           </div>
 
-          {/* Item Preview */}
-          <Link
-            href={`/product/${postId}`}
-            className="flex items-center gap-3 p-4 border-t bg-white"
-          >
-            {itemImage && (
-              <Image
-                src={itemImage}
-                alt={itemTitle ?? "Item"}
-                width={56}
-                height={56}
-                className="h-20 w-20 rounded-md object-fill"
-              />
-            )}
+          {/* Item Preview - Only show if post is not Sold */}
+          {postStatus !== "Sold" && (
+            <Link
+              href={`/product/${postId}`}
+              className="flex items-center gap-3 p-4 border-t bg-white"
+            >
+              {itemImage && (
+                <Image
+                  src={itemImage}
+                  alt={itemTitle ?? "Item"}
+                  width={56}
+                  height={56}
+                  className="h-20 w-20 rounded-md object-fill"
+                />
+              )}
 
-            <div className="space-y-2">
-              <PostTypeBadge
-                type={postType as any}
-                className="text-xs text-slate-500"
-              />
+              <div className="space-y-2">
+                <PostTypeBadge
+                  type={postType as any}
+                  className="text-xs text-slate-500"
+                />
 
-              {postType === "Sale" && (
-                <>
+                {postType === "Sale" && (
+                  <>
+                    <p className="text-sm font-medium truncate">{itemTitle}</p>
+                    {itemPrice && (
+                      <p className="text-xs text-[#E59E2C]">
+                        ₱{itemPrice.toLocaleString()}
+                      </p>
+                    )}
+                  </>
+                )}
+
+                {postType === "Rent" && (
+                  <>
+                    <p className="text-sm font-medium truncate">{itemTitle}</p>
+                    {itemPrice && (
+                      <p className="text-xs text-[#E59E2C]">
+                        ₱{itemPrice.toLocaleString()} / Day
+                      </p>
+                    )}
+                  </>
+                )}
+
+                {postType === "Trade" && (
+                  <>
+                    <p className="text-sm font-medium truncate">{itemTitle}</p>
+                    {itemPrice && (
+                      <p className="text-xs text-[#E59E2C]">
+                        ₱{itemPrice.toLocaleString()} + Trade for{" "}
+                        <b>{itemTrade}</b>
+                      </p>
+                    )}
+                  </>
+                )}
+
+                {(postType === "PasaBuy" ||
+                  postType === "Emergency Lending") && (
                   <p className="text-sm font-medium truncate">{itemTitle}</p>
-                  {itemPrice && (
-                    <p className="text-xs text-[#E59E2C]">
-                      ₱{itemPrice.toLocaleString()}
-                    </p>
-                  )}
-                </>
-              )}
-
-              {postType === "Rent" && (
-                <>
-                  <p className="text-sm font-medium truncate">{itemTitle}</p>
-                  {itemPrice && (
-                    <p className="text-xs text-[#E59E2C]">
-                      ₱{itemPrice.toLocaleString()} / Day
-                    </p>
-                  )}
-                </>
-              )}
-
-              {postType === "Trade" && (
-                <>
-                  <p className="text-sm font-medium truncate">{itemTitle}</p>
-                  {itemPrice && (
-                    <p className="text-xs text-[#E59E2C]">
-                      ₱{itemPrice.toLocaleString()} + Trade for{" "}
-                      <b>{itemTrade}</b>
-                    </p>
-                  )}
-                </>
-              )}
-
-              {(postType === "PasaBuy" ||
-                postType === "Emergency Lending") && (
-                <p className="text-sm font-medium truncate">{itemTitle}</p>
-              )}
-            </div>
-          </Link>
+                )}
+              </div>
+            </Link>
+          )}
         </div>
 
         {/* Messages */}
@@ -581,8 +585,9 @@ export default function ChatClient({
                 <p>Add Attachment</p>
               </TooltipContent>
             </Tooltip>
-            
-            {(
+
+            {/* Only show form button if post is not Sold */}
+            {postStatus !== "Sold" && (
               (currentUserRole === "buyer" && postType !== "Giveaway") ||
               (currentUserRole === "seller" && postType === "Giveaway")
             ) && (
