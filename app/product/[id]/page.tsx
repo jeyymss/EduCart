@@ -22,6 +22,8 @@ import { createClient } from "@/utils/supabase/client";
 import dynamic from "next/dynamic";
 import ReportItemDialog from "@/components/report/reportItemDialog";
 import { submitItemReport } from "@/app/api/reports/reportItem/route";
+import MakeOfferDialog from "@/components/offers/MakeOfferDialog";
+import ViewOffersDialog from "@/components/offers/ViewOffersDialog";
 const MobileBottomNav = dynamic(() => import("@/components/mobile/MobileTopNav"), { ssr: false });
 
 function renderDetails(item: any) {
@@ -130,6 +132,9 @@ export default function ItemDetailsPage() {
 
   const avatarSrc = lister?.avatar_url ?? undefined;
 
+  // Check if current user is the seller
+  const isSeller = userId && userId === item.post_user_id;
+
   //submit report
   const reportSubmit = async () => {
     if (!selectedReportReason) {
@@ -225,39 +230,42 @@ export default function ItemDetailsPage() {
           <div className="space-y-6">
             <div className="flex items-start justify-between">
               <div className="flex-1">{renderDetails(item)}</div>
-              {userId && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  disabled={favLoading || toggleFavorite.isPending}
-                  onClick={() => toggleFavorite.mutate(isFav)}
-                  className={`${
-                    isFav ? "text-red-500" : "text-gray-400"
-                  } hover:text-red-600 hover:cursor-pointer transition-colors`}
-                >
-                  <Heart
-                    className={`h-7 w-7 hover:cursor-pointer ${
-                      isFav ? "fill-red-500" : ""
-                    }`}
-                  />
-                </Button>
-              )}
-              <Button
-                variant="ghost"
-                  size="sm"
-                  onClick={() => setShowReport(true)}
-                  className={"text-gray-400 hover:text-red-600 hover:cursor-pointer transition-colors"}
-                >
-                <Flag />
-              </Button>
+              {/* Show favorite and report buttons only if user is NOT the seller */}
+              {userId && !isSeller && (
+                <>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    disabled={favLoading || toggleFavorite.isPending}
+                    onClick={() => toggleFavorite.mutate(isFav)}
+                    className={`${
+                      isFav ? "text-red-500" : "text-gray-400"
+                    } hover:text-red-600 hover:cursor-pointer transition-colors`}
+                  >
+                    <Heart
+                      className={`h-7 w-7 hover:cursor-pointer ${
+                        isFav ? "fill-red-500" : ""
+                      }`}
+                    />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowReport(true)}
+                    className={"text-gray-400 hover:text-red-600 hover:cursor-pointer transition-colors"}
+                  >
+                    <Flag />
+                  </Button>
 
-              <ReportItemDialog 
-                open={showReport}
-                onOpenChange={setShowReport}
-                selectedReportReason={selectedReportReason}
-                setSelectedReportReason={setSelectedReportReason}
-                onSubmit={reportSubmit}
-              />
+                  <ReportItemDialog
+                    open={showReport}
+                    onOpenChange={setShowReport}
+                    selectedReportReason={selectedReportReason}
+                    setSelectedReportReason={setSelectedReportReason}
+                    onSubmit={reportSubmit}
+                  />
+                </>
+              )}
             </div>
 
             {item.created_at && (
@@ -267,20 +275,36 @@ export default function ItemDetailsPage() {
               </div>
             )}
 
+            {/* Action buttons - show different buttons based on whether user is seller or buyer */}
             <div className="flex gap-3">
-              <MessageSellerButton
-                className="flex-1 bg-[#F3D58D] hover:bg-[#F3D58D]/90 text-black font-medium py-3 hover:cursor-pointer"
-                postId={item.post_id}
-                sellerId={item.post_user_id}
-              />
-              {item.post_type_name == "Sale" && (
-                <Button variant="outline" className="flex-1 py-3 bg-transparent hover:cursor-pointer">
-                  Make an Offer
-                </Button>
+              {isSeller ? (
+                // Seller view: Show View Offers button for Sale items
+                item.post_type_name === "Sale" && (
+                  <ViewOffersDialog
+                    itemTitle={item.item_title}
+                    itemPrice={item.price}
+                  />
+                )
+              ) : (
+                // Buyer view: Show Message Seller and Make an Offer buttons
+                <>
+                  <MessageSellerButton
+                    className="flex-1 bg-[#F3D58D] hover:bg-[#F3D58D]/90 text-black font-medium py-3 hover:cursor-pointer"
+                    postId={item.post_id}
+                    sellerId={item.post_user_id}
+                  />
+                  {item.post_type_name === "Sale" && (
+                    <MakeOfferDialog
+                      itemTitle={item.item_title}
+                      itemPrice={item.price}
+                    />
+                  )}
+                </>
               )}
             </div>
 
-            {item.post_user_id && (
+            {/* Show "Posted By" section only if viewer is not the seller */}
+            {item.post_user_id && !isSeller && (
               <div className="bg-white rounded-2xl p-6 shadow-sm">
                 <h3 className="text-sm font-medium text-gray-500 mb-4">Posted By</h3>
                 <div className="flex items-center justify-between">
