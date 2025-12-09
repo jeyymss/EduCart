@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 
 export type PostWithUser = {
   post_id: string;
+  item_service_fee: number | null;
   quantity: string;
   post_user_id: string;
   item_title: string;

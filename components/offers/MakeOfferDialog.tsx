@@ -59,7 +59,7 @@ export default function MakeOfferDialog({ itemTitle, itemPrice }: MakeOfferDialo
               <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
               <Input
                 id="itemPrice"
-                value={itemPrice.toFixed(2)}
+                value={Number(itemPrice ?? 0).toFixed(2)}
                 disabled
                 className="pl-9 bg-gray-50 text-gray-600"
               />

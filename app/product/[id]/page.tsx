@@ -11,7 +11,7 @@ import TradeDetails from "@/components/posts/itemDetails/tradeDetails";
 import GiveawayDetails from "@/components/posts/itemDetails/giveawayDetails";
 import { getRelativeTime } from "@/utils/getRelativeTime";
 import { usePublicProfile } from "@/hooks/queries/profiles";
-import { ArrowLeft, Heart, X, ChevronLeft, ChevronRight, Flag } from "lucide-react";
+import { ArrowLeft, Heart, X, ChevronLeft, ChevronRight, Flag, Pencil } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import MessageSellerButton from "@/components/messages/MessageSellerBtn";
@@ -24,6 +24,7 @@ import ReportItemDialog from "@/components/report/reportItemDialog";
 import { submitItemReport } from "@/app/api/reports/reportItem/route";
 import MakeOfferDialog from "@/components/offers/MakeOfferDialog";
 import ViewOffersDialog from "@/components/offers/ViewOffersDialog";
+import EditProductDialog from "@/components/product/EditProductDialog";
 const MobileBottomNav = dynamic(() => import("@/components/mobile/MobileTopNav"), { ssr: false });
 
 function renderDetails(item: any) {
@@ -49,6 +50,7 @@ export default function ItemDetailsPage() {
   const id = params?.id as string | undefined;
   const [showReport, setShowReport] = useState(false);
   const [selectedReportReason, setSelectedReportReason] = useState("");
+  const [showEditDialog, setShowEditDialog] = useState(false);
 
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -164,7 +166,7 @@ export default function ItemDetailsPage() {
     <div className="min-h-screen bg-white">
       {/* Back button header */}
       <div className="bg-white px-6 py-4 -mt-2 lg:mt-8">
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
           <Button
             variant="ghost"
             size="sm"
@@ -174,6 +176,19 @@ export default function ItemDetailsPage() {
             <ArrowLeft className="h-4 w-4" />
             Back
           </Button>
+
+          {/* Edit button - only visible to seller */}
+          {isSeller && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2 text-[#102E4A] border-[#102E4A] hover:bg-[#102E4A]/10 hover:cursor-pointer"
+              onClick={() => setShowEditDialog(true)}
+            >
+              <Pencil className="h-4 w-4" />
+              Edit Post
+            </Button>
+          )}
         </div>
       </div>
 
@@ -282,7 +297,7 @@ export default function ItemDetailsPage() {
                 item.post_type_name === "Sale" && (
                   <ViewOffersDialog
                     itemTitle={item.item_title}
-                    itemPrice={item.price}
+                    itemPrice={item.item_price}
                   />
                 )
               ) : (
@@ -296,7 +311,7 @@ export default function ItemDetailsPage() {
                   {item.post_type_name === "Sale" && (
                     <MakeOfferDialog
                       itemTitle={item.item_title}
-                      itemPrice={item.price}
+                      itemPrice={item.item_price}
                     />
                   )}
                 </>
@@ -364,6 +379,23 @@ export default function ItemDetailsPage() {
             )}
           </div>
         </div>
+      )}
+
+      {/* Edit Product Dialog */}
+      {isSeller && (
+        <EditProductDialog
+          open={showEditDialog}
+          onOpenChange={setShowEditDialog}
+          post={{
+            post_id: item.post_id,
+            item_price: item.item_price,
+            item_description: item.item_description,
+            item_trade: item.item_trade,
+            item_service_fee: item.item_service_fee,
+            quantity: Number(item.quantity),
+            post_type_name: item.post_type_name,
+          }}
+        />
       )}
 
       {/* Mobile Bottom Navigation */}
