@@ -44,6 +44,7 @@ import { useUserProfile } from "@/hooks/useUserProfile";
 import {
   ArrowRight,
   BadgeCent,
+  Bell,
   MessageSquare,
   Plus,
   User,
@@ -64,6 +65,51 @@ export function Header() {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [selectedType, setSelectedType] = useState("");
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+
+  // Sample notifications (frontend only)
+  const sampleNotifications = [
+    {
+      id: 1,
+      type: "message",
+      title: "New Message",
+      description: "Sarah sent you a message about the textbook",
+      time: "2m ago",
+      read: false,
+    },
+    {
+      id: 2,
+      type: "sale",
+      title: "Item Sold",
+      description: "Your calculus textbook has been sold!",
+      time: "1h ago",
+      read: false,
+    },
+    {
+      id: 3,
+      type: "offer",
+      title: "New Offer Received",
+      description: "John made an offer on your laptop",
+      time: "3h ago",
+      read: true,
+    },
+    {
+      id: 4,
+      type: "giveaway",
+      title: "Giveaway Winner",
+      description: "You won the engineering book giveaway!",
+      time: "5h ago",
+      read: true,
+    },
+    {
+      id: 5,
+      type: "rental",
+      title: "Rental Reminder",
+      description: "Your rented camera is due tomorrow",
+      time: "1d ago",
+      read: true,
+    },
+  ];
 
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
@@ -270,24 +316,167 @@ export function Header() {
                     {user?.post_credits_balance}
                   </div>
 
-                  {/* Messages + Profile */}
+                  {/* Messages + Wallet + Notifications + Profile */}
+                  {/* MESSAGE BUTTON */}
+                  <Link
+                    href={"/messages"}
+                    className="hover:opacity-80"
+                    style={{ color: primary }}
+                  >
+                    <MessageSquare className="w-6 h-6" />
+                  </Link>
+                  {/* WALLET BUTTON */}
+                  <Link
+                    href={"/wallet"}
+                    className="hover:opacity-80"
+                    style={{ color: primary }}
+                  >
+                    <Wallet className="w-6 h-6" />
+                  </Link>
+
+                  {/* NOTIFICATIONS DROPDOWN */}
+                  <DropdownMenu
+                    open={notificationsOpen}
+                    onOpenChange={setNotificationsOpen}
+                  >
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        className="hover:opacity-80 hover:cursor-pointer relative"
+                        aria-label="Open notifications"
+                        style={{ color: primary }}
+                      >
+                        <Bell className="w-6 h-6" />
+                        {/* Unread badge */}
+                        {sampleNotifications.filter((n) => !n.read).length > 0 && (
+                          <span
+                            className="absolute -top-1 -right-1 w-5 h-5 rounded-full text-xs flex items-center justify-center text-white font-semibold"
+                            style={{ backgroundColor: "#E53E3E" }}
+                          >
+                            {sampleNotifications.filter((n) => !n.read).length}
+                          </span>
+                        )}
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                      align="end"
+                      className="w-[380px] max-h-[500px] overflow-y-auto p-0"
+                    >
+                      {/* Header */}
+                      <div
+                        className="px-4 py-3 border-b font-semibold"
+                        style={{ color: primary }}
+                      >
+                        Notifications
+                      </div>
+
+                      {/* Notifications List */}
+                      {sampleNotifications.length > 0 ? (
+                        <div>
+                          {sampleNotifications.map((notification) => (
+                            <div
+                              key={notification.id}
+                              className={`px-4 py-3 border-b last:border-b-0 hover:bg-gray-50 cursor-pointer transition-colors ${
+                                !notification.read ? "bg-blue-50" : ""
+                              }`}
+                              onClick={() => {
+                                console.log("Notification clicked:", notification.id);
+                              }}
+                            >
+                              <div className="flex items-start gap-3">
+                                {/* Icon based on type */}
+                                <div
+                                  className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 mt-1"
+                                  style={{
+                                    backgroundColor: !notification.read
+                                      ? softAccent
+                                      : "#E5E7EB",
+                                  }}
+                                >
+                                  {notification.type === "message" && (
+                                    <MessageSquare
+                                      className="w-5 h-5"
+                                      style={{ color: primary }}
+                                    />
+                                  )}
+                                  {notification.type === "sale" && (
+                                    <BadgeCent
+                                      className="w-5 h-5"
+                                      style={{ color: primary }}
+                                    />
+                                  )}
+                                  {notification.type === "offer" && (
+                                    <Wallet
+                                      className="w-5 h-5"
+                                      style={{ color: primary }}
+                                    />
+                                  )}
+                                  {notification.type === "giveaway" && (
+                                    <Plus
+                                      className="w-5 h-5"
+                                      style={{ color: primary }}
+                                    />
+                                  )}
+                                  {notification.type === "rental" && (
+                                    <ArrowRight
+                                      className="w-5 h-5"
+                                      style={{ color: primary }}
+                                    />
+                                  )}
+                                </div>
+
+                                {/* Content */}
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-start justify-between gap-2">
+                                    <h4
+                                      className={`text-sm ${
+                                        !notification.read
+                                          ? "font-semibold"
+                                          : "font-medium"
+                                      }`}
+                                      style={{ color: primary }}
+                                    >
+                                      {notification.title}
+                                    </h4>
+                                    {!notification.read && (
+                                      <div
+                                        className="w-2 h-2 rounded-full flex-shrink-0 mt-1"
+                                        style={{ backgroundColor: "#3B82F6" }}
+                                      />
+                                    )}
+                                  </div>
+                                  <p className="text-sm text-gray-600 mt-0.5">
+                                    {notification.description}
+                                  </p>
+                                  <p className="text-xs text-gray-400 mt-1">
+                                    {notification.time}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="px-4 py-8 text-center text-gray-500">
+                          No notifications
+                        </div>
+                      )}
+
+                      {/* Footer */}
+                      <div
+                        className="px-4 py-3 border-t text-center text-sm font-medium hover:bg-gray-50 cursor-pointer"
+                        style={{ color: accent }}
+                        onClick={() => {
+                          console.log("View all notifications clicked");
+                          setNotificationsOpen(false);
+                        }}
+                      >
+                        View all notifications
+                      </div>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
+                  {/* USER PROFILE DROPDOWN */}
                   <DropdownMenu>
-                    {/* MESSAGE BUTTON */}
-                    <Link
-                      href={"/messages"}
-                      className="hover:opacity-80"
-                      style={{ color: primary }}
-                    >
-                      <MessageSquare className="w-6 h-6" />
-                    </Link>
-                    {/* WALLET BUTTON */}
-                    <Link
-                      href={"/wallet"}
-                      className="hover:opacity-80"
-                      style={{ color: primary }}
-                    >
-                      <Wallet className="w-6 h-6" />
-                    </Link>
                     <DropdownMenuTrigger asChild>
                       <button
                         className="hover:opacity-80 hover:cursor-pointer"
