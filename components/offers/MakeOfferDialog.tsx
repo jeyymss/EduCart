@@ -128,7 +128,7 @@ export default function MakeOfferDialog({
               className="resize-none border-gray-300 focus:border-[#102E4A] focus:ring-[#102E4A]"
             />
             <p className="text-xs text-gray-500">
-              Explain why you're offering this price or ask questions
+              Explain why you&apos;re offering this price or ask questions
             </p>
           </div>
 
