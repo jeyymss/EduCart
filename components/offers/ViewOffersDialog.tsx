@@ -21,11 +21,11 @@ interface Offer {
   message: string | null;
   status: "Pending" | "Accepted" | "Rejected";
   created_at: string;
-  individuals?: {
-    full_name: string;
-    avatar_url?: string | null;
-  };
+
+  buyer_full_name: string | null;
+  buyer_avatar_url?: string | null;
 }
+
 
 interface ViewOffersDialogProps {
   postId: string;
@@ -146,10 +146,10 @@ export default function ViewOffersDialog({
                 {/* Header with buyer info and status */}
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
-                    {offer.individuals?.avatar_url ? (
+                    {offer.buyer_full_name ? (
                       <Image
-                        src={offer.individuals.avatar_url}
-                        alt={offer.individuals.full_name}
+                        src={offer.buyer_avatar_url || "/default-avatar.png"}
+                        alt={offer.buyer_full_name}
                         width={48}
                         height={48}
                         className="w-12 h-12 rounded-full object-cover border-2 border-gray-200"
@@ -161,7 +161,7 @@ export default function ViewOffersDialog({
                     )}
                     <div>
                       <p className="font-semibold text-[#102E4A]">
-                        {offer.individuals?.full_name || "Unknown Buyer"}
+                        {offer.buyer_full_name ?? "Unknown Buyer"}
                       </p>
                       <p className="text-xs text-gray-500">
                         {formatDate(offer.created_at)}

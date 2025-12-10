@@ -23,31 +23,17 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Fetch offers + buyer profile (full_name, avatar)
+  // Fetch offers + buyer profile
   const { data, error } = await supabase
-    .from("offers")
-    .select(`
-      id,
-      post_id,
-      buyer_id,
-      seller_id,
-      offered_price,
-      message,
-      status,
-      created_at,
-      individuals!buyer_id (
-        full_name,
-        avatar_url
-      )
-    `)
+    .from("offer_with_buyer")
+    .select("*")
     .eq("post_id", postId)
     .order("created_at", { ascending: false });
-
 
   if (error) {
     console.error("Error fetching offers:", error);
     return NextResponse.json(
-      { error: "Failed to fetch offers", details: error.message },
+      { error: "Failed to fetch offers"},
       { status: 500 }
     );
   }
