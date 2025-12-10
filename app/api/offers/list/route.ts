@@ -31,7 +31,6 @@ export async function GET(request: Request) {
     .order("created_at", { ascending: false });
 
   if (error) {
-    console.error("Error fetching offers:", error);
     return NextResponse.json(
       { error: "Failed to fetch offers"},
       { status: 500 }

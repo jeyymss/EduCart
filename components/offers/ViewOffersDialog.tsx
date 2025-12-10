@@ -148,7 +148,7 @@ export default function ViewOffersDialog({
                   <div className="flex items-center gap-3">
                     {offer.buyer_full_name ? (
                       <Image
-                        src={offer.buyer_avatar_url || "/default-avatar.png"}
+                        src={offer.buyer_avatar_url || "/avatarplaceholder.png"}
                         alt={offer.buyer_full_name}
                         width={48}
                         height={48}

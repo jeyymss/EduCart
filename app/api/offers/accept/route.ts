@@ -32,7 +32,7 @@ export async function POST(req: Request) {
     .eq("id", offer_id);
 
   // 2. Start chat with RPC
-  const { data: convo_id, error: chatErr } = await supabase.rpc("start_chat", {
+  const { data: convo_id, error: chatErr } = await supabase.rpc("start_chat_with_user", {
     input_user_id: offer.buyer_id,
     input_post_id: post_id,
   });
