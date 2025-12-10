@@ -168,3 +168,36 @@ export const useOrganizationItems = () => {
     refetchOnWindowFocus: false,
   });
 };
+
+export type RelatedPost = {
+  id: string;
+  item_title: string;
+  item_price: number | null;
+  image_urls: string[];
+  category_name: string;
+  post_type_name: string;
+  status: string;
+};
+
+//DISPLAY RELATED ITEMS BY CATEGORY
+export const useRelatedItems = (
+  postId: string,
+  categoryName: string,
+  postType: string
+) => {
+  return useQuery<RelatedPost[]>({
+    queryKey: ["related-items", postId, categoryName, postType],
+    queryFn: async () => {
+      const res = await fetch(
+        `/api/posts/relatedItems?postId=${postId}&category=${encodeURIComponent(
+          categoryName
+        )}&postType=${encodeURIComponent(postType)}&limit=6`
+      );
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to fetch related items");
+      return data;
+    },
+    enabled: !!postId && !!categoryName,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+};

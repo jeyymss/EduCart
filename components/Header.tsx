@@ -67,52 +67,50 @@ export function Header() {
   const [selectedType, setSelectedType] = useState("");
   const [notificationsOpen, setNotificationsOpen] = useState(false);
 
-  // Sample notifications (frontend only)
-  const sampleNotifications = [
-    {
-      id: 1,
-      type: "message",
-      title: "New Message",
-      description: "Sarah sent you a message about the textbook",
-      time: "2m ago",
-      read: false,
-    },
-    {
-      id: 2,
-      type: "sale",
-      title: "Item Sold",
-      description: "Your calculus textbook has been sold!",
-      time: "1h ago",
-      read: false,
-    },
-    {
-      id: 3,
-      type: "offer",
-      title: "New Offer Received",
-      description: "John made an offer on your laptop",
-      time: "3h ago",
-      read: true,
-    },
-    {
-      id: 4,
-      type: "giveaway",
-      title: "Giveaway Winner",
-      description: "You won the engineering book giveaway!",
-      time: "5h ago",
-      read: true,
-    },
-    {
-      id: 5,
-      type: "rental",
-      title: "Rental Reminder",
-      description: "Your rented camera is due tomorrow",
-      time: "1d ago",
-      read: true,
-    },
-  ];
+  const [notifications, setNotifications] = useState<any[]>([]);
 
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
+
+  useEffect(() => {
+  if (!isLoggedIn) return;
+
+  const loadNotifications = async () => {
+    const res = await fetch("/api/notifications/get");
+    const data = await res.json();
+    if (!data.error) setNotifications(data.notifications);
+  };
+
+  loadNotifications();
+}, [isLoggedIn]);
+
+useEffect(() => {
+  if (!user) return;
+
+  const supabaseRT = createClient();
+
+  const channel = supabaseRT
+    .channel(`notifications:user:${user.id}`)
+    .on(
+      "postgres_changes",
+      {
+        event: "INSERT",
+        schema: "public",
+        table: "notifications",
+        filter: `user_id=eq.${user.id}`,
+      },
+      (payload) => {
+        setNotifications((prev) => [payload.new, ...prev]);
+      }
+    )
+    .subscribe();
+
+  return () => {
+    supabaseRT.removeChannel(channel);
+  };
+}, [user]);
+
+
 
   useEffect(() => {
     if (isConfirmPage) return;
@@ -347,12 +345,12 @@ export function Header() {
                       >
                         <Bell className="w-6 h-6" />
                         {/* Unread badge */}
-                        {sampleNotifications.filter((n) => !n.read).length > 0 && (
+                        {notifications.filter((n) => !n.read).length > 0 && (
                           <span
                             className="absolute -top-1 -right-1 w-5 h-5 rounded-full text-xs flex items-center justify-center text-white font-semibold"
                             style={{ backgroundColor: "#E53E3E" }}
                           >
-                            {sampleNotifications.filter((n) => !n.read).length}
+                            {notifications.filter((n) => !n.read).length}
                           </span>
                         )}
                       </button>
@@ -370,85 +368,84 @@ export function Header() {
                       </div>
 
                       {/* Notifications List */}
-                      {sampleNotifications.length > 0 ? (
+                      {notifications.length > 0 ? (
                         <div>
-                          {sampleNotifications.map((notification) => (
+                          {notifications.map((n) => (
                             <div
-                              key={notification.id}
-                              className={`px-4 py-3 border-b last:border-b-0 hover:bg-gray-50 cursor-pointer transition-colors ${
-                                !notification.read ? "bg-blue-50" : ""
+                              key={n.id}
+                              className={`px-4 py-3 border-b hover:bg-gray-50 cursor-pointer ${
+                                !n.is_read ? "bg-blue-50" : ""
                               }`}
-                              onClick={() => {
-                                console.log("Notification clicked:", notification.id);
+                              onClick={async () => {
+                                // Mark as read
+                                await fetch("/api/notifications/mark-read", {
+                                  method: "POST",
+                                  body: JSON.stringify({ id: n.id }),
+                                });
+
+                                setNotifications((prev) =>
+                                  prev.map((x) =>
+                                    x.id === n.id ? { ...x, is_read: true } : x
+                                  )
+                                );
+
+                                // Close the dropdown
+                                setNotificationsOpen(false);
+
+                                // Redirect based on notification type
+                                if (n.related_table === "offers" && n.related_id) {
+                                  // Fetch the offer to get the post_id
+                                  const { data: offer } = await supabase
+                                    .from("offers")
+                                    .select("post_id")
+                                    .eq("id", n.related_id)
+                                    .single();
+
+                                  if (offer?.post_id) {
+                                    router.push(`/product/${offer.post_id}`);
+                                  }
+                                } else if (n.related_table === "posts" && n.related_id) {
+                                  // Direct post notification
+                                  router.push(`/product/${n.related_id}`);
+                                }
                               }}
                             >
                               <div className="flex items-start gap-3">
-                                {/* Icon based on type */}
                                 <div
-                                  className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 mt-1"
+                                  className="w-10 h-10 rounded-full flex items-center justify-center mt-1"
                                   style={{
-                                    backgroundColor: !notification.read
-                                      ? softAccent
-                                      : "#E5E7EB",
+                                    backgroundColor: !n.is_read ? softAccent : "#E5E7EB",
                                   }}
                                 >
-                                  {notification.type === "message" && (
-                                    <MessageSquare
-                                      className="w-5 h-5"
-                                      style={{ color: primary }}
-                                    />
+                                  {n.category === "Message" && (
+                                    <MessageSquare className="w-5 h-5" style={{ color: primary }} />
                                   )}
-                                  {notification.type === "sale" && (
-                                    <BadgeCent
-                                      className="w-5 h-5"
-                                      style={{ color: primary }}
-                                    />
+                                  {n.category === "Transaction" && (
+                                    <Wallet className="w-5 h-5" style={{ color: primary }} />
                                   )}
-                                  {notification.type === "offer" && (
-                                    <Wallet
-                                      className="w-5 h-5"
-                                      style={{ color: primary }}
-                                    />
+                                  {n.category === "Review" && (
+                                    <Plus className="w-5 h-5" style={{ color: primary }} />
                                   )}
-                                  {notification.type === "giveaway" && (
-                                    <Plus
-                                      className="w-5 h-5"
-                                      style={{ color: primary }}
-                                    />
+                                  {n.category === "Comment" && (
+                                    <MessageSquare className="w-5 h-5" style={{ color: primary }} />
                                   )}
-                                  {notification.type === "rental" && (
-                                    <ArrowRight
-                                      className="w-5 h-5"
-                                      style={{ color: primary }}
-                                    />
+                                  {n.category === "Report" && (
+                                    <ArrowRight className="w-5 h-5" style={{ color: primary }} />
                                   )}
                                 </div>
 
-                                {/* Content */}
                                 <div className="flex-1 min-w-0">
-                                  <div className="flex items-start justify-between gap-2">
-                                    <h4
-                                      className={`text-sm ${
-                                        !notification.read
-                                          ? "font-semibold"
-                                          : "font-medium"
-                                      }`}
-                                      style={{ color: primary }}
-                                    >
-                                      {notification.title}
-                                    </h4>
-                                    {!notification.read && (
-                                      <div
-                                        className="w-2 h-2 rounded-full flex-shrink-0 mt-1"
-                                        style={{ backgroundColor: "#3B82F6" }}
-                                      />
-                                    )}
-                                  </div>
-                                  <p className="text-sm text-gray-600 mt-0.5">
-                                    {notification.description}
-                                  </p>
-                                  <p className="text-xs text-gray-400 mt-1">
-                                    {notification.time}
+                                  <h4
+                                    className={`text-sm ${
+                                      !n.is_read ? "font-semibold" : "font-medium"
+                                    }`}
+                                    style={{ color: primary }}
+                                  >
+                                    {n.title}
+                                  </h4>
+                                  <p className="text-sm text-gray-600">{n.body}</p>
+                                  <p className="text-xs text-gray-400">
+                                    {new Date(n.created_at).toLocaleString()}
                                   </p>
                                 </div>
                               </div>
@@ -460,6 +457,7 @@ export function Header() {
                           No notifications
                         </div>
                       )}
+
 
                       {/* Footer */}
                       <div

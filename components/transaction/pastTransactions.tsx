@@ -63,15 +63,17 @@ export default function PastTransactionDetails({
     }
   }, []);
 
-  // Load Wallet Balance - optimized endpoint
+  // Load Wallet Balance - only when PaymentDialog is opened
   useEffect(() => {
+    if (!showPaymentDialog) return;
+
     async function load() {
       const res = await fetch("/api/wallet/balance");
       const data = await res.json();
       setBalance(data.balance);
     }
     load();
-  }, []);
+  }, [showPaymentDialog]);
 
   // ========================
   // COMPUTE TOTAL PAYMENT

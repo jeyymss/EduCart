@@ -25,6 +25,7 @@ import { submitItemReport } from "@/app/api/reports/reportItem/route";
 import MakeOfferDialog from "@/components/offers/MakeOfferDialog";
 import ViewOffersDialog from "@/components/offers/ViewOffersDialog";
 import EditProductDialog from "@/components/product/EditProductDialog";
+import RelatedItems from "@/components/product/RelatedItems";
 const MobileBottomNav = dynamic(() => import("@/components/mobile/MobileTopNav"), { ssr: false });
 
 function renderDetails(item: any) {
@@ -296,8 +297,9 @@ export default function ItemDetailsPage() {
                 // Seller view: Show View Offers button for Sale items
                 item.post_type_name === "Sale" && (
                   <ViewOffersDialog
+                    postId={item.post_id}
+                    sellerId={item.post_user_id}
                     itemTitle={item.item_title}
-                    itemPrice={item.item_price}
                   />
                 )
               ) : (
@@ -310,8 +312,9 @@ export default function ItemDetailsPage() {
                   />
                   {item.post_type_name === "Sale" && (
                     <MakeOfferDialog
+                      postId={item.post_id}
+                      sellerId={item.post_user_id}
                       itemTitle={item.item_title}
-                      itemPrice={item.item_price}
                     />
                   )}
                 </>
@@ -347,6 +350,15 @@ export default function ItemDetailsPage() {
           </div>
         </div>
       </div>
+
+      {/* Related Items - Only show if viewer is not the seller */}
+      {!isSeller && item.category_name && item.post_type_name && (
+        <RelatedItems
+          currentPostId={item.post_id}
+          categoryName={item.category_name}
+          postType={item.post_type_name}
+        />
+      )}
 
       {/* Lightbox Modal */}
       {isModalOpen && imgCount > 0 && (

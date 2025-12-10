@@ -3,132 +3,151 @@
 import { useState } from "react";
 import {
   Dialog,
+  DialogTrigger,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { DollarSign } from "lucide-react";
+import { Label } from "@/components/ui/label";
 
 interface MakeOfferDialogProps {
+  postId: string;
+  sellerId: string;
   itemTitle: string;
-  itemPrice: number;
 }
 
-export default function MakeOfferDialog({ itemTitle, itemPrice }: MakeOfferDialogProps) {
+export default function MakeOfferDialog({
+  postId,
+  sellerId,
+  itemTitle,
+}: MakeOfferDialogProps) {
   const [open, setOpen] = useState(false);
-  const [offerPrice, setOfferPrice] = useState("");
+  const [price, setPrice] = useState("");
   const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // TODO: Backend logic will go here
-    console.log("Offer submitted:", { offerPrice, message });
+  // Reset form when dialog closes
+  const handleOpenChange = (isOpen: boolean) => {
+    setOpen(isOpen);
+    if (!isOpen) {
+      setPrice("");
+      setMessage("");
+      setError("");
+    }
+  };
 
-    // Reset form and close dialog
-    setOfferPrice("");
-    setMessage("");
+  const submitOffer = async () => {
+    // Validation
+    if (!price || Number(price) <= 0) {
+      setError("Please enter a valid price");
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+
+    const res = await fetch("/api/offers/create", {
+      method: "POST",
+      body: JSON.stringify({
+        post_id: postId,
+        seller_id: sellerId,
+        offered_price: Number(price),
+        message,
+      }),
+    });
+
+    const data = await res.json();
+    setLoading(false);
+
+    if (data.error) {
+      setError(data.error);
+      return;
+    }
+
     setOpen(false);
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="flex-1 py-3 bg-transparent hover:cursor-pointer">
-          Make an Offer
+        <Button
+          variant="outline"
+          className="flex-1 py-3 bg-transparent hover:bg-gray-50 border-2 border-[#102E4A] text-[#102E4A] font-semibold hover:cursor-pointer transition-all"
+        >
+          Make Offer
         </Button>
       </DialogTrigger>
+
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-[#102E4A]">Make an Offer</DialogTitle>
+          <DialogTitle className="text-xl font-bold text-[#102E4A]">
+            Make an Offer
+          </DialogTitle>
           <DialogDescription className="text-gray-600">
-            Submit your best offer for {itemTitle}
+            Submit your offer for <span className="font-semibold">{itemTitle}</span>
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6 mt-4">
+        <div className="space-y-5 mt-4">
+          {/* Price Input */}
           <div className="space-y-2">
-            <label htmlFor="itemPrice" className="text-sm font-medium text-gray-700">
-              Item Price
-            </label>
+            <Label htmlFor="price" className="text-sm font-medium text-gray-700">
+              Offered Price <span className="text-red-500">*</span>
+            </Label>
             <div className="relative">
-              <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium">
+                ₱
+              </span>
               <Input
-                id="itemPrice"
-                value={Number(itemPrice ?? 0).toFixed(2)}
-                disabled
-                className="pl-9 bg-gray-50 text-gray-600"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <label htmlFor="offerPrice" className="text-sm font-medium text-gray-700">
-              Your Offer Price <span className="text-red-500">*</span>
-            </label>
-            <div className="relative">
-              <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
-              <Input
-                id="offerPrice"
+                id="price"
                 type="number"
-                step="0.01"
-                min="0"
-                placeholder="Enter your offer"
-                value={offerPrice}
-                onChange={(e) => setOfferPrice(e.target.value)}
-                className="pl-9"
-                required
+                placeholder="0.00"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                className="pl-8 h-11 text-base border-gray-300 focus:border-[#102E4A] focus:ring-[#102E4A]"
               />
             </div>
-            {offerPrice && Number(offerPrice) > 0 && (
-              <p className="text-xs text-gray-500">
-                {Number(offerPrice) < itemPrice
-                  ? `₱${(itemPrice - Number(offerPrice)).toFixed(2)} less than listing price`
-                  : Number(offerPrice) > itemPrice
-                  ? `₱${(Number(offerPrice) - itemPrice).toFixed(2)} more than listing price`
-                  : "Same as listing price"}
-              </p>
-            )}
           </div>
 
+          {/* Message Input */}
           <div className="space-y-2">
-            <label htmlFor="message" className="text-sm font-medium text-gray-700">
+            <Label htmlFor="message" className="text-sm font-medium text-gray-700">
               Message (Optional)
-            </label>
+            </Label>
             <Textarea
               id="message"
               placeholder="Add a message to the seller..."
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              className="min-h-24 resize-none"
+              rows={4}
+              className="resize-none border-gray-300 focus:border-[#102E4A] focus:ring-[#102E4A]"
             />
             <p className="text-xs text-gray-500">
-              {message.length}/500 characters
+              Explain why you're offering this price or ask questions
             </p>
           </div>
 
-          <div className="flex gap-3 pt-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setOpen(false)}
-              className="flex-1"
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              className="flex-1 bg-[#577C8E] hover:bg-[#577C8E]/90 text-white"
-              disabled={!offerPrice || Number(offerPrice) <= 0}
-            >
-              Submit Offer
-            </Button>
-          </div>
-        </form>
+          {/* Error Message */}
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+              <p className="text-sm text-red-600">{error}</p>
+            </div>
+          )}
+
+          {/* Submit Button */}
+          <Button
+            className="w-full h-11 bg-gradient-to-r from-[#102E4A] to-[#1a3d5f] text-white font-semibold hover:from-[#1a3d5f] hover:to-[#102E4A] shadow-md hover:shadow-lg transition-all"
+            onClick={submitOffer}
+            disabled={loading}
+          >
+            {loading ? "Submitting..." : "Send Offer"}
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );
