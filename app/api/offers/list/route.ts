@@ -37,7 +37,5 @@ export async function GET(request: Request) {
     );
   }
 
-  console.log("Fetched offers:", JSON.stringify(data, null, 2));
-
   return NextResponse.json({ offers: data || [] });
 }

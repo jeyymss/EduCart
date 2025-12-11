@@ -89,6 +89,7 @@ export default function ViewOffersDialog({
       method: "POST",
       body: JSON.stringify({
         offer_id: offer.id,
+        seller_id: sellerId,
       }),
     });
 
