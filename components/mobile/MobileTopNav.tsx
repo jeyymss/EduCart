@@ -17,11 +17,12 @@ import {
 } from "lucide-react";
 
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  ListDialog,
+  ListDialogHeader,
+  ListDialogTitle,
+  ListDialogDescription,
+  ListDialogContent,
+} from "@/components/ui/ListDialog";
 import {
   Select,
   SelectTrigger,
@@ -187,49 +188,44 @@ export default function MobileTopNav({
       />
 
       {!showOnlyBottom && <div className="md:hidden h-20" />}
-      
-      {/* Create Listing Dialog */}
-      <Dialog open={open} onOpenChange={handleOpenChange}>
-        <DialogContent className="sm:max-w-lg w-[95vw] max-h-[85vh] overflow-hidden p-0">
-          <div className="p-4 sm:p-5">
-            <DialogHeader className="mb-2">
-              <DialogTitle className="text-center">Create Listing</DialogTitle>
-            </DialogHeader>
 
-            <p className="text-center text-sm text-gray-600 mb-4">
-              What type of listing do you want to create?
-            </p>
+      {/* Create Listing Dialog - Custom */}
+      <ListDialog open={open} onOpenChange={handleOpenChange}>
+        <ListDialogHeader>
+          <ListDialogTitle>Create Listing</ListDialogTitle>
+          <ListDialogDescription>
+            What type of listing do you want to create?
+          </ListDialogDescription>
+        </ListDialogHeader>
 
-            <div className="mb-4">
-              <Select value={choice} onValueChange={handleSelectChange}>
-                <SelectTrigger className="w-full h-11">
-                  <SelectValue placeholder="Select Listing Type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="sale">For Sale</SelectItem>
-                  <SelectItem value="rent">For Rent</SelectItem>
-                  <SelectItem value="trade">Trade</SelectItem>
-                  <SelectItem value="emergency">Emergency Lending</SelectItem>
-                  <SelectItem value="pasabuy">PasaBuy</SelectItem>
-                  <SelectItem value="giveaway">Giveaway</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+        <ListDialogContent>
+          <Select value={choice} onValueChange={handleSelectChange}>
+            <SelectTrigger className="w-full h-12">
+              <SelectValue placeholder="Select Listing Type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="sale">For Sale</SelectItem>
+              <SelectItem value="rent">For Rent</SelectItem>
+              <SelectItem value="trade">Trade</SelectItem>
+              <SelectItem value="emergency">Emergency Lending</SelectItem>
+              <SelectItem value="pasabuy">PasaBuy</SelectItem>
+              <SelectItem value="giveaway">Giveaway</SelectItem>
+            </SelectContent>
+          </Select>
 
-            <div className="max-h-[60vh] overflow-auto pr-1">
-              {choice === "sale" && (
-                <ForSaleForm selectedType={TYPE_LABEL.sale} />
-              )}
-              {choice === "rent" && (
-                <RentForm selectedType={TYPE_LABEL.rent} />
-              )}
-              {choice === "trade" && (
-                <TradeForm selectedType={TYPE_LABEL.trade} />
-              )}
-            </div>
+          <div className="mt-6">
+            {choice === "sale" && (
+              <ForSaleForm selectedType={TYPE_LABEL.sale} />
+            )}
+            {choice === "rent" && (
+              <RentForm selectedType={TYPE_LABEL.rent} />
+            )}
+            {choice === "trade" && (
+              <TradeForm selectedType={TYPE_LABEL.trade} />
+            )}
           </div>
-        </DialogContent>
-      </Dialog>
+        </ListDialogContent>
+      </ListDialog>
     </>
   );
 }

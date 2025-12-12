@@ -13,14 +13,12 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogClose,
-} from "./ui/dialog";
+  ListDialog,
+  ListDialogHeader,
+  ListDialogTitle,
+  ListDialogDescription,
+  ListDialogContent,
+} from "./ui/ListDialog";
 import {
   Select,
   SelectTrigger,
@@ -49,7 +47,6 @@ import {
   Plus,
   User,
   Wallet,
-  X,
 } from "lucide-react";
 
 export function Header() {
@@ -66,6 +63,7 @@ export function Header() {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [selectedType, setSelectedType] = useState("");
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [listDialogOpen, setListDialogOpen] = useState(false);
 
   const [notifications, setNotifications] = useState<any[]>([]);
 
@@ -217,94 +215,34 @@ useEffect(() => {
               {/* Logged-in actions (Cart, Credits, Messages, Profile) */}
               {isLoggedIn === true && (
                 <>
-                  {/* LIST dialog */}
-                  <Dialog>
-                    <DialogTrigger asChild onClick={resetModal}>
-                      <Button
-                        className="hover:cursor-pointer flex items-center gap-2 border-0"
-                        style={{
-                          backgroundColor: softAccent,
-                          color: primary,
-                          fontWeight: 600,
-                        }}
-                        onMouseEnter={(e) => {
-                          (e.currentTarget as HTMLButtonElement).style.backgroundColor =
-                            accent;
-                          (e.currentTarget as HTMLButtonElement).style.color =
-                            "#FFFFFF";
-                        }}
-                        onMouseLeave={(e) => {
-                          (e.currentTarget as HTMLButtonElement).style.backgroundColor =
-                            softAccent;
-                          (e.currentTarget as HTMLButtonElement).style.color =
-                            primary;
-                        }}
-                      >
-                        <Plus className="w-4 h-4" />
-                        List
-                      </Button>
-                    </DialogTrigger>
-
-                    <DialogContent
-                      onInteractOutside={(e) => e.preventDefault()}
-                      onEscapeKeyDown={(e) => e.preventDefault()}
-                    >
-                      <DialogClose asChild>
-                        <button
-                          className="absolute right-2 top-2 rounded p-1 hover:cursor-pointer"
-                          aria-label="Close"
-                          style={{ color: primary }}
-                        >
-                          <X className="h-5 w-5" />
-                        </button>
-                      </DialogClose>
-                      <DialogHeader>
-                        <div className="text-center">
-                          <DialogTitle style={{ color: primary }}>
-                            Create Listing
-                          </DialogTitle>
-                          <DialogDescription>
-                            What type of listing do you want to create?
-                          </DialogDescription>
-                        </div>
-                      </DialogHeader>
-                      <Select onValueChange={setSelectedType} value={selectedType}>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select Listing Type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Sale">For Sale</SelectItem>
-                          <SelectItem value="Rent">Rent</SelectItem>
-                          <SelectItem value="Trade">Trade</SelectItem>
-                          <SelectItem value="Emergency Lending">
-                            Emergency Lending
-                          </SelectItem>
-                          <SelectItem value="PasaBuy">PasaBuy</SelectItem>
-                          <SelectItem value="Giveaway">Giveaway</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <div>
-                        {selectedType === "Sale" && (
-                          <ForSaleForm selectedType={selectedType} />
-                        )}
-                        {selectedType === "Rent" && (
-                          <RentForm selectedType={selectedType} />
-                        )}
-                        {selectedType === "Trade" && (
-                          <TradeForm selectedType={selectedType} />
-                        )}
-                        {selectedType === "Emergency Lending" && (
-                          <EmergencyForm selectedType={selectedType} />
-                        )}
-                        {selectedType === "PasaBuy" && (
-                          <PasaBuyForm selectedType={selectedType} />
-                        )}
-                        {selectedType === "Giveaway" && (
-                          <GiveawayForm selectedType={selectedType} />
-                        )}
-                      </div>
-                    </DialogContent>
-                  </Dialog>
+                  {/* LIST button */}
+                  <Button
+                    onClick={() => {
+                      resetModal();
+                      setListDialogOpen(true);
+                    }}
+                    className="hover:cursor-pointer flex items-center gap-2 border-0"
+                    style={{
+                      backgroundColor: softAccent,
+                      color: primary,
+                      fontWeight: 600,
+                    }}
+                    onMouseEnter={(e) => {
+                      (e.currentTarget as HTMLButtonElement).style.backgroundColor =
+                        accent;
+                      (e.currentTarget as HTMLButtonElement).style.color =
+                        "#FFFFFF";
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.currentTarget as HTMLButtonElement).style.backgroundColor =
+                        softAccent;
+                      (e.currentTarget as HTMLButtonElement).style.color =
+                        primary;
+                    }}
+                  >
+                    <Plus className="w-4 h-4" />
+                    List
+                  </Button>
 
                   {/* Credits (kept) */}
                   <div className="flex items-center gap-1" style={{ color: primary }}>
@@ -548,6 +486,61 @@ useEffect(() => {
           </div>
         </div>
       </header>
+
+      {/* CUSTOM LIST DIALOG */}
+      <ListDialog
+        open={listDialogOpen}
+        onOpenChange={(open) => {
+          setListDialogOpen(open);
+          if (!open) resetModal();
+        }}
+      >
+        <ListDialogHeader>
+          <ListDialogTitle>Create Listing</ListDialogTitle>
+          <ListDialogDescription>
+            What type of listing do you want to create?
+          </ListDialogDescription>
+        </ListDialogHeader>
+
+        <ListDialogContent>
+          <Select onValueChange={setSelectedType} value={selectedType}>
+            <SelectTrigger className="w-full h-12">
+              <SelectValue placeholder="Select Listing Type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Sale">For Sale</SelectItem>
+              <SelectItem value="Rent">Rent</SelectItem>
+              <SelectItem value="Trade">Trade</SelectItem>
+              <SelectItem value="Emergency Lending">
+                Emergency Lending
+              </SelectItem>
+              <SelectItem value="PasaBuy">PasaBuy</SelectItem>
+              <SelectItem value="Giveaway">Giveaway</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <div className="mt-6">
+            {selectedType === "Sale" && (
+              <ForSaleForm selectedType={selectedType} />
+            )}
+            {selectedType === "Rent" && (
+              <RentForm selectedType={selectedType} />
+            )}
+            {selectedType === "Trade" && (
+              <TradeForm selectedType={selectedType} />
+            )}
+            {selectedType === "Emergency Lending" && (
+              <EmergencyForm selectedType={selectedType} />
+            )}
+            {selectedType === "PasaBuy" && (
+              <PasaBuyForm selectedType={selectedType} />
+            )}
+            {selectedType === "Giveaway" && (
+              <GiveawayForm selectedType={selectedType} />
+            )}
+          </div>
+        </ListDialogContent>
+      </ListDialog>
 
       {/* LOGOUT OVERLAY */}
       {showLogoutModal && (
