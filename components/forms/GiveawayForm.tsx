@@ -104,8 +104,8 @@ export function GiveawayForm({ selectedType }: FormProps) {
         <div className="text-sm text-pink-800">
           <p className="font-medium mb-1">Giveaway Guidelines:</p>
           <ul className="list-disc list-inside space-y-0.5 text-xs">
-            <li>Only list items you're genuinely giving away for free</li>
-            <li>Describe the item's condition honestly</li>
+            <li>Only list items you&apos;re genuinely giving away for free</li>
+            <li>Describe the item&apos;s condition honestly</li>
             <li>First come, first served unless stated otherwise</li>
           </ul>
         </div>
@@ -145,7 +145,7 @@ export function GiveawayForm({ selectedType }: FormProps) {
               className="w-full border border-gray-300 p-3 rounded-md mt-1.5 min-h-[100px] resize-none focus:border-pink-400 focus:ring-1 focus:ring-pink-400 transition"
             />
             <p className="text-xs text-gray-500 mt-1">
-              Help recipients understand what they're getting and how to claim it
+              Help recipients understand what they&apos;re getting and how to claim it
             </p>
           </div>
 

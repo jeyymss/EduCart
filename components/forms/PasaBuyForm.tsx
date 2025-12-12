@@ -121,10 +121,10 @@ export function PasaBuyForm({ selectedType }: FormProps) {
         <div className="text-sm text-amber-800">
           <p className="font-medium mb-1">How PasaBuy Works:</p>
           <ul className="list-disc list-inside space-y-0.5 text-xs">
-            <li>List items you're willing to buy FOR buyers at the specified location</li>
+            <li>List items you&apos;re willing to buy FOR buyers at the specified location</li>
             <li>Set ONE flat service fee (not per item) for your shopping service</li>
             <li>Buyers will pay: Item Price + Your Service Fee</li>
-            <li>Set a cutoff date for when you'll do the shopping trip</li>
+            <li>Set a cutoff date for when you&apos;ll do the shopping trip</li>
           </ul>
         </div>
       </div>
@@ -177,7 +177,7 @@ export function PasaBuyForm({ selectedType }: FormProps) {
         <div className="space-y-4">
           <h3 className="text-base font-semibold text-gray-700">Items Available for PasaBuy</h3>
           <p className="text-xs text-gray-600">
-            List items you're willing to buy for customers. Buyers will request these items and pay the item price + your service fee.
+            List items you&apos;re willing to buy for customers. Buyers will request these items and pay the item price + your service fee.
           </p>
 
           {/* Add Item Form */}
@@ -291,7 +291,7 @@ export function PasaBuyForm({ selectedType }: FormProps) {
                   <p className="text-xs text-gray-600">Selected: {location}</p>
                 </div>
               )}
-              <p className="text-xs text-gray-500 mt-1">Store or location where you'll purchase the items</p>
+              <p className="text-xs text-gray-500 mt-1">Store or location where you&apos;ll purchase the items</p>
             </div>
 
             {/* Cut Off Date */}

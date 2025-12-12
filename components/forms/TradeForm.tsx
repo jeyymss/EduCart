@@ -87,8 +87,8 @@ export function TradeForm({ selectedType }: FormProps) {
         <div className="text-sm text-green-800">
           <p className="font-medium mb-1">Tips for trading items:</p>
           <ul className="list-disc list-inside space-y-0.5 text-xs">
-            <li>Specify what you're looking to trade for clearly</li>
-            <li>Describe your item's condition accurately</li>
+            <li>Specify what you&apos;re looking to trade for clearly</li>
+            <li>Describe your item&apos;s condition accurately</li>
             <li>Add an optional price to attract cash offers</li>
             <li>Be open to reasonable trade proposals</li>
           </ul>
@@ -129,7 +129,7 @@ export function TradeForm({ selectedType }: FormProps) {
               className="mt-1.5 border-gray-300 focus:border-green-400 focus:ring-green-400"
               required
             />
-            <p className="text-xs text-gray-500 mt-1">Specify what items you're interested in trading for</p>
+            <p className="text-xs text-gray-500 mt-1">Specify what items you&apos;re interested in trading for</p>
           </div>
 
           {/* Description */}
@@ -143,7 +143,7 @@ export function TradeForm({ selectedType }: FormProps) {
               className="w-full border border-gray-300 p-3 rounded-md mt-1.5 min-h-[100px] resize-none focus:border-green-400 focus:ring-1 focus:ring-green-400 transition"
               required
             />
-            <p className="text-xs text-gray-500 mt-1">Include details about the item and what you'd accept in trade</p>
+            <p className="text-xs text-gray-500 mt-1">Include details about the item and what you&apos;d accept in trade</p>
           </div>
 
           {/* Price (Optional), Condition - Grid Layout */}
@@ -161,7 +161,7 @@ export function TradeForm({ selectedType }: FormProps) {
                 step="0.01"
                 className="mt-1.5 border-gray-300 focus:border-green-400 focus:ring-green-400"
               />
-              <p className="text-xs text-gray-500 mt-1">Add if you're open to cash offers</p>
+              <p className="text-xs text-gray-500 mt-1">Add if you&apos;re open to cash offers</p>
             </div>
 
             {/* Condition */}
