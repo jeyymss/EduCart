@@ -2,10 +2,17 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, CheckCircle, XCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 import { createClient } from "@/utils/supabase/client";
 import CreditPaymentDialog from "@/components/credits/CreditPurchaseDialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export default function IndividualCreditsPage() {
   const supabase = createClient();
@@ -15,6 +22,9 @@ export default function IndividualCreditsPage() {
   const [walletBalance, setWalletBalance] = useState(0);
 
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [successDialogOpen, setSuccessDialogOpen] = useState(false);
+  const [errorDialogOpen, setErrorDialogOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const [selectedPkg, setSelectedPkg] = useState<any>(null);
   const [paymentMethod, setPaymentMethod] = useState("wallet");
   const [isProcessing, setIsProcessing] = useState(false);
@@ -65,10 +75,25 @@ export default function IndividualCreditsPage() {
     const json = await res.json();
     setIsProcessing(false);
 
-    if (json.error) return alert(json.error);
+    if (json.error) {
+      setErrorMessage(json.error);
+      setErrorDialogOpen(true);
+      return;
+    }
 
-    alert("Credits purchased successfully!");
+    // Reload wallet balance
+    if (userId) {
+      const { data: w } = await supabase
+        .from("wallets")
+        .select("current_balance")
+        .eq("user_id", userId)
+        .single();
+
+      if (w?.current_balance != null) setWalletBalance(w.current_balance);
+    }
+
     setDialogOpen(false);
+    setSuccessDialogOpen(true);
   };
 
   // =======================
@@ -95,7 +120,8 @@ export default function IndividualCreditsPage() {
     if (json.checkout_url) {
       window.location.href = json.checkout_url;
     } else {
-      alert("Failed to initialize GCash payment.");
+      setErrorMessage("Failed to initialize GCash payment. Please try again.");
+      setErrorDialogOpen(true);
     }
   };
 
@@ -275,6 +301,77 @@ export default function IndividualCreditsPage() {
               onGCashPay={handleGCashPayment}
             />
           )}
+
+          {/* SUCCESS DIALOG */}
+          <Dialog open={successDialogOpen} onOpenChange={setSuccessDialogOpen}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <div className="flex flex-col items-center gap-4 py-4">
+                  <div className="rounded-full bg-green-100 p-3">
+                    <CheckCircle className="h-12 w-12 text-green-600" />
+                  </div>
+                  <DialogTitle className="text-2xl font-bold text-center">
+                    Purchase Successful!
+                  </DialogTitle>
+                  <DialogDescription className="text-center text-base">
+                    {selectedPkg && (
+                      <>
+                        <span className="font-semibold text-green-600">
+                          {selectedPkg.credits} posting credit{selectedPkg.credits > 1 ? 's' : ''}
+                        </span>{" "}
+                        {selectedPkg.credits > 1 ? 'have' : 'has'} been added to your account.
+                      </>
+                    )}
+                  </DialogDescription>
+                </div>
+              </DialogHeader>
+              <div className="flex flex-col gap-2">
+                <Button
+                  onClick={() => setSuccessDialogOpen(false)}
+                  className="w-full bg-[#E59E2C] hover:bg-[#d18e1f]"
+                >
+                  Continue Shopping
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setSuccessDialogOpen(false);
+                    window.location.href = "/profile#settings";
+                  }}
+                  className="w-full"
+                >
+                  View Profile
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* ERROR DIALOG */}
+          <Dialog open={errorDialogOpen} onOpenChange={setErrorDialogOpen}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <div className="flex flex-col items-center gap-4 py-4">
+                  <div className="rounded-full bg-red-100 p-3">
+                    <XCircle className="h-12 w-12 text-red-600" />
+                  </div>
+                  <DialogTitle className="text-2xl font-bold text-center text-red-600">
+                    Payment Failed
+                  </DialogTitle>
+                  <DialogDescription className="text-center text-base">
+                    {errorMessage}
+                  </DialogDescription>
+                </div>
+              </DialogHeader>
+              <div className="flex flex-col gap-2">
+                <Button
+                  onClick={() => setErrorDialogOpen(false)}
+                  className="w-full bg-[#E59E2C] hover:bg-[#d18e1f]"
+                >
+                  Try Again
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </main>
     </div>
