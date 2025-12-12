@@ -90,14 +90,14 @@ useEffect(() => {
   const supabaseRT = createClient();
 
   const channel = supabaseRT
-    .channel(`notifications:user:${user.id}`)
+    .channel(`notifications:user:${user.user_id}`)
     .on(
       "postgres_changes",
       {
         event: "INSERT",
         schema: "public",
         table: "notifications",
-        filter: `user_id=eq.${user.id}`,
+        filter: `user_id=eq.${user.user_id}`,
       },
       (payload) => {
         setNotifications((prev) => [payload.new, ...prev]);
@@ -345,12 +345,12 @@ useEffect(() => {
                       >
                         <Bell className="w-6 h-6" />
                         {/* Unread badge */}
-                        {notifications.filter((n) => !n.read).length > 0 && (
+                        {notifications.filter((n) => !n.is_read).length > 0 && (
                           <span
                             className="absolute -top-1 -right-1 w-5 h-5 rounded-full text-xs flex items-center justify-center text-white font-semibold"
                             style={{ backgroundColor: "#E53E3E" }}
                           >
-                            {notifications.filter((n) => !n.read).length}
+                            {notifications.filter((n) => !n.is_read).length}
                           </span>
                         )}
                       </button>
