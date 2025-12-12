@@ -1,35 +1,61 @@
-import { createClient } from "@/utils/supabase/server";
 import { NextResponse } from "next/server";
+import { createClient } from "@/utils/supabase/server";
 
 export async function GET() {
   const supabase = await createClient();
 
-  // get user session
   const {
     data: { session },
     error: sessionError,
   } = await supabase.auth.getSession();
 
   if (sessionError)
-    return NextResponse.json({ error: sessionError.message }, { status: 401 });
-  if (!session) return NextResponse.json(null);
+    return NextResponse.json({ error: sessionError.message }, { status: 500 });
 
-  const userId = session.user.id
+  if (!session)
+    return NextResponse.json({ error: "Not logged in" }, { status: 401 });
 
-  //fetch org by userId
+  const userId = session.user.id;
+
   const { data, error } = await supabase
     .from("organizations")
     .select(
-      `user_id, universities:university_id (
-        id,
-        abbreviation
-      ), organization_name, organization_description, email, avatar_url, background_url, role, subscription_quota_used, post_credits_balance, is_gcash_linked, total_earnings, created_at, updated_at, university_id`
+      `
+        user_id,
+        organization_name,
+        organization_description,
+        email,
+        role,
+        avatar_url,
+        background_url,
+        bio,
+        post_credits_balance,
+        is_gcash_linked,
+        total_earnings,
+        business_type,
+        documents,
+        created_at,
+        updated_at,
+        university_id,
+        universities:university_id (
+          id,
+          abbreviation
+        )
+      `
     )
     .eq("user_id", userId)
-    .maybeSingle();
+    .single();
 
   if (error)
-    return NextResponse.json({ error: error.message }, { status: 400 });
+    return NextResponse.json({ error: error.message }, { status: 500 });
 
-  return NextResponse.json(data ?? null);
+  if (!data)
+    return NextResponse.json({ error: "Profile not found" }, { status: 404 });
+
+  // ✅ NORMALIZE HERE
+  return NextResponse.json({
+    ...data,
+    user_id: data.user_id,
+    full_name: data.organization_name, // ⭐ KEY FIX
+  });
 }

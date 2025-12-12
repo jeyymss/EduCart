@@ -114,25 +114,6 @@ export async function updateSession(request: NextRequest) {
     }
   }
 
-  // 5c) Block Organization role from user-only routes
-  const userOnlyPrefixes = [
-    "/home",
-    "/browse",
-    "/businesses",
-    "/organizations",
-  ];
-  if ((role ?? "").toLowerCase() === "organization") {
-    const isUserOnlyPath = userOnlyPrefixes.some((prefix) =>
-      currentPath.startsWith(prefix)
-    );
-    if (isUserOnlyPath) {
-      // bounce orgs away from student/faculty/alumni areas
-      const url = new URL("/organization-account/dashboard", request.url);
-      url.searchParams.set("blocked", "user-only");
-      return NextResponse.redirect(url);
-    }
-  }
-
   // 6) Smart redirects away from login/signup/root when already authenticated
   if (
     user &&
@@ -141,11 +122,7 @@ export async function updateSession(request: NextRequest) {
       currentPath === "/")
   ) {
     const url = new URL(
-      isAdmin
-        ? "/admin/dashboard"
-        : (role ?? "").toLowerCase() === "organization"
-        ? "/organization-account"
-        : "/home",
+      isAdmin ? "/admin/dashboard" : "/home",
       request.url
     );
     return NextResponse.redirect(url);

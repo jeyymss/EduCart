@@ -7,7 +7,7 @@ type LoginSuccess = {
   success: true;
   isAdmin: boolean;
   role: "Student" | "Faculty" | "Alumni" | "Organization" | null;
-  redirect: "/admin/dashboard" | "/home" | "/organization-account/dashboard";
+  redirect: "/admin/dashboard" | "/home";
 };
 
 type LoginError = {
@@ -63,8 +63,6 @@ export async function login(formData: FormData): Promise<LoginResult> {
   let redirect: LoginSuccess["redirect"] = "/home";
   if (isAdmin) {
     redirect = "/admin/dashboard";
-  } else if (role === "Organization") {
-    redirect = "/organization-account/dashboard";
   }
 
   return {

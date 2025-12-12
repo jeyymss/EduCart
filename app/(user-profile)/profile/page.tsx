@@ -132,6 +132,8 @@ export default function ProfilePage() {
 
   if (!displayUser) return null;
 
+  console.log(displayUser.user_id)
+
   const renderTabContent = (
   key: "all" | "listed" | "sold" | "unlisted",
   status?: "Listed" | "Sold" | "Unlisted"
@@ -149,7 +151,7 @@ export default function ProfilePage() {
       >
         <div className="p-3 md:p-4">
           <UserPosts
-            userId={displayUser.id}
+            userId={displayUser.user_id}
             status={status}
             excludeSold={key === "all"}  
             postType={postType}
@@ -179,9 +181,9 @@ export default function ProfilePage() {
       <div className="pb-6 md:pb-8">
         {isEditing ? (
           <EditProfile
-            userId={displayUser.id}
+            userId={displayUser.user_id}
             role={
-              displayUser.role === "Organization" ? "organization" : "individual"
+              displayUser.profile_type === "Organization" ? "organization" : "individual"
             }
             currentAvatar={displayUser.avatar_url}
             currentBackground={displayUser.background_url}
@@ -304,14 +306,16 @@ export default function ProfilePage() {
                 </div>
 
                 {/* Add Business Account Modal */}
-                <motion.div
-                  className="mt-3 md:mt-2 w-full md:w-auto flex justify-end md:justify-start"
-                  variants={fadeIn}
-                  initial="initial"
-                  animate="animate"
-                >
-                  <AddBusinessModal />
-                </motion.div>
+                {displayUser.profile_type !== "Organization" && (
+                  <motion.div
+                    className="mt-3 md:mt-2 w-full md:w-auto flex justify-end md:justify-start"
+                    variants={fadeIn}
+                    initial="initial"
+                    animate="animate"
+                  >
+                    <AddBusinessModal />
+                  </motion.div>
+                )}
               </div>
             </motion.div>
           </motion.div>
@@ -394,7 +398,7 @@ export default function ProfilePage() {
                         >
                           All (
                           <UserPosts.Count
-                            userId={displayUser.id}
+                            userId={displayUser.user_id}
                             postType={filtersByTab.all.postType}
                             search={filtersByTab.all.search}
                             filters={filtersByTab.all.adv}
@@ -408,7 +412,7 @@ export default function ProfilePage() {
                         >
                           Listed (
                           <UserPosts.Count
-                            userId={displayUser.id}
+                            userId={displayUser.user_id}
                             status="Listed"
                             postType={filtersByTab.listed.postType}
                             search={filtersByTab.listed.search}
@@ -423,7 +427,7 @@ export default function ProfilePage() {
                         >
                           Sold (
                           <UserPosts.Count
-                            userId={displayUser.id}
+                            userId={displayUser.user_id}
                             status="Sold"
                             postType={filtersByTab.sold.postType}
                             search={filtersByTab.sold.search}
@@ -438,7 +442,7 @@ export default function ProfilePage() {
                         >
                           Unlisted (
                           <UserPosts.Count
-                            userId={displayUser.id}
+                            userId={displayUser.user_id}
                             status="Unlisted"
                             postType={filtersByTab.unlisted.postType}
                             search={filtersByTab.unlisted.search}
@@ -575,7 +579,7 @@ export default function ProfilePage() {
               >
                 <h2 className="text-lg font-semibold mb-4">My Favorites</h2>
 
-                {displayUser?.id && <FavoritesList userId={displayUser.id} />}
+                {displayUser?.user_id && <FavoritesList userId={displayUser.user_id} />}
               </motion.section>
             </TabsContent>
 
@@ -587,7 +591,7 @@ export default function ProfilePage() {
                 animate="animate"
                 exit="exit"
               >
-                <Transactions userId={displayUser.id} />
+                <Transactions userId={displayUser.user_id} />
               </motion.div>
             </TabsContent>
 
@@ -602,7 +606,7 @@ export default function ProfilePage() {
               >
                 <h2 className="text-lg font-semibold mb-4">My Reviews</h2>
 
-                <UserReviews userId={displayUser.id} />
+                <UserReviews userId={displayUser.user_id} />
               </motion.section>
             </TabsContent>
 
