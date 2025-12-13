@@ -1,105 +1,80 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import CountUp from "react-countup";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
+
 import {
+  Wallet,
+  TrendingUp,
+  PiggyBank,
   Users,
   Building2,
-  Users2,
-  Receipt,
-  CheckCircle2,
-  Sun,
+  ArrowUpRight,
+  Activity,
+  Bell,
+  Clock,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+
 import { useDashboardStats } from "@/hooks/queries/admin/getDashboardStats";
 
+/* ===================== CALENDAR ===================== */
 function CalendarDemo() {
   const [date, setDate] = useState<Date | undefined>(new Date());
 
   return (
-    <Card className="rounded-xl shadow-sm h-full">
+    <Card className="rounded-2xl border bg-white h-full">
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-medium text-slate-600">
+        <CardTitle className="text-sm font-medium text-slate-700">
           Calendar
         </CardTitle>
       </CardHeader>
-      <CardContent className="pb-6">
+      <CardContent className="pt-0">
         <Calendar
           mode="single"
           selected={date}
           onSelect={setDate}
           captionLayout="dropdown"
-          className="rounded-md border shadow-sm w-full"
+          className="rounded-md border w-full"
         />
       </CardContent>
     </Card>
   );
 }
 
+/* ===================== MAIN ===================== */
 export default function AdminDashboard() {
   const router = useRouter();
+
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
   const [monthlySales, setMonthlySales] = useState<number | null>(null);
   const [platformEarnings, setPlatformEarnings] = useState<number | null>(null);
 
-  const { data, isLoading, isError, error } = useDashboardStats();
+  const { data, isLoading, error } = useDashboardStats();
 
-  //fetch wallet balance
   useEffect(() => {
-    const fetchBalance = async () => {
-      try {
-        const res = await fetch("/api/admin/wallet/balance");
-        const data = await res.json();
-
-        if (res.ok) {
-          setWalletBalance(data.balance);
-        }
-      } catch (error) {
-        console.error("Failed to fetch platform wallet balance:", error);
-      }
-    };
-
-    fetchBalance();
+    fetch("/api/admin/wallet/balance")
+      .then((r) => r.json())
+      .then((d) => setWalletBalance(d.balance))
+      .catch(() => {});
   }, []);
 
-  //fetch monthly sales
   useEffect(() => {
-    const fetchMonthlySales = async () => {
-      try {
-        const res = await fetch("/api/admin/wallet/monthly-sales");
-        const data = await res.json();
-
-        if (res.ok) {
-          setMonthlySales(data.totalSales);
-        }
-      } catch (error) {
-        console.error("Failed to fetch monthly sales:", error);
-      }
-    };
-
-    fetchMonthlySales();
+    fetch("/api/admin/wallet/monthly-sales")
+      .then((r) => r.json())
+      .then((d) => setMonthlySales(d.totalSales))
+      .catch(() => {});
   }, []);
 
-  // fetch platform earnings
   useEffect(() => {
-    const fetchPlatformEarnings = async () => {
-      try {
-        const res = await fetch("/api/admin/wallet/platform-earnings");
-        const data = await res.json();
-
-        if (res.ok) {
-          setPlatformEarnings(data.totalEarnings);
-        }
-      } catch (error) {
-        console.error("Failed to fetch platform earnings:", error);
-      }
-    };
-
-    fetchPlatformEarnings();
+    fetch("/api/admin/wallet/platform-earnings")
+      .then((r) => r.json())
+      .then((d) => setPlatformEarnings(d.totalEarnings))
+      .catch(() => {});
   }, []);
-
 
   useEffect(() => {
     if (error instanceof Error && error.message === "unauthorized") {
@@ -108,140 +83,156 @@ export default function AdminDashboard() {
   }, [error, router]);
 
   return (
-    <div className="p-6">
-      <div className="mx-auto w-full max-w-[1600px] space-y-6">
-        <h2 className="text-xl font-semibold text-slate-800">
-          Hello, EduCart Admin!
-        </h2>
+    <div className="min-h-screen bg-white p-6">
+      <div className="mx-auto max-w-[1600px] space-y-8">
 
-        {/* Calendar + KPI placeholders */}
-        <div className="grid gap-6 lg:grid-cols-4 items-stretch">
-          <div className="lg:col-span-1 h-full">
-            <CalendarDemo />
-          </div>
+        {/* HEADER */}
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">
+            Admin Dashboard
+          </h1>
+          <p className="text-sm text-slate-500">
+            Overview of EduCart platform performance
+          </p>
+        </div>
 
-          <div className="lg:col-span-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 h-full">
-            <KpiCard
-              title="Account Balance"
-              value={
-                walletBalance !== null
-                  ? "₱" +
-                    walletBalance.toLocaleString("en-PH", { minimumFractionDigits: 2 })
-                  : null
-              }
-            />
+        {/* CALENDAR + EMPTY PANELS */}
+        <div className="grid gap-6 lg:grid-cols-3">
+          <CalendarDemo />
 
-            <KpiCard
-              title="Total Monthly Sales"
-              value={
-                monthlySales !== null
-                  ? "₱" +
-                    monthlySales.toLocaleString("en-PH", { minimumFractionDigits: 2 })
-                  : null
-              }
-            />
-
-            <KpiCard
-              title="Platform Earnings"
-              value={
-                platformEarnings !== null
-                  ? "₱" +
-                    platformEarnings.toLocaleString("en-PH", { minimumFractionDigits: 2 })
-                  : null
-              }
-            />
+          <div className="lg:col-span-2 grid gap-6 sm:grid-cols-2">
+            <NotificationsCard />
+            <RecentActivityCard />
           </div>
         </div>
 
-        {/* Secondary Stats (Counts) */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+        {/* KPI CARDS */}
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <KpiCard
+            title="Account Balance"
+            icon={<Wallet />}
+            bgColor="#C7D9E5"
+            value={walletBalance}
+          />
+          <KpiCard
+            title="Monthly Sales"
+            icon={<TrendingUp />}
+            bgColor="#E6F6F1"
+            value={monthlySales}
+          />
+          <KpiCard
+            title="Platform Earnings"
+            icon={<PiggyBank />}
+            bgColor="#FEF7E5"
+            value={platformEarnings}
+          />
+        </div>
+
+        {/* STATS */}
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard
-            icon={<Users className="h-5 w-5 text-slate-500" />}
+            icon={<Users />}
             label="Individual Users"
-            value={isError ? "Error" : data?.individuals?.toLocaleString()}
+            value={data?.individuals}
             isLoading={isLoading}
           />
-
           <StatCard
-            icon={<Building2 className="h-5 w-5 text-slate-500" />}
+            icon={<Building2 />}
+            label="Organization Users"
+            value={data?.organizations}
+            isLoading={isLoading}
+          />
+          <StatCard
+            icon={<ArrowUpRight />}
+            label="Total Transactions"
+            value={data?.transactions}
+            isLoading={isLoading}
+          />
+          <StatCard
+            icon={<Activity />}
             label="Business Accounts"
             value="—"
-            isLoading={isLoading}
           />
-
-          <StatCard
-            icon={<Users className="h-5 w-5 text-slate-500" />}
-            label="Organization Users"
-            value={isError ? "Error" : data?.organizations?.toLocaleString()}
-            isLoading={isLoading}
-          />
-
-          <StatCard
-            icon={<Users className="h-5 w-5 text-slate-500" />}
-            label="Total Transactions"
-            value={isError ? "Error" : data?.transactions?.toLocaleString()}
-            isLoading={isLoading}
-          />
-
-          <StatCard
-            icon={<CheckCircle2 className="h-5 w-5 text-slate-500" />}
-            label="Invoice Paid"
-            value="—"
-            isLoading={isLoading}
-          />
-
-          <StatCard
-            icon={<Sun className="h-5 w-5 text-slate-500" />}
-            label="Invoice Unpaid"
-            value="—"
-            isLoading={isLoading}
-          />
-        </div>
-
-        <div className="grid gap-6 lg:grid-cols-2">
-          <Card className="rounded-2xl shadow-sm">
-            <CardHeader>
-              <CardTitle>Recent Activities</CardTitle>
-            </CardHeader>
-            <CardContent className="text-sm text-slate-500">
-              No activities yet.
-            </CardContent>
-          </Card>
-
-          <Card className="rounded-2xl shadow-sm">
-            <CardHeader>
-              <CardTitle>Notifications</CardTitle>
-            </CardHeader>
-            <CardContent className="text-sm text-slate-500">
-              No notifications yet.
-            </CardContent>
-          </Card>
         </div>
       </div>
     </div>
   );
 }
 
-function KpiCard({ title, value }: { title: string; value?: string | null }) {
+/* ===================== EMPTY STATE CARDS ===================== */
+
+function NotificationsCard() {
   return (
-    <Card className="rounded-xl shadow-sm h-full">
+    <Card className="rounded-2xl border bg-white">
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-medium text-slate-600">
-          {title}
+        <CardTitle className="flex items-center gap-2 text-sm font-medium text-slate-700">
+          <Bell className="h-4 w-4" />
+          Notifications
         </CardTitle>
       </CardHeader>
-
-      <CardContent className="pb-6 flex items-center">
-        {value ? (
-          <p className="text-2xl font-bold text-slate-800">{value}</p>
-        ) : (
-          <div className="h-7 w-36 rounded-md bg-slate-100 animate-pulse" />
-        )}
+      <CardContent className="flex h-[160px] items-center justify-center">
+        <p className="text-sm text-slate-400">
+          No notifications available
+        </p>
       </CardContent>
     </Card>
   );
 }
 
+function RecentActivityCard() {
+  return (
+    <Card className="rounded-2xl border bg-white">
+      <CardHeader className="pb-2">
+        <CardTitle className="flex items-center gap-2 text-sm font-medium text-slate-700">
+          <Clock className="h-4 w-4" />
+          Recent Activity
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="flex h-[160px] items-center justify-center">
+        <p className="text-sm text-slate-400">
+          No recent activity recorded
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
+
+/* ===================== SHARED COMPONENTS ===================== */
+
+function KpiCard({
+  title,
+  value,
+  icon,
+  bgColor,
+}: {
+  title: string;
+  value: number | null;
+  icon: React.ReactNode;
+  bgColor: string;
+}) {
+  return (
+    <Card
+      className="rounded-2xl border hover:shadow-md transition"
+      style={{ backgroundColor: bgColor }}
+    >
+      <CardContent className="p-6">
+        <div className="flex justify-between text-slate-700">
+          <p className="text-sm font-medium">{title}</p>
+          {icon}
+        </div>
+
+        {value !== null ? (
+          <p className="mt-4 text-3xl font-bold text-slate-900">
+            ₱
+            <CountUp end={value} decimals={2} duration={1.2} />
+          </p>
+        ) : (
+          <div className="mt-4 h-8 w-32 rounded bg-white/60 animate-pulse" />
+        )}
+      </CardContent>
+    </Card>
+  );
+}
 
 function StatCard({
   icon,
@@ -255,18 +246,21 @@ function StatCard({
   isLoading?: boolean;
 }) {
   return (
-    <Card className="rounded-xl shadow-sm h-full">
-      <CardContent className="flex flex-col items-center justify-center p-5">
-        {icon}
-        <p className="mt-2 text-xs text-slate-500">{label}</p>
-
-        {isLoading ? (
-          <div className="mt-1 h-5 w-10 rounded bg-slate-100 animate-pulse" />
-        ) : (
-          <p className="mt-1 text-xl font-semibold text-slate-800">
-            {value ?? "—"}
-          </p>
-        )}
+    <Card className="rounded-2xl border bg-white hover:shadow-sm transition">
+      <CardContent className="flex gap-4 p-6">
+        <div className="rounded-xl bg-slate-100 p-3 text-slate-600">
+          {icon}
+        </div>
+        <div>
+          <p className="text-xs text-slate-500">{label}</p>
+          {isLoading ? (
+            <div className="mt-1 h-5 w-16 rounded bg-slate-200 animate-pulse" />
+          ) : (
+            <p className="text-xl font-semibold text-slate-900">
+              {value ?? "—"}
+            </p>
+          )}
+        </div>
       </CardContent>
     </Card>
   );
