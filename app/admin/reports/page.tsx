@@ -1,333 +1,290 @@
-"use client"; 
+"use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, X, ShieldAlert, Ban, Eye, MoreVertical, Mail } from "lucide-react";
+import {
+  X,
+  ShieldAlert,
+  Ban,
+  Mail,
+  ChevronDown,
+} from "lucide-react";
 
-type ReportBase = {
+/* ===================== TYPES ===================== */
+type UserRef = {
+  name: string;
+  email: string;
+};
+
+type Report = {
   id: string;
+  title: string;
   type: "Product" | "Transaction" | "User";
-  transactionId?: string;
-  severity: "Minor" | "Major";
+  status: "Pending" | "Resolved";
   details: string;
+  reportedBy: UserRef;
+  target: {
+    label: string;
+    value: string;
+    owner?: UserRef;
+  };
 };
 
-type RealReport = ReportBase & {
-  placeholder?: false;
-  entity: string;
-};
-
-type PlaceholderReport = {
-  id: string;
-  placeholder: true;
-};
-
-type Report = RealReport | PlaceholderReport;
-
-/* Sample Data Only!! */
+/* ===================== DATA ===================== */
 const REPORTS: Report[] = [
   {
     id: "R-101",
+    title: "Taylor Swift Album",
     type: "Product",
-    entity: "Taylor Swift Album (ID: P-TS-1989)",
-    transactionId: "T-90001",
-    severity: "Minor",
+    status: "Pending",
     details: "The item I received is defective and the seller is unresponsive.",
+    reportedBy: {
+      name: "Vivianne Alano",
+      email: "vfalano@gbox.adnu.edu.ph",
+    },
+    target: {
+      label: "Product ID",
+      value: "P-TS-1989",
+      owner: {
+        name: "James Aguilar",
+        email: "jaguilar@gbox.adnu.edu.ph",
+      },
+    },
   },
   {
-    id: "R-102",
-    type: "Product",
-    entity: "Nike Shoes (ID: P-NK-1234)",
-    transactionId: "T-90002",
-    severity: "Major",
-    details: "The shoes are different from the pics the seller sent.",
+    id: "R-305",
+    title: "Nike Shoes",
+    type: "Transaction",
+    status: "Resolved",
+    details: "The product delivered does not match the description.",
+    reportedBy: {
+      name: "Juan Cruz",
+      email: "juandcruz@gmail.com",
+    },
+    target: {
+      label: "Transaction ID",
+      value: "T-90002",
+      owner: {
+        name: "Maria Clara Santos",
+        email: "mclarasantos@gmail.com",
+      },
+    },
   },
-  { id: "R-103", placeholder: true },
-  { id: "R-104", placeholder: true },
-  { id: "R-105", placeholder: true },
-  { id: "R-106", placeholder: true },
+  {
+    id: "R-412",
+    title: "Andres Felipe",
+    type: "User",
+    status: "Pending",
+    details: "User has been sending inappropriate messages.",
+    reportedBy: {
+      name: "Fred Lacson",
+      email: "flacson@gmail.com",
+    },
+    target: {
+      label: "User Email",
+      value: "anflpe@gmail.com",
+    },
+  },
 ];
 
-/* Report Page */
-export default function ReportPage() {
+/* ===================== PAGE ===================== */
+export default function ReportsPage() {
   const [query, setQuery] = useState("");
-  const [type, setType] = useState<"All" | "Product" | "Transaction" | "User">("All");
-  const [severity, setSeverity] = useState<"All" | "Minor" | "Major">("All");
+  const [type, setType] = useState<"All" | Report["type"]>("All");
+  const [openDetails, setOpenDetails] = useState<Report | null>(null);
+  const [animate, setAnimate] = useState(false);
 
-  // details 
-  const [openDetails, setOpenDetails] = useState<RealReport | null>(null);
-  const [menu, setMenu] = useState<{ id: string | null; top: number; left: number }>({
-    id: null,
-    top: 0,
-    left: 0,
-  });
-
+  /* animation sync */
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setMenu((m) => ({ ...m, id: null }));
-    };
-    const onClick = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      if (target.closest("#report-options-menu")) return;
-      if (target.closest("[data-options-trigger]")) return;
-      setMenu((m) => ({ ...m, id: null }));
-    };
-    document.addEventListener("keydown", onKey);
-    document.addEventListener("click", onClick);
-    return () => {
-      document.removeEventListener("keydown", onKey);
-      document.removeEventListener("click", onClick);
-    };
-  }, []);
+    if (openDetails) requestAnimationFrame(() => setAnimate(true));
+    else setAnimate(false);
+  }, [openDetails]);
 
-  /* Reports filters */
   const filtered = useMemo(() => {
     return REPORTS.filter((r) => {
-      if ("placeholder" in r && r.placeholder) {
-        if (query.trim() || type !== "All" || severity !== "All") return false;
-        return true;
-      }
-      const rr = r as RealReport;
-      const matchesType = type === "All" || rr.type === type;
-      const matchesSeverity = severity === "All" || rr.severity === severity;
-      const q = query.trim().toLowerCase();
+      const matchesType = type === "All" || r.type === type;
       const matchesQuery =
-        q.length === 0 ||
-        rr.id.toLowerCase().includes(q) ||
-        rr.entity.toLowerCase().includes(q) ||
-        (rr.transactionId || "").toLowerCase().includes(q) ||
-        (rr.details || "").toLowerCase().includes(q);
-      return matchesType && matchesSeverity && matchesQuery;
+        !query ||
+        r.title.toLowerCase().includes(query.toLowerCase()) ||
+        r.id.toLowerCase().includes(query.toLowerCase());
+      return matchesType && matchesQuery;
     });
-  }, [query, type, severity]);
+  }, [query, type]);
 
-  /* --- Actions triggers --- */
-  const handleWarn = (r: RealReport) => {
-    setMenu({ id: null, top: 0, left: 0 });
-    const ok = window.confirm(`Warn account for report ${r.id}?`);
-    if (ok) alert(`Warning issued`);
-  };
-
-  const handleSuspend = (r: RealReport) => {
-    setMenu({ id: null, top: 0, left: 0 });
-    const ok = window.confirm(`Suspend account for report ${r.id}?`);
-    if (ok) alert(`Account suspended`);
-  };
-
-  const handleEmailOSA = (r: RealReport) => {
-    setMenu({ id: null, top: 0, left: 0 });
-    alert(`Email sent to Office of Student Affairs regarding ${r.id} ✅ (frontend only)`);
-  };
-
-  const openOptionsMenu = (r: RealReport, e: React.MouseEvent<HTMLButtonElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const spacing = 8;
-    setMenu({
-      id: r.id,
-      top: rect.bottom + spacing + window.scrollY,
-      left: rect.right - 176 + window.scrollX,
-    });
-  };
+  const pendingCount = REPORTS.filter((r) => r.status === "Pending").length;
+  const resolvedCount = REPORTS.filter((r) => r.status === "Resolved").length;
 
   return (
-    <div className="mx-auto max-w-[95%] p-6">
+    <div className="mx-auto max-w-[95%] space-y-6 p-6">
 
-      <Card className="border-none shadow-sm rounded-2xl">
-        <CardContent className="p-5">
-          <div className="flex flex-col md:flex-row flex-wrap gap-3 md:items-center md:justify-between">
-            <h2 className="text-lg font-semibold">Reports</h2>
+      {/* ===== SUMMARY ===== */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Card className="rounded-xl border border-amber-200 bg-amber-50">
+          <CardContent className="p-4">
+            <p className="text-xs text-amber-700">Pending Reports</p>
+            <p className="text-2xl font-bold text-amber-800">{pendingCount}</p>
+          </CardContent>
+        </Card>
 
-            <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
-              {/* Filter: Report Type */}
+        <Card className="rounded-xl border border-green-200 bg-green-50">
+          <CardContent className="p-4">
+            <p className="text-xs text-green-700">Resolved Reports</p>
+            <p className="text-2xl font-bold text-green-800">{resolvedCount}</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* ===== FILTERS ===== */}
+      <Card className="rounded-2xl shadow-sm">
+        <CardContent className="flex flex-wrap items-center justify-between gap-4 p-5">
+          <h2 className="text-lg font-semibold">Reports</h2>
+
+          <div className="flex items-center gap-3">
+            <div className="relative">
               <select
-                className="w-full md:w-[160px] rounded-xl border border-gray-200 px-3 py-2 text-sm"
                 value={type}
                 onChange={(e) => setType(e.target.value as any)}
+                className="appearance-none rounded-xl border px-4 py-2 pr-9 text-sm"
               >
                 <option value="All">All Types</option>
                 <option value="Product">Product</option>
                 <option value="Transaction">Transaction</option>
                 <option value="User">User</option>
               </select>
-
-              {/* Filter: Severity */}
-              <select
-                className="w-full md:w-[160px] rounded-xl border border-gray-200 px-3 py-2 text-sm"
-                value={severity}
-                onChange={(e) => setSeverity(e.target.value as any)}
-              >
-                <option value="All">All Severity</option>
-                <option value="Minor">Minor</option>
-                <option value="Major">Major</option>
-              </select>
-
-              {/* Search Input */}
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search report"
-                className="w-full md:w-[260px] rounded-xl border border-gray-200 px-3 py-2 text-sm"
-              />
+              <ChevronDown className="absolute right-3 top-2.5 h-4 w-4 text-gray-500" />
             </div>
+
+            <input
+              placeholder="Search reports"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="rounded-xl border px-4 py-2 text-sm w-[260px]"
+            />
           </div>
         </CardContent>
       </Card>
 
-      {/*Reports Table */}
-      <Card className="border-none shadow-md rounded-2xl mt-6">
+      {/* ===== TABLE ===== */}
+      <Card className="border-none shadow-md rounded-2xl overflow-hidden">
         <CardContent className="p-0">
-          <div className="grid grid-cols-12 items-center px-6 py-3 text-xs md:text-sm font-semibold text-gray-700 bg-[#C7D9E5]">
-            <div className="col-span-5">Report</div>
-            <div className="col-span-2">Transaction</div>
-            <div className="col-span-2">Severity</div>
-            <div className="col-span-1">Details</div>
-            <div className="col-span-2 text-right">Action</div>
+          <div className="grid grid-cols-12 px-6 py-3 text-sm font-semibold bg-[#C7D9E5]">
+            <div className="col-span-4">Report</div>
+            <div className="col-span-2">Report ID</div>
+            <div className="col-span-2">Type</div>
+            <div className="col-span-2">Status</div>
+            <div className="col-span-2 text-right">Details</div>
           </div>
 
-          <ul className="divide-y">
-            {filtered.map((r) => {
-              if ("placeholder" in r && r.placeholder) {
-                return (
-                  <li key={r.id} className="grid grid-cols-12 items-center px-6 py-6 bg-white">
-                    <div className="col-span-12" />
-                  </li>
-                );
-              }
-
-              const rr = r as RealReport;
-              const isOpen = menu.id === rr.id;
-
-              return (
-                <li
-                  key={rr.id}
-                  className="grid grid-cols-12 items-center px-6 py-5 bg-white hover:bg-gray-50 transition"
+          {filtered.map((r) => (
+            <div
+              key={r.id}
+              className="grid grid-cols-12 px-6 py-4 border-b hover:bg-gray-50"
+            >
+              <div className="col-span-4 font-medium">{r.title}</div>
+              <div className="col-span-2 text-gray-600">{r.id}</div>
+              <div className="col-span-2">{r.type}</div>
+              <div className="col-span-2">
+                <span
+                  className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                    r.status === "Resolved"
+                      ? "bg-green-100 text-green-700"
+                      : "bg-amber-100 text-amber-700"
+                  }`}
                 >
-                  {/* Report Info */}
-                  <div className="col-span-5">
-                    <div className="text-sm font-medium text-gray-900">{rr.entity}</div>
-                    <div className="text-xs text-gray-500">
-                      {rr.type} • {rr.id}
-                    </div>
-                  </div>
-
-                  {/* Transaction ID */}
-                  <div className="col-span-2">
-                    <div className="text-sm text-gray-900">{rr.transactionId || "—"}</div>
-                  </div>
-
-                  {/* Severity */}
-                  <div className="col-span-2">
-                    <span
-                      className={[
-                        "inline-flex items-center gap-1 rounded-full text-xs px-2 py-1 border",
-                        rr.severity === "Major"
-                          ? "bg-red-50 text-red-700 border-red-200"
-                          : "bg-amber-50 text-amber-700 border-amber-200",
-                      ].join(" ")}
-                    >
-                      <AlertTriangle className="h-3.5 w-3.5" />
-                      {rr.severity}
-                    </span>
-                  </div>
-
-                  <div className="col-span-1">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="rounded-xl px-3 py-1.5 text-sm"
-                      onClick={() => setOpenDetails(rr)}
-                    >
-                      <Eye className="h-4 w-4 mr-1" />
-                      View
-                    </Button>
-                  </div>
-
-                  <div className="col-span-2 flex items-center justify-end">
-                    <Button
-                      type="button"
-                      data-options-trigger
-                      variant="outline"
-                      className="rounded-xl px-3 py-1.5 text-sm"
-                      onClick={(e) => openOptionsMenu(rr, e)}
-                    >
-                      <MoreVertical className="h-4 w-4 mr-1" />
-                      Options
-                    </Button>
-
-                    {/* Warn, Suspend, Email OSA */}
-                    {isOpen && (
-                      <div
-                        id="report-options-menu"
-                        className="fixed z-[1000] w-44 rounded-xl border border-gray-200 bg-white shadow-lg"
-                        style={{ top: menu.top, left: menu.left }}
-                      >
-                        <button
-                          className="w-full flex items-center gap-2 text-left px-3 py-2 text-sm hover:bg-gray-50"
-                          onClick={() => handleWarn(rr)}
-                        >
-                          <ShieldAlert className="h-4 w-4 text-amber-600" />
-                          Warn
-                        </button>
-                        <button
-                          className="w-full flex items-center gap-2 text-left px-3 py-2 text-sm hover:bg-gray-50"
-                          onClick={() => handleSuspend(rr)}
-                        >
-                          <Ban className="h-4 w-4 text-[#102E4A]" />
-                          Suspend
-                        </button>
-                        <button
-                          className="w-full flex items-center gap-2 text-left px-3 py-2 text-sm hover:bg-gray-50"
-                          onClick={() => handleEmailOSA(rr)}
-                        >
-                          <Mail className="h-4 w-4 text-[#E59D2C]" />
-                          Email OSA
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
+                  {r.status}
+                </span>
+              </div>
+              <div className="col-span-2 text-right">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setOpenDetails(r)}
+                >
+                  Details
+                </Button>
+              </div>
+            </div>
+          ))}
         </CardContent>
       </Card>
 
-      {/* Report Details */}
+      {/* ===== DETAILS DRAWER ===== */}
       {openDetails && (
-        <div className="fixed inset-0 z-40">
-          <div className="absolute inset-0 bg-black/30" onClick={() => setOpenDetails(null)} />
-          <div className="absolute right-0 top-0 h-full w-full sm:w-[480px] bg-white shadow-2xl">
+        <div className="fixed inset-0 z-50">
+          <div
+            className={`absolute inset-0 bg-black/40 transition-opacity duration-300 ${
+              animate ? "opacity-100" : "opacity-0"
+            }`}
+            onClick={() => setOpenDetails(null)}
+          />
+
+          <div
+            className={`absolute right-0 top-0 h-full w-full sm:w-[480px] bg-white shadow-2xl transform transition-all duration-300 ease-out
+              ${animate ? "translate-x-0 opacity-100" : "translate-x-full opacity-0"}
+            `}
+          >
             <div className="flex items-center justify-between p-5 border-b">
-              <div className="space-y-0.5">
-                <div className="text-sm text-gray-500">{openDetails.type}</div>
-                <h3 className="text-lg font-semibold">{openDetails.entity}</h3>
+              <div>
+                <h3 className="font-semibold">{openDetails.title}</h3>
+                <p className="text-xs text-gray-500">
+                  Report ID: {openDetails.id}
+                </p>
               </div>
-              <button className="text-gray-400 hover:text-gray-600" onClick={() => setOpenDetails(null)}>
-                <X className="h-5 w-5" />
+              <button onClick={() => setOpenDetails(null)}>
+                <X className="h-5 w-5 text-gray-500" />
               </button>
             </div>
 
-            <div className="p-5 space-y-3">
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                <div>
-                  <div className="text-gray-500">Report ID</div>
-                  <div className="font-medium">{openDetails.id}</div>
-                </div>
-                <div>
-                  <div className="text-gray-500">Severity</div>
-                  <div className="font-medium">{openDetails.severity}</div>
-                </div>
-                <div>
-                  <div className="text-gray-500">Transaction</div>
-                  <div className="font-medium">{openDetails.transactionId || "—"}</div>
-                </div>
-              </div>
+            <div className="p-5 space-y-4 text-sm">
+              <Card>
+                <CardContent className="p-4 space-y-1">
+                  <div>
+                    <strong>{openDetails.target.label}:</strong>{" "}
+                    {openDetails.target.value}
+                  </div>
 
-              <div className="pt-2">
-                <div className="text-gray-500 text-sm mb-1">Details</div>
-                <p className="text-sm leading-6">{openDetails.details}</p>
-              </div>
+                  {openDetails.target.owner && (
+                    <>
+                      <div>
+                        <strong>Seller:</strong>{" "}
+                        {openDetails.target.owner.name}
+                      </div>
+                      <div className="text-xs">
+                        {openDetails.target.owner.email}
+                      </div>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-4">
+                  <div className="text-xs text-gray-500">Reported by</div>
+                  <div className="font-medium">
+                    {openDetails.reportedBy.name}
+                  </div>
+                  <div className="text-xs">
+                    {openDetails.reportedBy.email}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-4">{openDetails.details}</CardContent>
+              </Card>
+            </div>
+
+            <div className="border-t p-4 flex gap-2">
+              <Button variant="outline">
+                <ShieldAlert className="h-4 w-4 mr-1" /> Warn
+              </Button>
+              <Button variant="outline">
+                <Ban className="h-4 w-4 mr-1" /> Suspend
+              </Button>
+              <Button variant="outline">
+                <Mail className="h-4 w-4 mr-1" /> Email OSA
+              </Button>
             </div>
           </div>
         </div>
