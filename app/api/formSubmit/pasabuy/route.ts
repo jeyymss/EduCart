@@ -24,6 +24,11 @@ export async function PasaBuySubmit(formData: FormData, selectedType: string) {
     const pasabuyCutOffDate = formData.get("pasabuyCutOffDate") as string;
     const itemDescription = formData.get("itemDescription") as string;
 
+    // Seller location for delivery
+    const sellerLat = formData.get("seller_lat") ? Number(formData.get("seller_lat")) : null;
+    const sellerLng = formData.get("seller_lng") ? Number(formData.get("seller_lng")) : null;
+    const sellerAddress = formData.get("seller_address") as string;
+
     //set selected post type (PASABUY)
     const { data: postType } = await supabase
       .from("post_types")
@@ -43,6 +48,9 @@ export async function PasaBuySubmit(formData: FormData, selectedType: string) {
         item_pasabuy_cutoff: pasabuyCutOffDate,
         item_title: itemTitle,
         item_description: itemDescription,
+        pickup_lat: sellerLat,
+        pickup_lng: sellerLng,
+        pickup_location: sellerAddress,
       },
     ]);
 

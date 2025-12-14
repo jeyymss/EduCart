@@ -9,90 +9,100 @@ import {
   Ban,
   Mail,
   ChevronDown,
+  Loader2,
 } from "lucide-react";
+import { useReports, type Report as ReportData } from "@/hooks/queries/admin/useReports";
 
 /* ===================== TYPES ===================== */
-type UserRef = {
-  name: string;
-  email: string;
-};
-
-type Report = {
+type DisplayReport = {
   id: string;
   title: string;
   type: "Product" | "Transaction" | "User";
   status: "Pending" | "Resolved";
   details: string;
-  reportedBy: UserRef;
+  reportedBy: {
+    name: string;
+    email: string;
+  };
   target: {
     label: string;
     value: string;
-    owner?: UserRef;
+    owner?: {
+      name: string;
+      email: string;
+    };
   };
+  reportType: string;
+  createdAt: string;
 };
 
-/* ===================== DATA ===================== */
-const REPORTS: Report[] = [
-  {
-    id: "R-101",
-    title: "Taylor Swift Album",
-    type: "Product",
-    status: "Pending",
-    details: "The item I received is defective and the seller is unresponsive.",
+/* ===================== HELPER FUNCTIONS ===================== */
+function transformReportData(report: ReportData): DisplayReport {
+  // Get reporter name
+  const reporterName = report.reporter.individuals?.full_name ||
+                       report.reporter.organizations?.organization_name ||
+                       "Unknown User";
+
+  // Get reported user name
+  const reportedUserName = report.reported_user.individuals?.full_name ||
+                           report.reported_user.organizations?.organization_name ||
+                           "Unknown User";
+
+  // Determine title and target based on report type
+  let title = "";
+  let targetLabel = "";
+  let targetValue = "";
+  let targetOwner = undefined;
+
+  if (report.report_target_type === "Item" && report.reported_item) {
+    title = report.reported_item.item_title;
+    targetLabel = "Item ID";
+    targetValue = report.reported_item.id;
+    targetOwner = {
+      name: reportedUserName,
+      email: report.reported_user.email,
+    };
+  } else if (report.report_target_type === "Transaction" && report.reported_transaction) {
+    title = `Transaction ${report.reported_transaction.reference_code}`;
+    targetLabel = "Transaction ID";
+    targetValue = report.reported_transaction.id;
+    targetOwner = {
+      name: reportedUserName,
+      email: report.reported_user.email,
+    };
+  } else {
+    title = reportedUserName;
+    targetLabel = "User Email";
+    targetValue = report.reported_user.email;
+  }
+
+  return {
+    id: report.reference_code || report.id,
+    title,
+    type: report.report_target_type === "Item" ? "Product" :
+          report.report_target_type === "Transaction" ? "Transaction" : "User",
+    status: report.status as "Pending" | "Resolved",
+    details: report.description || "No description provided.",
     reportedBy: {
-      name: "Vivianne Alano",
-      email: "vfalano@gbox.adnu.edu.ph",
+      name: reporterName,
+      email: report.reporter.email,
     },
     target: {
-      label: "Product ID",
-      value: "P-TS-1989",
-      owner: {
-        name: "James Aguilar",
-        email: "jaguilar@gbox.adnu.edu.ph",
-      },
+      label: targetLabel,
+      value: targetValue,
+      owner: targetOwner,
     },
-  },
-  {
-    id: "R-305",
-    title: "Nike Shoes",
-    type: "Transaction",
-    status: "Resolved",
-    details: "The product delivered does not match the description.",
-    reportedBy: {
-      name: "Juan Cruz",
-      email: "juandcruz@gmail.com",
-    },
-    target: {
-      label: "Transaction ID",
-      value: "T-90002",
-      owner: {
-        name: "Maria Clara Santos",
-        email: "mclarasantos@gmail.com",
-      },
-    },
-  },
-  {
-    id: "R-412",
-    title: "Andres Felipe",
-    type: "User",
-    status: "Pending",
-    details: "User has been sending inappropriate messages.",
-    reportedBy: {
-      name: "Fred Lacson",
-      email: "flacson@gmail.com",
-    },
-    target: {
-      label: "User Email",
-      value: "anflpe@gmail.com",
-    },
-  },
-];
+    reportType: report.report_type,
+    createdAt: report.created_at,
+  };
+}
 
 /* ===================== PAGE ===================== */
 export default function ReportsPage() {
+  const { data: reportsData, isLoading, error } = useReports();
   const [query, setQuery] = useState("");
-  const [type, setType] = useState<"All" | Report["type"]>("All");
-  const [openDetails, setOpenDetails] = useState<Report | null>(null);
+  const [type, setType] = useState<"All" | DisplayReport["type"]>("All");
+  const [openDetails, setOpenDetails] = useState<DisplayReport | null>(null);
   const [animate, setAnimate] = useState(false);
 
   /* animation sync */
@@ -101,8 +111,14 @@ export default function ReportsPage() {
     else setAnimate(false);
   }, [openDetails]);
 
+  // Transform the data
+  const reports = useMemo(() => {
+    if (!reportsData) return [];
+    return reportsData.map(transformReportData);
+  }, [reportsData]);
+
   const filtered = useMemo(() => {
-    return REPORTS.filter((r) => {
+    return reports.filter((r) => {
       const matchesType = type === "All" || r.type === type;
       const matchesQuery =
         !query ||
@@ -110,10 +126,33 @@ export default function ReportsPage() {
         r.id.toLowerCase().includes(query.toLowerCase());
       return matchesType && matchesQuery;
     });
-  }, [query, type]);
+  }, [query, type, reports]);
 
-  const pendingCount = REPORTS.filter((r) => r.status === "Pending").length;
-  const resolvedCount = REPORTS.filter((r) => r.status === "Resolved").length;
+  const pendingCount = reports.filter((r) => r.status === "Pending").length;
+  const resolvedCount = reports.filter((r) => r.status === "Resolved").length;
+
+  if (isLoading) {
+    return (
+      <div className="mx-auto max-w-[95%] space-y-6 p-6 flex items-center justify-center min-h-[400px]">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
+          <p className="text-sm text-gray-600">Loading reports...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="mx-auto max-w-[95%] space-y-6 p-6">
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="p-6">
+            <p className="text-red-800">Error loading reports: {error.message}</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-[95%] space-y-6 p-6">
@@ -176,36 +215,42 @@ export default function ReportsPage() {
             <div className="col-span-2 text-right">Details</div>
           </div>
 
-          {filtered.map((r) => (
-            <div
-              key={r.id}
-              className="grid grid-cols-12 px-6 py-4 border-b hover:bg-gray-50"
-            >
-              <div className="col-span-4 font-medium">{r.title}</div>
-              <div className="col-span-2 text-gray-600">{r.id}</div>
-              <div className="col-span-2">{r.type}</div>
-              <div className="col-span-2">
-                <span
-                  className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                    r.status === "Resolved"
-                      ? "bg-green-100 text-green-700"
-                      : "bg-amber-100 text-amber-700"
-                  }`}
-                >
-                  {r.status}
-                </span>
-              </div>
-              <div className="col-span-2 text-right">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setOpenDetails(r)}
-                >
-                  Details
-                </Button>
-              </div>
+          {filtered.length === 0 ? (
+            <div className="px-6 py-12 text-center text-gray-500">
+              <p className="text-sm">No reports found</p>
             </div>
-          ))}
+          ) : (
+            filtered.map((r) => (
+              <div
+                key={r.id}
+                className="grid grid-cols-12 px-6 py-4 border-b hover:bg-gray-50"
+              >
+                <div className="col-span-4 font-medium">{r.title}</div>
+                <div className="col-span-2 text-gray-600">{r.id}</div>
+                <div className="col-span-2">{r.type}</div>
+                <div className="col-span-2">
+                  <span
+                    className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                      r.status === "Resolved"
+                        ? "bg-green-100 text-green-700"
+                        : "bg-amber-100 text-amber-700"
+                    }`}
+                  >
+                    {r.status}
+                  </span>
+                </div>
+                <div className="col-span-2 text-right">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setOpenDetails(r)}
+                  >
+                    Details
+                  </Button>
+                </div>
+              </div>
+            ))
+          )}
         </CardContent>
       </Card>
 
