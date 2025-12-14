@@ -69,7 +69,7 @@ export default function SaleActions({
   };
 
 
-  const disabledStates = ["Waiting for Confirmation", "On Hold", "Completed", "Cancelled"];
+  const disabledStates = ["Waiting for Confirmation", "On Hold", "Completed", "Cancelled", "Waiting for Delivery"];
 
   if (disabledStates.includes(action)) {
     return (

@@ -26,6 +26,7 @@ interface FormProps {
   post_id: string;
   postType: string;
   onClose?: () => void;
+  acceptedOfferPrice?: number | null;
 }
 
 export default function SaleTransacForm({
@@ -36,7 +37,10 @@ export default function SaleTransacForm({
   post_id,
   postType,
   onClose,
+  acceptedOfferPrice,
 }: FormProps) {
+  // Use accepted offer price if available, otherwise use original item price
+  const finalPrice = acceptedOfferPrice ?? itemPrice;
   const formRef = useRef<HTMLFormElement | null>(null);
   const [isFormValid, setIsFormValid] = useState(false);
   const [selectedType, setSelectedType] = useState("");
@@ -126,18 +130,18 @@ export default function SaleTransacForm({
       const result = await SaleTransaction(
         formData,
         conversationId,
-        itemPrice,
+        finalPrice,
         itemTitle,
         selectedType,
         selectPayment,
         sellerId,
         post_id,
         postType,
-        deliveryLat,          
-        deliveryLng,          
-        deliveryAddress,      
-        deliveryFee,         
-        distanceKm            
+        deliveryLat,
+        deliveryLng,
+        deliveryAddress,
+        deliveryFee,
+        distanceKm
       );
 
       setLoading(false);
@@ -160,7 +164,14 @@ export default function SaleTransacForm({
       <Label>Item</Label>
       <Input value={itemTitle ?? ""} readOnly name="itemTitle" />
       <Label>Price ₱ </Label>
-      <Input value={itemPrice ?? ""} readOnly />
+      <div className="space-y-1">
+        <Input value={finalPrice ?? ""} readOnly />
+        {acceptedOfferPrice && itemPrice && acceptedOfferPrice !== itemPrice && (
+          <p className="text-xs text-gray-500">
+            Original price: <span className="line-through">₱{itemPrice.toLocaleString()}</span>
+          </p>
+        )}
+      </div>
 
       <Label>Preferred Method</Label>
       <Select value={selectedType} onValueChange={setSelectedType}>

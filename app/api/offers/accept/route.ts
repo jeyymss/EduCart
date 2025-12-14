@@ -32,10 +32,11 @@ export async function POST(req: Request) {
     .eq("id", offer_id);
 
   // 2. Start chat with RPC
-  const { data: convo_id, error: chatErr } = await supabase.rpc("start_chat_with_user", {
-    input_user_id: offer.buyer_id,
+  const { data: convo_id, error: chatErr } = await supabase.rpc("start_chat_from_offer", {
+    input_offer_id: offer_id,
     input_post_id: post_id,
   });
+
 
   if (chatErr) {
     return NextResponse.json({ error: "Chat creation failed" }, { status: 500 });

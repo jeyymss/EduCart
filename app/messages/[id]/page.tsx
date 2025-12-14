@@ -136,6 +136,28 @@ export default async function ConversationPage({
     }
   }
 
+  // ✅ Fetch accepted offer price for this conversation (if any)
+  let acceptedOfferPrice: number | null = null;
+  if (convoMeta?.post_id && convoMeta?.post_type === "Sale") {
+    const { data: conversation } = await supabase
+      .from("conversations")
+      .select("offer_id")
+      .eq("id", conversationIdNumber)
+      .single();
+
+    if (conversation?.offer_id) {
+      const { data: offer } = await supabase
+        .from("offers")
+        .select("offered_price, status")
+        .eq("id", conversation.offer_id)
+        .single();
+
+      if (offer?.status === "Accepted") {
+        acceptedOfferPrice = offer.offered_price;
+      }
+    }
+  }
+
   return (
     <ChatClient
       conversationId={conversationIdNumber}
@@ -156,6 +178,7 @@ export default async function ConversationPage({
       itemPasabuyLocation={convoMeta?.item_pasabuy_location ?? null}
       itemPasabuyCutoff={convoMeta?.item_pasabuy_cutoff ?? null}
       transactionHistory={transactionHistory}
+      acceptedOfferPrice={acceptedOfferPrice}
     />
   );
 }

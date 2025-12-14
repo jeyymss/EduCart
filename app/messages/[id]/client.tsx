@@ -81,6 +81,7 @@ export default function ChatClient({
   itemPasabuyLocation,
   itemPasabuyCutoff,
   transactionHistory: initialTransactionHistory,
+  acceptedOfferPrice: initialAcceptedOfferPrice,
 }: {
   conversationId: number;
   currentUserId: string;
@@ -100,6 +101,7 @@ export default function ChatClient({
   itemPasabuyLocation: string;
   itemPasabuyCutoff: string;
   transactionHistory?: any[];
+  acceptedOfferPrice?: number | null;
 }) {
   const supabase = useMemo(() => createClient(), []);
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
@@ -110,6 +112,7 @@ export default function ChatClient({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [acceptedPrice, setAcceptedPrice] = useState<number | null>(initialAcceptedOfferPrice ?? null);
 
   // Auto scroll to bottom when messages change
   useEffect(() => {
@@ -239,6 +242,23 @@ export default function ChatClient({
               record.id === updatedRecord.id ? { ...record, ...updatedRecord } : record
             )
           );
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "offers",
+          filter: `post_id=eq.${postId}`,
+        },
+        async (payload) => {
+          const updatedOffer = payload.new as any;
+
+          // Update accepted price if an offer is accepted
+          if (updatedOffer.status === "Accepted" && postType === "Sale") {
+            setAcceptedPrice(updatedOffer.offered_price);
+          }
         }
       )
       .subscribe();
@@ -428,10 +448,23 @@ export default function ChatClient({
                 {postType === "Sale" && (
                   <>
                     <p className="text-sm font-medium truncate">{itemTitle}</p>
-                    {itemPrice && (
-                      <p className="text-xs text-[#E59E2C]">
-                        ₱{itemPrice.toLocaleString()}
-                      </p>
+                    {acceptedPrice ? (
+                      <div className="flex items-center gap-2">
+                        <p className="text-xs text-[#E59E2C] font-semibold">
+                          ₱{acceptedPrice.toLocaleString()}
+                        </p>
+                        {itemPrice && (
+                          <p className="text-xs text-gray-400 line-through">
+                            ₱{itemPrice.toLocaleString()}
+                          </p>
+                        )}
+                      </div>
+                    ) : (
+                      itemPrice && (
+                        <p className="text-xs text-[#E59E2C]">
+                          ₱{itemPrice.toLocaleString()}
+                        </p>
+                      )
                     )}
                   </>
                 )}
@@ -727,6 +760,7 @@ export default function ChatClient({
                         sellerId={otherUserId}
                         post_id={postId}
                         postType={postType || ""}
+                        acceptedOfferPrice={acceptedPrice}
                         onClose={() => {
                           setOpen(false);
                           setShowSuccess(true);

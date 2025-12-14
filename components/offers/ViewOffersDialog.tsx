@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Dialog,
   DialogTrigger,
@@ -38,6 +39,7 @@ export default function ViewOffersDialog({
   sellerId,
   itemTitle,
 }: ViewOffersDialogProps) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [offers, setOffers] = useState<Offer[]>([]);
   const [loading, setLoading] = useState(false);
@@ -72,7 +74,7 @@ export default function ViewOffersDialog({
   }, [open]);
 
   const acceptOffer = async (offer: Offer) => {
-    await fetch("/api/offers/accept", {
+    const res = await fetch("/api/offers/accept", {
       method: "POST",
       body: JSON.stringify({
         offer_id: offer.id,
@@ -81,7 +83,15 @@ export default function ViewOffersDialog({
       }),
     });
 
-    loadOffers();
+    const data = await res.json();
+
+    if (data.success && data.convo_id) {
+      // Navigate to the conversation
+      router.push(`/messages/${data.convo_id}`);
+    } else {
+      // If there's an error, reload the offers
+      loadOffers();
+    }
   };
 
   const rejectOffer = async (offer: Offer) => {
