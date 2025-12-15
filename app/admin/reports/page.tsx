@@ -505,7 +505,7 @@ export default function ReportsPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Suspend User</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to suspend this user's account? This will
+              Are you sure you want to suspend this user&apos;s account? This will
               prevent them from accessing the platform. They will receive a
               notification about the suspension, and the report will be marked as
               resolved.
