@@ -12,10 +12,24 @@ import {
   Loader2,
 } from "lucide-react";
 import { useReports, type Report as ReportData } from "@/hooks/queries/admin/useReports";
+import { createClient } from "@/utils/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 
 /* ===================== TYPES ===================== */
 type DisplayReport = {
-  id: string;
+  id: string; // Display ID (reference_code or fallback to id)
+  databaseId: string; // Actual database ID for API calls
   title: string;
   type: "Product" | "Transaction" | "User";
   status: "Pending" | "Resolved";
@@ -34,6 +48,7 @@ type DisplayReport = {
   };
   reportType: string;
   createdAt: string;
+  reportedUserId: string;
 };
 
 /* ===================== HELPER FUNCTIONS ===================== */
@@ -78,11 +93,12 @@ function transformReportData(report: ReportData): DisplayReport {
 
   return {
     id: report.reference_code || report.id,
+    databaseId: report.id, // Actual database ID
     title,
     type: report.report_target_type === "Item" ? "Product" :
           report.report_target_type === "Transaction" ? "Transaction" : "User",
     status: report.status as "Pending" | "Resolved",
-    details: report.description || "No description provided.",
+    details: report.description || "Please review our community guidelines.",
     reportedBy: {
       name: reporterName,
       email: report.reporter.email,
@@ -94,22 +110,119 @@ function transformReportData(report: ReportData): DisplayReport {
     },
     reportType: report.report_type,
     createdAt: report.created_at,
+    reportedUserId: report.reported_user_id,
   };
 }
 
 /* ===================== PAGE ===================== */
 export default function ReportsPage() {
+  const supabase = createClient();
+  const queryClient = useQueryClient();
   const { data: reportsData, isLoading, error } = useReports();
   const [query, setQuery] = useState("");
   const [type, setType] = useState<"All" | DisplayReport["type"]>("All");
   const [openDetails, setOpenDetails] = useState<DisplayReport | null>(null);
   const [animate, setAnimate] = useState(false);
+  const [warnDialogOpen, setWarnDialogOpen] = useState(false);
+  const [suspendDialogOpen, setSuspendDialogOpen] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
 
   /* animation sync */
   useEffect(() => {
     if (openDetails) requestAnimationFrame(() => setAnimate(true));
     else setAnimate(false);
   }, [openDetails]);
+
+  // Real-time subscription for reports
+  useEffect(() => {
+    const channel = supabase
+      .channel("reports-realtime")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "reports",
+        },
+        () => {
+          // Invalidate and refetch the reports query
+          queryClient.invalidateQueries({ queryKey: ["adminReports"] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [supabase, queryClient]);
+
+  // Handle warn user
+  const handleWarn = async () => {
+    if (!openDetails) return;
+
+    setActionLoading(true);
+    try {
+      const res = await fetch("/api/admin/reports/warn", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          reportId: openDetails.databaseId,
+          reportedUserId: openDetails.reportedUserId,
+          reportType: openDetails.reportType,
+          reason: openDetails.details,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to warn user");
+      }
+
+      toast.success("User warned successfully");
+      setWarnDialogOpen(false);
+      setOpenDetails(null);
+      queryClient.invalidateQueries({ queryKey: ["adminReports"] });
+    } catch (error: any) {
+      toast.error(error.message || "Failed to warn user");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Handle suspend user
+  const handleSuspend = async () => {
+    if (!openDetails) return;
+
+    setActionLoading(true);
+    try {
+      const res = await fetch("/api/admin/reports/suspend", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          reportId: openDetails.databaseId,
+          reportedUserId: openDetails.reportedUserId,
+          reportType: openDetails.reportType,
+          reason: openDetails.details,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to suspend user");
+      }
+
+      toast.success("User suspended successfully");
+      setSuspendDialogOpen(false);
+      setOpenDetails(null);
+      queryClient.invalidateQueries({ queryKey: ["adminReports"] });
+    } catch (error: any) {
+      toast.error(error.message || "Failed to suspend user");
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
   // Transform the data
   const reports = useMemo(() => {
@@ -316,15 +429,35 @@ export default function ReportsPage() {
               </Card>
 
               <Card>
-                <CardContent className="p-4">{openDetails.details}</CardContent>
+                <CardContent className="p-4">
+                  <div className="text-xs text-gray-500">Report Type</div>
+                  <div className="font-medium capitalize">
+                    {openDetails.reportType}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-4">
+                  <div className="text-xs text-gray-500">Description</div>
+                  <div className="mt-1">{openDetails.details}</div>
+                </CardContent>
               </Card>
             </div>
 
             <div className="border-t p-4 flex gap-2">
-              <Button variant="outline">
+              <Button
+                variant="outline"
+                onClick={() => setWarnDialogOpen(true)}
+                disabled={openDetails.status === "Resolved"}
+              >
                 <ShieldAlert className="h-4 w-4 mr-1" /> Warn
               </Button>
-              <Button variant="outline">
+              <Button
+                variant="outline"
+                onClick={() => setSuspendDialogOpen(true)}
+                disabled={openDetails.status === "Resolved"}
+              >
                 <Ban className="h-4 w-4 mr-1" /> Suspend
               </Button>
               <Button variant="outline">
@@ -334,6 +467,69 @@ export default function ReportsPage() {
           </div>
         </div>
       )}
+
+      {/* ===== WARN CONFIRMATION DIALOG ===== */}
+      <AlertDialog open={warnDialogOpen} onOpenChange={setWarnDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Warn User</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to issue a warning to this user? They will
+              receive a notification about this warning, and the report will be
+              marked as resolved.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={actionLoading}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleWarn}
+              disabled={actionLoading}
+              className="bg-amber-600 hover:bg-amber-700"
+            >
+              {actionLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Warning...
+                </>
+              ) : (
+                "Warn User"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* ===== SUSPEND CONFIRMATION DIALOG ===== */}
+      <AlertDialog open={suspendDialogOpen} onOpenChange={setSuspendDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Suspend User</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to suspend this user's account? This will
+              prevent them from accessing the platform. They will receive a
+              notification about the suspension, and the report will be marked as
+              resolved.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={actionLoading}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleSuspend}
+              disabled={actionLoading}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {actionLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Suspending...
+                </>
+              ) : (
+                "Suspend User"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

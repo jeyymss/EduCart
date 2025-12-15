@@ -42,9 +42,11 @@ import { useUserProfile } from "@/hooks/useUserProfile";
 import {
   ArrowRight,
   BadgeCent,
+  Ban,
   Bell,
   MessageSquare,
   Plus,
+  ShieldAlert,
   User,
   Wallet,
 } from "lucide-react";
@@ -343,7 +345,7 @@ useEffect(() => {
                                     router.push(`/product/${offer.post_id}`);
                                   }
                                 } else if (n.related_table === "posts" && n.related_id) {
-                                  // Direct post notification
+                                  // Direct post notification (includes item reports)
                                   router.push(`/product/${n.related_id}`);
                                 }
                               }}
@@ -369,6 +371,12 @@ useEffect(() => {
                                   )}
                                   {n.category === "Report" && (
                                     <ArrowRight className="w-5 h-5" style={{ color: primary }} />
+                                  )}
+                                  {n.category === "Warning Issued" && (
+                                    <ShieldAlert className="w-5 h-5" style={{ color: "#D97706" }} />
+                                  )}
+                                  {n.category === "Suspension" && (
+                                    <Ban className="w-5 h-5" style={{ color: "#DC2626" }} />
                                   )}
                                 </div>
 

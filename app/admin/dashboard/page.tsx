@@ -17,9 +17,12 @@ import {
   Activity,
   Bell,
   Clock,
+  AlertCircle,
 } from "lucide-react";
 
 import { useDashboardStats } from "@/hooks/queries/admin/getDashboardStats";
+import { createClient } from "@/utils/supabase/client";
+import Link from "next/link";
 
 /* ===================== CALENDAR ===================== */
 function CalendarDemo() {
@@ -48,19 +51,49 @@ function CalendarDemo() {
 /* ===================== MAIN ===================== */
 export default function AdminDashboard() {
   const router = useRouter();
+  const supabase = createClient();
 
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
   const [monthlySales, setMonthlySales] = useState<number | null>(null);
   const [platformEarnings, setPlatformEarnings] = useState<number | null>(null);
+  const [recentReports, setRecentReports] = useState<any[]>([]);
+  const [pendingReportsCount, setPendingReportsCount] = useState(0);
 
   const { data, isLoading, error } = useDashboardStats();
 
+  // Fetch wallet balance
+  const fetchWalletBalance = async () => {
+    const res = await fetch("/api/admin/wallet/balance");
+    const data = await res.json();
+    if (res.ok) setWalletBalance(data.balance);
+  };
+
   useEffect(() => {
-    fetch("/api/admin/wallet/balance")
-      .then((r) => r.json())
-      .then((d) => setWalletBalance(d.balance))
-      .catch(() => {});
+    fetchWalletBalance();
   }, []);
+
+  // Real-time subscription for wallet transactions
+  useEffect(() => {
+    const channel = supabase
+      .channel("admin-wallet-changes")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "wallet_transactions",
+          filter: "user_id=eq.00000000-0000-0000-0000-000000000000", // Platform wallet ID
+        },
+        () => {
+          fetchWalletBalance();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [supabase]);
 
   useEffect(() => {
     fetch("/api/admin/wallet/monthly-sales")
@@ -75,6 +108,43 @@ export default function AdminDashboard() {
       .then((d) => setPlatformEarnings(d.totalEarnings))
       .catch(() => {});
   }, []);
+
+  // Fetch recent reports
+  const fetchReports = async () => {
+    const res = await fetch("/api/admin/getReports");
+    if (res.ok) {
+      const data = await res.json();
+      const reports = data.reports || [];
+      setRecentReports(reports.slice(0, 5)); // Get latest 5 reports
+      setPendingReportsCount(reports.filter((r: any) => r.status === "Pending").length);
+    }
+  };
+
+  useEffect(() => {
+    fetchReports();
+  }, []);
+
+  // Real-time subscription for new reports
+  useEffect(() => {
+    const channel = supabase
+      .channel("admin-reports")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "reports",
+        },
+        () => {
+          fetchReports();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [supabase]);
 
   useEffect(() => {
     if (error instanceof Error && error.message === "unauthorized") {
@@ -101,7 +171,10 @@ export default function AdminDashboard() {
           <CalendarDemo />
 
           <div className="lg:col-span-2 grid gap-6 sm:grid-cols-2">
-            <NotificationsCard />
+            <NotificationsCard
+              reports={recentReports}
+              pendingCount={pendingReportsCount}
+            />
             <RecentActivityCard />
           </div>
         </div>
@@ -161,19 +234,85 @@ export default function AdminDashboard() {
 
 /* ===================== EMPTY STATE CARDS ===================== */
 
-function NotificationsCard() {
+function NotificationsCard({
+  reports,
+  pendingCount,
+}: {
+  reports: any[];
+  pendingCount: number;
+}) {
   return (
     <Card className="rounded-2xl border bg-white">
       <CardHeader className="pb-2">
-        <CardTitle className="flex items-center gap-2 text-sm font-medium text-slate-700">
-          <Bell className="h-4 w-4" />
-          Notifications
+        <CardTitle className="flex items-center justify-between text-sm font-medium text-slate-700">
+          <div className="flex items-center gap-2">
+            <Bell className="h-4 w-4" />
+            Report Notifications
+          </div>
+          {pendingCount > 0 && (
+            <span className="flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700">
+              <AlertCircle className="h-3 w-3" />
+              {pendingCount} Pending
+            </span>
+          )}
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex h-[160px] items-center justify-center">
-        <p className="text-sm text-slate-400">
-          No notifications available
-        </p>
+      <CardContent className="max-h-[160px] overflow-y-auto">
+        {reports.length === 0 ? (
+          <div className="flex h-[120px] items-center justify-center">
+            <p className="text-sm text-slate-400">No reports available</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {reports.map((report) => {
+              const reporterName =
+                report.reporter?.individuals?.full_name ||
+                report.reporter?.organizations?.organization_name ||
+                "Unknown User";
+
+              const reportedName =
+                report.reported_user?.individuals?.full_name ||
+                report.reported_user?.organizations?.organization_name ||
+                "Unknown User";
+
+              return (
+                <div
+                  key={report.id}
+                  className="rounded-lg border bg-slate-50 p-2 text-xs hover:bg-slate-100 transition"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1">
+                      <p className="font-medium text-slate-800">
+                        New {report.report_target_type} Report
+                      </p>
+                      <p className="text-slate-600">
+                        {reporterName} reported {reportedName}
+                      </p>
+                      <p className="text-slate-500 mt-0.5">
+                        {new Date(report.created_at).toLocaleString()}
+                      </p>
+                    </div>
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                        report.status === "Pending"
+                          ? "bg-amber-100 text-amber-700"
+                          : "bg-green-100 text-green-700"
+                      }`}
+                    >
+                      {report.status}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+            <Link
+              href="/admin/reports"
+              className="block text-center text-xs font-medium text-blue-600 hover:text-blue-700 pt-2"
+            >
+              View All Reports →
+            </Link>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

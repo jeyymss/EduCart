@@ -53,25 +53,48 @@ export default function WalletPage() {
   const currentData = transactions.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
   // Fetch balance
-  useEffect(() => {
-    const fetchBalance = async () => {
-      const res = await fetch("/api/admin/wallet/balance");
-      const data = await res.json();
-      if (res.ok) setBalance(data.balance);
-    };
-    fetchBalance();
-  }, []);
+  const fetchBalance = async () => {
+    const res = await fetch("/api/admin/wallet/balance");
+    const data = await res.json();
+    if (res.ok) setBalance(data.balance);
+  };
 
   // Fetch platform wallet transactions
+  const fetchTransactions = async () => {
+    const res = await fetch("/api/admin/wallet/transactions");
+    const data = await res.json();
+    if (res.ok) setTransactions(data.transactions);
+    setLoading(false);
+  };
+
   useEffect(() => {
-    const fetchTx = async () => {
-      const res = await fetch("/api/admin/wallet/transactions");
-      const data = await res.json();
-      if (res.ok) setTransactions(data.transactions);
-      setLoading(false);
-    };
-    fetchTx();
+    fetchBalance();
+    fetchTransactions();
   }, []);
+
+  // Real-time subscription for wallet transactions
+  useEffect(() => {
+    const channel = supabase
+      .channel("admin-wallet-realtime")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "platform_wallet_transactions",
+        },
+        () => {
+          // Refetch balance and transactions when any wallet transaction changes
+          fetchBalance();
+          fetchTransactions();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [supabase]);
 
   return (
     <div className="mx-auto max-w-[95%] space-y-8 p-6">
