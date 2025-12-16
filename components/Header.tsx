@@ -138,7 +138,7 @@ useEffect(() => {
   const navItems = [
     { label: "Home", href: "/home" },
     { label: "Browse", href: "/browse" },
-    { label: "Businesses", href: "/businesses" },
+    /* { label: "Businesses", href: "/businesses" }, */
     { label: "Organizations", href: "/organizations" },
   ];
 
