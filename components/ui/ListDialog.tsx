@@ -12,39 +12,22 @@ interface ListDialogProps {
 export function ListDialog({ open, onOpenChange, children }: ListDialogProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
 
-  // Close on Escape key
+  // Prevent body scroll when dialog is open
   useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && open) {
-        onOpenChange(false);
-      }
-    };
-
     if (open) {
-      document.addEventListener("keydown", handleEscape);
-      // Prevent body scroll when dialog is open
       document.body.style.overflow = "hidden";
     }
 
     return () => {
-      document.removeEventListener("keydown", handleEscape);
       document.body.style.overflow = "unset";
     };
-  }, [open, onOpenChange]);
-
-  // Close on backdrop click
-  const handleBackdropClick = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) {
-      onOpenChange(false);
-    }
-  };
+  }, [open]);
 
   if (!open) return null;
 
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm animate-in fade-in duration-200"
-      onClick={handleBackdropClick}
     >
       <div
         ref={dialogRef}
@@ -85,6 +68,7 @@ export function ListDialog({ open, onOpenChange, children }: ListDialogProps) {
             transition-all
             duration-200
             hover:scale-110
+            hover: cursor-pointer
           "
           aria-label="Close dialog"
         >

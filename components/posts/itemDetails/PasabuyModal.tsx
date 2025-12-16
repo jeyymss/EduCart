@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import MessageSellerButton from "@/components/messages/MessageSellerBtn";
 import { getRelativeTime } from "@/utils/getRelativeTime";
+import { usePasabuyDetails } from "@/hooks/queries/usePasabuyDetailts";
 
 import type { PasaBuyPost } from "@/hooks/queries/displayItems";
 
@@ -21,6 +22,8 @@ interface PasabuyModalProps {
 }
 
 export default function PasabuyModal({ post, onClose }: PasabuyModalProps) {
+  const { data, isLoading } = usePasabuyDetails(post?.post_id ?? null);
+
   if (!post) return null;
 
   return (
@@ -41,57 +44,89 @@ export default function PasabuyModal({ post, onClose }: PasabuyModalProps) {
           </DialogTitle>
         </DialogHeader>
 
-        {/* BODY */}
-        <div className="mt-4 space-y-3 text-sm text-gray-700">
-          <p>
-            <span className="font-semibold text-[#102E4A]">Description:</span>{" "}
-            {post.item_description}
-          </p>
+        {isLoading ? (
+          <p className="text-sm text-gray-500">Loading details…</p>
+        ) : (
+          <>
+            {/* BODY */}
+            <div className="mt-4 space-y-3 text-sm text-gray-700">
+                <p>
+                  <span className="font-semibold text-[#102E4A]">
+                    Description:
+                  </span>{" "}
+                  {post.item_description}
+                </p>
 
-          <p>
-            <span className="font-semibold text-[#102E4A]">Service Fee:</span>{" "}
-            ₱{post.item_service_fee}
-          </p>
+                <p>
+                  <span className="font-semibold text-[#102E4A]">
+                    Service Fee:
+                  </span>{" "}
+                  ₱{post.item_service_fee}
+                </p>
 
-          <p>
-            <span className="font-semibold text-[#102E4A]">Name:</span>{" "}
-            {post.full_name}
-          </p>
+                {/* ✅ NEW: PASABUY LOCATION */}
+                {data?.item_pasabuy_location && (
+                  <p>
+                    <span className="font-semibold text-[#102E4A]">
+                      Shopping Location:
+                    </span>{" "}
+                    {data.item_pasabuy_location}
+                  </p>
+                )}
 
-          <p>
-            <span className="font-semibold text-[#102E4A]">University:</span>{" "}
-            {post.university_abbreviation}
-          </p>
+                <p>
+                  <span className="font-semibold text-[#102E4A]">
+                    Posted:
+                  </span>{" "}
+                  {getRelativeTime(post.created_at)}
+                </p>
+            </div>
 
-          <p>
-            <span className="font-semibold text-[#102E4A]">Role:</span>{" "}
-            {post.role}
-          </p>
 
-          <p>
-            <span className="font-semibold text-[#102E4A]">Posted:</span>{" "}
-            {getRelativeTime(post.created_at)}
-          </p>
-        </div>
+            {/* ITEMS LIST */}
+            <div className="mt-5">
+              <h3 className="font-semibold text-[#102E4A] mb-2">
+                Items Available
+              </h3>
+
+              {data?.pasabuy_items?.length ? (
+                <div className="space-y-2">
+                  {data.pasabuy_items.map((item) => (
+                    <div
+                      key={item.id}
+                      className="flex justify-between rounded-lg border p-2 text-sm"
+                    >
+                      <span>{item.product_name}</span>
+                      <span className="font-semibold">
+                        ₱{item.price.toFixed(2)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-gray-500">
+                  No items listed.
+                </p>
+              )}
+            </div>
+          </>
+        )}
 
         {/* FOOTER */}
         <DialogFooter className="flex flex-col sm:flex-row sm:justify-end gap-3 pt-4">
-
-          {/* VIEW LISTER */}
           <Link href={`/${post.post_user_id}`} className="w-full sm:w-auto">
             <Button
               variant="outline"
-              className="w-full py-2 font-medium rounded-lg border-[#102E4A] text-[#102E4A] hover:bg-[#102E4A] hover:text-white transition"
+              className="w-full py-2 font-medium rounded-lg"
             >
               View Lister
             </Button>
           </Link>
 
-          {/* MESSAGE SELLER */}
           <MessageSellerButton
             postId={post.post_id}
             sellerId={post.post_user_id}
-            className="w-full sm:w-auto bg-[#F3D58D] hover:bg-[#e8c880] text-black font-medium py-2 rounded-lg"
+            className="w-full sm:w-auto bg-[#F3D58D]"
           />
         </DialogFooter>
 

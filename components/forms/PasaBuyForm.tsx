@@ -6,8 +6,8 @@ import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { PasaBuySubmit } from "@/app/api/formSubmit/pasabuy/route";
 import { Plus, Trash2, Info, ShoppingCart, MapPin, CalendarIcon } from "lucide-react";
-import AddressPickerInput from "../location/AddressPickerInput";
 import { Calendar } from "../ui/calendar";
+import AddressPickerWithMap from "../location/AddressPickerWithMap";
 import {
   Popover,
   PopoverTrigger,
@@ -41,28 +41,20 @@ export function PasaBuyForm({ selectedType }: FormProps) {
   const [location, setLocation] = useState("");
   const [cutoffDate, setCutoffDate] = useState<Date>();
 
+  // Pickup Location state
+  const [pickupLat, setPickupLat] = useState<number | null>(null);
+  const [pickupLng, setPickupLng] = useState<number | null>(null);
+  const [pickupAddress, setPickupAddress] = useState<string>("");
+
   useEffect(() => {
-    const form = formRef.current;
+    const isValid =
+      location !== "" &&
+      cutoffDate !== undefined &&
+      pickupAddress !== "";
 
-    const handleValidation = () => {
-      const formValid = form?.checkValidity() ?? false;
-      const isValid = formValid && location !== "" && cutoffDate !== undefined;
+    setIsFormValid(isValid);
+  }, [location, cutoffDate, pickupAddress]);
 
-      setIsFormValid(isValid);
-    };
-
-    if (form) {
-      form.addEventListener("input", handleValidation);
-    }
-
-    handleValidation();
-
-    return () => {
-      if (form) {
-        form.removeEventListener("input", handleValidation);
-      }
-    };
-  }, [location, cutoffDate]);
 
   const addItem = () => {
     if (!newItemName.trim() || !newItemPrice.trim()) {
@@ -93,10 +85,18 @@ export function PasaBuyForm({ selectedType }: FormProps) {
     e.preventDefault();
     setError(null);
 
+    if (items.length === 0) {
+      setError("Please add at least one item.");
+      return;
+    }
+
     try {
       setLoading(true);
 
       const formData = new FormData(e.currentTarget);
+
+      // 🔥 THIS IS THE MISSING PIECE
+      formData.append("items", JSON.stringify(items));
 
       const output = await PasaBuySubmit(formData, selectedType);
 
@@ -110,8 +110,10 @@ export function PasaBuyForm({ selectedType }: FormProps) {
     } catch (err) {
       console.error(err);
       setError("Submit Failed");
+      setLoading(false);
     }
   };
+
 
   return (
     <div className="w-full">
@@ -219,41 +221,31 @@ export function PasaBuyForm({ selectedType }: FormProps) {
 
           {/* Items List Display */}
           {items.length > 0 && (
-            <div className="space-y-3">
-              <div className="max-h-60 overflow-y-auto space-y-2">
-                {items.map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex items-center justify-between bg-white border border-gray-200 rounded-lg p-3 hover:border-amber-300 transition"
-                  >
-                    <div className="flex-1">
-                      <p className="font-medium text-sm text-gray-800">
-                        {item.productName}
-                      </p>
-                      <p className="text-sm text-amber-600 font-semibold">
-                        ₱{item.price.toFixed(2)}
-                      </p>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeItem(item.id)}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+            <div className="max-h-60 overflow-y-auto space-y-2">
+              {items.map((item) => (
+                <div
+                  key={item.id}
+                  className="flex items-center justify-between bg-white border border-gray-200 rounded-lg p-3 hover:border-amber-300 transition"
+                >
+                  <div className="flex-1">
+                    <p className="font-medium text-sm text-gray-800">
+                      {item.productName}
+                    </p>
+                    <p className="text-sm text-amber-600 font-semibold">
+                      ₱{item.price.toFixed(2)}
+                    </p>
                   </div>
-                ))}
-              </div>
-              <div className="pt-3 border-t border-gray-200 bg-gray-50 rounded-lg p-3">
-                <p className="text-sm font-semibold text-gray-800">
-                  Total Items Cost: ₱{items.reduce((sum, item) => sum + item.price, 0).toFixed(2)}
-                </p>
-                <p className="text-xs text-gray-500 mt-1">
-                  {items.length} item{items.length !== 1 ? "s" : ""} available • Service fee applies per order
-                </p>
-              </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeItem(item.id)}
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              ))}
             </div>
           )}
         </div>
@@ -274,23 +266,15 @@ export function PasaBuyForm({ selectedType }: FormProps) {
               <Label className="text-sm font-medium text-gray-700">
                 Where will you shop? <span className="text-red-600">*</span>
               </Label>
-              <div className="mt-1.5">
-                <AddressPickerInput
-                  placeholder="Search location..."
-                  onSelect={(address) => setLocation(address)}
-                />
-              </div>
               <Input
-                type="hidden"
+                type="text"
                 name="pasabuyLocation"
+                placeholder="e.g., SM City Manila, Puregold Cubao"
                 value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                className="mt-1.5 border-gray-300 focus:border-amber-400 focus:ring-amber-400"
                 required
               />
-              {location && (
-                <div className="mt-2 p-2 bg-gray-50 rounded-md border border-gray-200">
-                  <p className="text-xs text-gray-600">Selected: {location}</p>
-                </div>
-              )}
               <p className="text-xs text-gray-500 mt-1">Store or location where you&apos;ll purchase the items</p>
             </div>
 
@@ -299,6 +283,7 @@ export function PasaBuyForm({ selectedType }: FormProps) {
               <Label className="text-sm font-medium text-gray-700">
                 Shopping Date <span className="text-red-600">*</span>
               </Label>
+
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
@@ -311,6 +296,7 @@ export function PasaBuyForm({ selectedType }: FormProps) {
                     {cutoffDate ? format(cutoffDate, "PPP") : <span>Pick a date</span>}
                   </Button>
                 </PopoverTrigger>
+
                 <PopoverContent className="w-auto p-0" align="start">
                   <Calendar
                     mode="single"
@@ -320,12 +306,15 @@ export function PasaBuyForm({ selectedType }: FormProps) {
                   />
                 </PopoverContent>
               </Popover>
+
+              {/* ✅ IMPORTANT CHANGE HERE */}
               <Input
                 type="hidden"
                 name="pasabuyCutOffDate"
-                value={cutoffDate ? format(cutoffDate, "PPP") : ""}
+                value={cutoffDate ? cutoffDate.toISOString() : ""}
                 required
               />
+
               <p className="text-xs text-gray-500 mt-2">
                 When will you go shopping? Buyers must order before this date.
               </p>
@@ -350,6 +339,50 @@ export function PasaBuyForm({ selectedType }: FormProps) {
           <p className="text-xs text-gray-500">
             Help buyers understand how to request items and receive their orders
           </p>
+        </div>
+
+        {/* Divider */}
+        <div className="border-t border-gray-200"></div>
+
+        {/* Pickup Location Section */}
+        <div className="space-y-4">
+          <div className="flex items-start gap-2">
+            <div className="flex-1">
+              <h3 className="text-base font-semibold text-gray-700 flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-amber-500" />
+                Pickup Location
+              </h3>
+              <p className="text-xs text-gray-600 mt-1">Where buyers can pick up their orders (also used to calculate delivery fees)</p>
+            </div>
+          </div>
+
+          <div>
+            <Label className="text-sm font-medium text-gray-700">
+              Set Location <span className="text-red-600">*</span>
+            </Label>
+            <div className="mt-1.5">
+              <AddressPickerWithMap
+                onSelect={(lat, lng, address) => {
+                  setPickupLat(lat);
+                  setPickupLng(lng);
+                  setPickupAddress(address);
+                }}
+              />
+            </div>
+
+            <div className="mt-3">
+              <Input
+                readOnly
+                value={pickupAddress}
+                placeholder="Selected address will appear here"
+                className="bg-gray-50 border-gray-300 text-gray-700"
+              />
+            </div>
+
+            <input type="hidden" name="seller_lat" value={pickupLat ?? ""} />
+            <input type="hidden" name="seller_lng" value={pickupLng ?? ""} />
+            <input type="hidden" name="seller_address" value={pickupAddress} />
+          </div>
         </div>
 
         {/* Divider */}

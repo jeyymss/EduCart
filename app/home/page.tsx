@@ -406,12 +406,14 @@ export default function HomePage() {
                         className="min-w-[280px] snap-start rounded-2xl bg-white text-left"
                       >
                         <PasabuyCard
-                          id={post.post_id}
-                          title={post.item_title}
-                          description={post.item_description}
-                          serviceFee={post.item_service_fee}
-                          created_at={post.created_at}
-                        />
+                            key={post.post_id}
+                            id={post.post_id}
+                            title={post.item_title}
+                            description={post.item_description}
+                            serviceFee={post.item_service_fee}
+                            created_at={post.created_at}
+                            items={post.pasabuy_items}
+                          />
                       </button>
                     ))}
                   </div>
@@ -426,12 +428,14 @@ export default function HomePage() {
                         className="rounded-2xl bg-white text-left"
                       >
                         <PasabuyCard
-                          id={post.post_id}
-                          title={post.item_title}
-                          description={post.item_description}
-                          serviceFee={post.item_service_fee}
-                          created_at={post.created_at}
-                        />
+                            key={post.post_id}
+                            id={post.post_id}
+                            title={post.item_title}
+                            description={post.item_description}
+                            serviceFee={post.item_service_fee}
+                            created_at={post.created_at}
+                            items={post.pasabuy_items}
+                          />
                       </button>
                     ))}
                   </div>

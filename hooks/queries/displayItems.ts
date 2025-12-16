@@ -33,9 +33,17 @@ type BasePost = {
 
 export type EmergencyPost = BasePost;
 
+export type PasabuyItem = {
+  id: string;
+  product_name: string;
+  price: number;
+};
+
 export type PasaBuyPost = BasePost & {
   item_service_fee: number;
+  pasabuy_items: PasabuyItem[];
 };
+
 
 export type OrganizationPost = {
   post_id: string;

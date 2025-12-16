@@ -512,7 +512,7 @@ useEffect(() => {
 
         <ListDialogContent>
           <Select onValueChange={setSelectedType} value={selectedType}>
-            <SelectTrigger className="w-full h-12">
+            <SelectTrigger className="w-full h-12 hover:cursor-pointer">
               <SelectValue placeholder="Select Listing Type" />
             </SelectTrigger>
             <SelectContent>
