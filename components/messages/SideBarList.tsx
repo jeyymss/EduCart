@@ -141,7 +141,7 @@ export default function SidebarList({
                 ${isActive ? "bg-blue-100 border-l-4 border-blue-500 shadow-sm" : "hover:bg-slate-100"}
                 ${row.has_unread && !isActive ? "bg-blue-50 border-l-4 border-blue-300" : ""}`}
             >
-              <Avatar url={row.other_user_avatar_url} />
+              <Avatar url={row.other_user_avatar_url || "/avatarplaceholder.png"} />
 
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between">

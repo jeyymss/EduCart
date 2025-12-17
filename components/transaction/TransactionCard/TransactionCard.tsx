@@ -10,12 +10,14 @@ import { computeRentActionLabel } from "../actions/rentAction";
 import { computeTradeActionLabel } from "../actions/tradeAction";
 import { computeEmergencyActionLabel } from "../actions/emergencyAction";
 import { computeGiveawayActionLabel } from "../actions/giveawayAction";
+import { computePasaBuyActionLabel } from "../actions/pasabuyAction";
 import SaleActions from "../update-status/SaleActions";
 import RentActions from "../update-status/RentActions";
 import EmergencyActions from "../update-status/EmergencyActions";
 import LeaveReviewDialog from "../LeaveReviewDialog";
 import TradeActions from "../update-status/TradeActions";
 import GiveawayActions from "../update-status/GiveawayActions";
+import PasaBuyActions from "../update-status/PasaBuyActions";
 
 export type TxMethod = "Meetup" | "Delivery";
 export type TxSide = "Purchases" | "Sales";
@@ -81,92 +83,22 @@ export default function TransactionCard({
     if (clean === "trade") return computeTradeActionLabel(type, currentStatus, paymentMethod ?? undefined);
     if (clean === "emergency lending") return computeEmergencyActionLabel(type, currentStatus as any);
     if (clean === "giveaway") return computeGiveawayActionLabel(type, currentStatus as any, fulfillment ?? undefined);
+    if (clean === "pasabuy") return computePasaBuyActionLabel(type, currentStatus, paymentMethod ?? undefined, fulfillment ?? undefined);
 
     return "";
   }
 
   const action = resolveActionLabel();
 
-  // Handler to check if review should be shown after action
+  // Handler to call parent's onPrimary callback
   const handlePrimaryAction = React.useCallback(async (txId: string) => {
-    console.log("[TransactionCard] Action completed, checking if review should show...");
-    console.log("[TransactionCard] Type:", type, "Transaction ID:", transactionId);
+    console.log("[TransactionCard] Action completed");
 
     // Call the parent's onPrimary if it exists
     onPrimary?.(txId);
 
-    // Check immediately if this is a buyer view
-    const isBuyer = type === "Purchases";
-
-    if (!isBuyer) {
-      console.log("[TransactionCard] User is seller, not showing review dialog");
-      return;
-    }
-
-    console.log("[TransactionCard] User is buyer, will check for completion status...");
-
-    // Poll for status update with multiple attempts
-    let attempts = 0;
-    const maxAttempts = 5;
-    const pollInterval = 500; // Check every 500ms
-
-    const checkCompletion = async () => {
-      attempts++;
-      console.log(`[TransactionCard] Attempt ${attempts}/${maxAttempts} - Checking transaction status...`);
-
-      // Re-fetch the transaction to get the latest status
-      const { data: txData, error: txError } = await supabase
-        .from("transactions")
-        .select("status, buyer_id, seller_id")
-        .eq("id", transactionId)
-        .single();
-
-      console.log("[TransactionCard] Transaction status:", txData?.status);
-
-      if (txError || !txData) {
-        console.error("[TransactionCard] Error fetching transaction:", txError);
-        if (attempts < maxAttempts) {
-          setTimeout(checkCompletion, pollInterval);
-        }
-        return;
-      }
-
-      // Check if status is Completed
-      if (txData.status !== "Completed") {
-        console.log("[TransactionCard] Status not yet Completed:", txData.status);
-        if (attempts < maxAttempts) {
-          // Keep polling
-          setTimeout(checkCompletion, pollInterval);
-        }
-        return;
-      }
-
-      console.log("[TransactionCard] ✅ Transaction is Completed! Checking for existing review...");
-
-      // Check if review already exists
-      const { data: reviewData } = await supabase
-        .from("reviews")
-        .select("id")
-        .eq("transaction_id", transactionId)
-        .eq("reviewer_id", txData.buyer_id)
-        .maybeSingle();
-
-      console.log("[TransactionCard] Existing review:", reviewData);
-
-      // If no review exists, show dialog
-      if (!reviewData) {
-        console.log("[TransactionCard] 🎉 Showing review dialog!");
-        setOpenReview(true);
-        setHasReview(false); // Ensure hasReview is false
-      } else {
-        console.log("[TransactionCard] Review already exists, not showing dialog");
-        setHasReview(true);
-      }
-    };
-
-    // Start polling after a small initial delay
-    setTimeout(checkCompletion, 300);
-  }, [onPrimary, supabase, transactionId, type]);
+    // Review dialog has been disabled - no automatic popup after completion
+  }, [onPrimary]);
 
   // Get current user ID
   useEffect(() => {
@@ -233,46 +165,7 @@ export default function TransactionCard({
 
           if (newData.status) {
             setCurrentStatus(newData.status);
-
-            // Check if transaction just became completed
-            if (
-              newData.status === "Completed" &&
-              oldData.status !== "Completed"
-            ) {
-              console.log("[Real-time] ✅ Transaction completed! Type:", type);
-
-              // Only show review dialog if user is the buyer (Purchases view)
-              const isBuyer = type === "Purchases";
-
-              if (!isBuyer) {
-                console.log("[Real-time] User is seller, not showing review dialog");
-                return;
-              }
-
-              console.log("[Real-time] User is buyer, will wait for state to settle...");
-
-              // Wait for realtime update to fully propagate and state to settle
-              setTimeout(async () => {
-                // Re-check if review exists before showing dialog
-                const { data: reviewData } = await supabase
-                  .from("reviews")
-                  .select("id")
-                  .eq("transaction_id", transactionId)
-                  .eq("reviewer_id", buyerId || newData.buyer_id)
-                  .maybeSingle();
-
-                console.log("[Real-time] Existing review after delay:", reviewData);
-
-                if (!reviewData) {
-                  console.log("[Real-time] 🎉 No review exists, showing dialog now!");
-                  setHasReview(false);
-                  setOpenReview(true);
-                } else {
-                  console.log("[Real-time] Review already exists");
-                  setHasReview(true);
-                }
-              }, 1000); // 1 second delay to let realtime updates fully settle
-            }
+            // Review dialog has been disabled - no automatic popup on completion
           }
           if (newData.payment_method) {
             setPaymentMethod(newData.payment_method);
@@ -367,6 +260,16 @@ export default function TransactionCard({
                 <GiveawayActions
                   action={action}
                   transactionId={transactionId}
+                  onPrimary={handlePrimaryAction}
+                />
+              )}
+
+              {/* POST TYPE: PASABUY */}
+              {postType === "PasaBuy" && (
+                <PasaBuyActions
+                  action={action}
+                  transactionId={transactionId}
+                  type={type}
                   onPrimary={handlePrimaryAction}
                 />
               )}

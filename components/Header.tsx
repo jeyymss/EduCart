@@ -138,7 +138,7 @@ useEffect(() => {
   const navItems = [
     { label: "Home", href: "/home" },
     { label: "Browse", href: "/browse" },
-    { label: "Businesses", href: "/businesses" },
+    /* { label: "Businesses", href: "/businesses" }, */
     { label: "Organizations", href: "/organizations" },
   ];
 
@@ -246,13 +246,21 @@ useEffect(() => {
                     List
                   </Button>
 
-                  {/* Credits (kept) */}
+                  {/* Credits */}
                   <div className="flex items-center gap-1" style={{ color: primary }}>
-                    <Link href={"/credits/individual"} className="hover:opacity-80">
+                    <Link
+                      href={
+                        user?.role === "Organization"
+                          ? "/credits/organization"
+                          : "/credits/individual"
+                      }
+                      className="hover:opacity-80"
+                    >
                       <BadgeCent className="w-4 h-4" />
                     </Link>
                     {user?.post_credits_balance}
                   </div>
+
 
                   {/* Messages + Wallet + Notifications + Profile */}
                   {/* MESSAGE BUTTON */}

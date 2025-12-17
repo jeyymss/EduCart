@@ -17,20 +17,19 @@ import { toast } from "sonner";
 import PaymentDialog from "@/components/payments/PaymentDialog";
 import { createClient } from "@/utils/supabase/client";
 
-type TradeActionsProps = {
+type PasaBuyActionsProps = {
   action: string;
   transactionId: string;
   type: "Purchases" | "Sales";
   onPrimary?: (id: string) => void;
-  paymentMethod?: string;
 };
 
-export default function TradeActions({
+export default function PasaBuyActions({
   action,
   transactionId,
   type,
   onPrimary,
-}: TradeActionsProps) {
+}: PasaBuyActionsProps) {
   const [open, setOpen] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
@@ -39,19 +38,19 @@ export default function TradeActions({
   const [isPaying, setIsPaying] = useState(false);
   const [txData, setTxData] = useState<any>(null);
   const [totalPayment, setTotalPayment] = useState<number | null>(null);
+  const [deliveryFee, setDeliveryFee] = useState<number | null>(null);
+  const [distanceKm, setDistanceKm] = useState<number | null>(null);
   const [conversationId, setConversationId] = useState<string | null>(null);
+  const [pasabuyData, setPasabuyData] = useState<any>(null);
 
   const supabase = createClient();
 
-  // ================================
-  // STATUS UPDATE REQUEST
-  // ================================
-  const updateTradeStatus = async (newStatus: string, successMsg: string) => {
+  const updatePasaBuyStatus = async (newStatus: string, successMsg: string) => {
     try {
       setIsUpdating(true);
       const loading = toast.loading("Updating transaction...");
 
-      const res = await fetch("/api/status-update/trade", {
+      const res = await fetch("/api/status-update/pasabuy", {
         method: "POST",
         body: JSON.stringify({ transactionId, newStatus }),
       });
@@ -62,7 +61,6 @@ export default function TradeActions({
 
       toast.success(successMsg);
       onPrimary?.(transactionId);
-
     } catch (e) {
       toast.error("Failed to update transaction.");
     } finally {
@@ -71,15 +69,12 @@ export default function TradeActions({
     }
   };
 
-  // ================================
-  // ACCEPT/REJECT HANDLERS
-  // ================================
   const handleAccept = () => {
-    updateTradeStatus("Accepted", "Order accepted.");
+    updatePasaBuyStatus("Accepted", "Order accepted.");
   };
 
   const handleReject = () => {
-    updateTradeStatus("Cancelled", "Order rejected.");
+    updatePasaBuyStatus("Cancelled", "Order rejected.");
   };
 
   const handlePayNowClick = async () => {
@@ -109,8 +104,29 @@ export default function TradeActions({
     // Store conversation ID
     setConversationId(transaction.conversation_id);
 
-    // For Trade, totalPayment is the cash_added amount
-    setTotalPayment(Number(transaction.cash_added ?? 0));
+    // Parse pasabuy data from offered_item
+    const pasabuyItems = transaction.offered_item
+      ? (() => {
+          try {
+            return JSON.parse(transaction.offered_item);
+          } catch {
+            return null;
+          }
+        })()
+      : null;
+    setPasabuyData(pasabuyItems);
+
+    // For PasaBuy, total_price already contains the total (items + service fee + delivery fee)
+    setTotalPayment(Number(transaction.total_price || 0));
+
+    // Set delivery fee and distance if it's a delivery
+    if (transaction.fulfillment_method === "Delivery" && transaction.delivery_fee !== null) {
+      setDeliveryFee(Number(transaction.delivery_fee));
+      setDistanceKm(Number(transaction.delivery_distance_km ?? 0));
+    } else {
+      setDeliveryFee(null);
+      setDistanceKm(null);
+    }
 
     setTxData(transaction);
     setShowPaymentDialog(true);
@@ -129,6 +145,7 @@ export default function TradeActions({
         body: JSON.stringify({
           transactionId,
           amount: totalPayment,
+          deliveryFee
         }),
       });
 
@@ -185,38 +202,25 @@ export default function TradeActions({
     }
   };
 
-  // ================================
-  // ACTION HANDLER LOGIC
-  // ================================
   const handleAction = () => {
-    // Buyer (Cash on Hand or Online Payment) – Item Received
+    if (action === "Order Picked Up")
+      return updatePasaBuyStatus("PickedUp", "Order marked as picked up.");
+
+    if (action === "Order Received")
+      return updatePasaBuyStatus("Completed", "Transaction completed.");
+
     if (action === "Item Received")
-      return updateTradeStatus("Received", "Item marked as received.");
-
-    // Buyer – Confirm Exchange (final step after Pickup)
-    if (action === "Confirm Exchange")
-      return updateTradeStatus("Completed", "Trade completed.");
-
-    // Seller – Confirm Item Received
-    if (action === "Confirm Item Received")
-      return updateTradeStatus("Completed", "Trade completed.");
-
-    // Seller – Mark as Exchanged
-    if (action === "Mark as Exchanged")
-      return updateTradeStatus("PickedUp", "Exchange marked as completed.");
+      return updatePasaBuyStatus("Completed", "Transaction completed.");
   };
 
-  // ================================
-  // DISABLED STATES
-  // ================================
   const disabledStates = [
-    "Waiting for Buyer",
     "Waiting for Seller",
-    "Waiting for Confirmation",
     "Waiting for Payment",
+    "Waiting for Confirmation",
     "On Hold",
     "Completed",
     "Cancelled",
+    "Waiting for Delivery",
   ];
 
   // Handle "Action" button for sellers
@@ -276,12 +280,15 @@ export default function TradeActions({
           <PaymentDialog
             open={showPaymentDialog}
             onOpenChange={setShowPaymentDialog}
-            postType="Trade"
+            postType="PasaBuy"
             itemTitle={txData.posts?.title}
-            txnPrice={txData.posts?.item_price}
-            distanceKm={null}
-            deliveryFee={null}
-            cash_added={txData.cash_added}
+            txnPrice={txData.total_price}
+            distanceKm={distanceKm}
+            deliveryFee={deliveryFee}
+            pasabuyItems={pasabuyData?.items}
+            itemsTotal={pasabuyData?.itemsTotal}
+            serviceFee={pasabuyData?.serviceFee}
+            cash_added={null}
             totalPayment={totalPayment}
             fulfillmentMethod={txData.fulfillment_method}
             paymentMethod={paymentMethod}
@@ -326,17 +333,17 @@ export default function TradeActions({
         <AlertDialogHeader>
           <AlertDialogTitle>{action}</AlertDialogTitle>
           <AlertDialogDescription>
+            {action === "Accept Order" &&
+              "Confirm that you want to accept this order."}
+
             {action === "Item Received" &&
-              "Confirm that you have received the item from the seller."}
+              "Confirm that you have received the item. This will complete the transaction."}
 
-            {action === "Confirm Exchange" &&
-              "Confirm that the exchange has been completed."}
+            {action === "Order Picked Up" &&
+              "Confirm that the buyer or courier picked up the order."}
 
-            {action === "Confirm Item Received" &&
-              "Confirm that you have received the buyer's item."}
-
-            {action === "Mark as Exchanged" &&
-              "Mark the trade as exchanged. This indicates both parties have exchanged items."}
+            {action === "Order Received" &&
+              "Confirm that you have received the item. This will complete the transaction."}
           </AlertDialogDescription>
         </AlertDialogHeader>
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
 
 type LiveTransactionCard = {
   txn: any;
@@ -35,6 +36,7 @@ export default function LiveTransactionCard({
   currentUserRole,
   handleUpdateTransaction,
 }: LiveTransactionCard) {
+  const router = useRouter();
   return (
     <div className="border border-gray-200 rounded-2xl p-6 bg-gradient-to-br from-white to-gray-50 shadow-lg hover:shadow-xl transition-all max-w-md">
       {/* HEADER */}
@@ -127,9 +129,10 @@ export default function LiveTransactionCard({
           {post_type === "Giveaway" && currentUserRole === "buyer" ? (
             <>
               <Button
-                onClick={() =>
-                  handleUpdateTransaction(txn.id, "Accepted")
-                }
+                onClick={async () => {
+                  await handleUpdateTransaction(txn.id, "Accepted");
+                  router.push("/profile#transactions");
+                }}
                 className="bg-gradient-to-r from-green-600 to-green-700 text-white hover:from-green-700 hover:to-green-800 w-full rounded-lg font-semibold shadow-md hover:shadow-lg transition-all"
               >
                 ✓ Accept Transaction
@@ -149,9 +152,10 @@ export default function LiveTransactionCard({
               {post_type !== "Giveaway" && currentUserRole === "seller" ? (
               <>
                 <Button
-                  onClick={() =>
-                    handleUpdateTransaction(txn.id, "Accepted")
-                  }
+                  onClick={async () => {
+                    await handleUpdateTransaction(txn.id, "Accepted");
+                    router.push("/profile#transactions");
+                  }}
                   className="bg-gradient-to-r from-green-600 to-green-700 text-white hover:from-green-700 hover:to-green-800 w-full rounded-lg font-semibold shadow-md hover:shadow-lg transition-all"
                 >
                   ✓ Accept Transaction

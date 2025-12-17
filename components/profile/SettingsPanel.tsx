@@ -17,8 +17,8 @@ export function SettingsPanel() {
   // credits link based on role
   const role = user?.role;
   const creditsLink =
-    role === "Business" || role === "organization"
-      ? "/credits/bo"
+    role === "Organization"
+      ? "/credits/organization"
       : "/credits/individual";
 
   return (
@@ -27,14 +27,6 @@ export function SettingsPanel() {
       <section className="space-y-3">
         <h3 className="font-semibold text-lg">Account</h3>
         <ul className="space-y-3 text-sm text-muted-foreground">
-          <li>
-            <a href="#" className="font-medium hover:text-primary">
-              Link GCash Account →
-            </a>
-            <p className="text-xs">
-              Connect your GCash wallet for seamless payments and transactions.
-            </p>
-          </li>
           <li>
             <Link
               href={creditsLink}
@@ -98,11 +90,10 @@ export function SettingsPanel() {
         <h3 className="font-semibold text-lg">Notifications</h3>
         <div className="flex flex-col space-y-2 text-sm">
           {[
-            "Messages",
+            "Transaction Reminders",
             "Comments",
             "Reviews Received",
-            "Reports",
-            "Transaction Reminders",
+            "Reports"
           ].map((label) => (
             <div key={label} className="flex items-center justify-between">
               <span>{label}</span>

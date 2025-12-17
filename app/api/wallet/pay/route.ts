@@ -8,11 +8,8 @@ export async function POST(req: Request) {
     const supabase = await createClient();
     const body = await req.json();
 
-    const { transactionId, amount, deliveryFee, rentDays } = body;
+    const { transactionId, amount, deliveryFee } = body;
 
-    // -----------------------------
-    // Validate required parameters
-    // -----------------------------
     if (!transactionId || amount == null) {
       return NextResponse.json(
         { error: "Missing parameters" },
@@ -20,9 +17,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // -----------------------------
-    // Get logged-in user
-    // -----------------------------
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -34,12 +28,9 @@ export async function POST(req: Request) {
       );
     }
 
-    // -----------------------------
-    // Fetch transaction (ensure user is buyer)
-    // -----------------------------
     const { data: txn, error: txnFetchErr } = await supabase
       .from("transactions")
-      .select("buyer_id, fulfillment_method, price, cash_added")
+      .select("buyer_id")
       .eq("id", transactionId)
       .single();
 
@@ -57,9 +48,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // -----------------------------
-    // Fetch wallet balance
-    // -----------------------------
     const { data: wallet, error: walletError } = await supabase
       .from("wallets")
       .select("current_balance")
@@ -80,28 +68,15 @@ export async function POST(req: Request) {
       );
     }
 
-    // -----------------------------
-    // Prepare transaction update
-    // -----------------------------
     const updatePayload: Record<string, any> = {
       status: "Paid",
       payment_channel: "Wallet",
     };
 
-    // Set delivery fee ONLY when provided (Sale + Delivery)
     if (deliveryFee != null) {
       updatePayload.delivery_fee = deliveryFee;
     }
 
-    // Optional: store rentDays when provided
-    if (rentDays != null) {
-      updatePayload.rent_days_paid = rentDays;
-    }
-
-    // -----------------------------
-    // Update transaction
-    // (trigger will handle escrow & wallet deduction)
-    // -----------------------------
     const { error: updateErr } = await supabase
       .from("transactions")
       .update(updatePayload)
@@ -115,9 +90,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // -----------------------------
-    // SUCCESS
-    // -----------------------------
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error("wallet/pay server error:", err);

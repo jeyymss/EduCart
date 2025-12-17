@@ -33,9 +33,17 @@ type TransactionDetailsModalProps = {
     price: number;
     total: number;
     delivery_fee?: number | null;
+    service_fee?: number | null;
+    items_total?: number | null;
+    cash_added?: number | null;
+    rent_days?: number | null;
+    rent_start_date?: string | null;
+    rent_end_date?: string | null;
+    pasabuy_items?: any[] | null;
     payment_method: string;
     method: string;
     type: string;
+    post_type?: string;
     status: string;
     created_at?: string;
     post_id: string;
@@ -88,6 +96,20 @@ export default function TransactionDetailsModal({
       : data.status?.toLowerCase() === "pending"
       ? "bg-amber-50 text-amber-700 ring-1 ring-amber-200"
       : "bg-slate-100 text-slate-700 ring-1 ring-slate-200";
+
+  // Calculate rent days if not provided
+  const rentDays =
+    data.post_type === "Rent" && data.rent_start_date && data.rent_end_date
+      ? data.rent_days ||
+        Math.max(
+          1,
+          Math.ceil(
+            (new Date(data.rent_end_date).getTime() -
+              new Date(data.rent_start_date).getTime()) /
+              (1000 * 60 * 60 * 24)
+          )
+        )
+      : data.rent_days;
 
   const reportSubmit = async () => {
     if (!selectedReportReason) {
@@ -202,54 +224,202 @@ export default function TransactionDetailsModal({
             />
           </div>
 
-          {/* RECEIPT-STYLE BREAKDOWN */}
-          <div className="rounded-2xl border-2 border-slate-200 bg-gradient-to-br from-white to-slate-50 p-5 mb-4">
-            <div className="flex items-center gap-2 mb-4">
-              <ReceiptText className="h-5 w-5 text-slate-600" />
-              <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wide">
-                Payment Breakdown
-              </h3>
+          {/* PASABUY: Selected Items */}
+          {data.post_type === "PasaBuy" && data.pasabuy_items && Array.isArray(data.pasabuy_items) && data.pasabuy_items.length > 0 && (
+            <div className="bg-white border border-gray-100 rounded-lg p-3 space-y-2 mb-4">
+              <p className="text-xs text-gray-500 font-medium">SELECTED ITEMS</p>
+              <div className="space-y-1.5">
+                {data.pasabuy_items.map((item: any, idx: number) => (
+                  <div key={idx} className="flex justify-between text-sm">
+                    <span className="text-gray-700">{item.product_name || item.name}</span>
+                    <span className="font-medium text-amber-600">{peso(item.price)}</span>
+                  </div>
+                ))}
+              </div>
             </div>
+          )}
 
-            <div className="space-y-3">
-              {/* Item Price */}
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-slate-600">Item Price</span>
-                <span className="text-sm font-semibold text-slate-900">
+          {/* PASABUY: Price Breakdown */}
+          {data.post_type === "PasaBuy" && (
+            <div className="bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-lg p-3 space-y-2 mb-4">
+              <p className="text-xs text-amber-700 font-medium">PRICE BREAKDOWN</p>
+
+              {data.items_total != null && data.items_total !== undefined && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-700">Items Total</span>
+                  <span className="font-medium">{peso(data.items_total)}</span>
+                </div>
+              )}
+
+              {data.service_fee != null && data.service_fee !== undefined && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-700">Service Fee</span>
+                  <span className="font-medium">{peso(data.service_fee)}</span>
+                </div>
+              )}
+
+              {data.delivery_fee != null && data.method === "Delivery" && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-700">Delivery Fee</span>
+                  <span className="font-medium">{peso(data.delivery_fee)}</span>
+                </div>
+              )}
+
+              <div className="border-t border-amber-300 pt-2 mt-2">
+                <div className="flex justify-between items-center">
+                  <p className="text-base font-bold text-gray-800">Total</p>
+                  <p className="text-lg font-bold text-amber-700">
+                    {peso(data.total)}
+                  </p>
+                </div>
+              </div>
+
+              {data.method === "Meetup" && (
+                <p className="text-xs text-gray-600 mt-1 italic">
+                  Meetup Transaction — No delivery fees
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* RENT: Price Breakdown */}
+          {data.post_type === "Rent" && (
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-3 space-y-2 mb-4">
+              <p className="text-xs text-blue-700 font-medium">RENT BREAKDOWN</p>
+
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-700">Price per Day</span>
+                <span className="font-semibold text-[#E59E2C]">
                   {peso(data.price)}
+                  <span className="text-xs"> /day</span>
                 </span>
               </div>
 
-              {/* Delivery Fee (if applicable) */}
-              {data.delivery_fee && data.delivery_fee > 0 && (
+              {rentDays != null && rentDays > 0 && (
                 <>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-slate-600">Delivery Fee</span>
-                    <span className="text-sm font-semibold text-slate-900">
-                      {peso(data.delivery_fee)}
-                    </span>
+                  {data.rent_start_date && data.rent_end_date && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-700">Rent Duration</span>
+                      <span className="font-medium text-gray-900">
+                        {new Date(data.rent_start_date).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })}{" "}
+                        →{" "}
+                        {new Date(data.rent_end_date).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
+                        <span className="text-xs text-gray-500"> ({rentDays} {rentDays === 1 ? "day" : "days"})</span>
+                      </span>
+                    </div>
+                  )}
+
+                  {(!data.rent_start_date || !data.rent_end_date) && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-700">Number of Days</span>
+                      <span className="font-medium">{rentDays} {rentDays === 1 ? 'day' : 'days'}</span>
+                    </div>
+                  )}
+
+                  <div className="border-t border-blue-300 pt-2 mt-2">
+                    <div className="flex justify-between items-center">
+                      <p className="text-sm font-semibold text-gray-700">Total Payment</p>
+                      <p className="text-lg font-bold text-blue-700">
+                        {peso(data.price * rentDays)}
+                      </p>
+                    </div>
                   </div>
-                  <Separator className="my-2" />
+                </>
+              )}
+            </div>
+          )}
+
+          {/* TRADE: Price Breakdown */}
+          {data.post_type === "Trade" && (
+            <div className="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-lg p-3 space-y-2 mb-4">
+              <p className="text-xs text-purple-700 font-medium">TRADE BREAKDOWN</p>
+
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-700">Item Value</span>
+                <span className="font-medium">{peso(data.price)}</span>
+              </div>
+
+              {data.cash_added != null && data.cash_added > 0 && (
+                <>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-700">Cash Top-up</span>
+                    <span className="font-medium text-amber-600">{peso(data.cash_added)}</span>
+                  </div>
+
+                  <div className="border-t border-purple-300 pt-2 mt-2">
+                    <div className="flex justify-between items-center">
+                      <p className="text-base font-bold text-gray-800">Total to Pay</p>
+                      <p className="text-lg font-bold text-purple-700">
+                        {peso(data.total)}
+                      </p>
+                    </div>
+                  </div>
                 </>
               )}
 
-              {/* Total */}
-              <div className="flex justify-between items-center pt-2 pb-1">
-                <span className="text-base font-bold text-slate-800">Total Amount</span>
-                <span className="text-xl font-extrabold text-emerald-600">
-                  {peso(data.total)}
-                </span>
-              </div>
+              {(!data.cash_added || data.cash_added === 0) && (
+                <p className="text-xs text-gray-600 italic">
+                  No additional cash required
+                </p>
+              )}
             </div>
+          )}
 
-            {/* Payment Method Badge */}
-            <div className="mt-4 pt-4 border-t border-slate-200">
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-slate-500">Payment Method</span>
-                <span className="px-3 py-1.5 rounded-full bg-blue-50 text-blue-700 text-xs font-semibold border border-blue-200">
-                  {data.payment_method}
-                </span>
+          {/* SALE/EMERGENCY/GIVEAWAY: Price Breakdown */}
+          {(data.post_type === "Sale" || data.post_type === "Emergency Lending" || data.post_type === "Giveaway") && (
+            <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-3 space-y-2 mb-4">
+              <p className="text-xs text-green-700 font-medium">PRICE BREAKDOWN</p>
+
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-700">Item Price</span>
+                <span className="font-medium">{peso(data.price)}</span>
               </div>
+
+              {data.delivery_fee != null && data.delivery_fee > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-700">Delivery Fee</span>
+                  <span className="font-medium">{peso(data.delivery_fee)}</span>
+                </div>
+              )}
+
+              <div className="border-t border-green-300 pt-2 mt-2">
+                <div className="flex justify-between items-center">
+                  <p className="text-base font-bold text-gray-800">Total</p>
+                  <p className="text-lg font-bold text-green-700">
+                    {peso(data.total)}
+                  </p>
+                </div>
+              </div>
+
+              {data.delivery_fee != null && data.delivery_fee > 0 && (
+                <p className="text-xs text-gray-600 mt-1">
+                  Includes delivery fee
+                </p>
+              )}
+
+              {data.method === "Meetup" && (
+                <p className="text-xs text-gray-600 mt-1 italic">
+                  Meetup Transaction — No delivery fees
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Payment Method Badge */}
+          <div className="bg-white border border-gray-100 rounded-lg p-3 mb-4">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-500">Payment Method</span>
+              <span className="px-3 py-1.5 rounded-full bg-blue-50 text-blue-700 text-xs font-semibold border border-blue-200">
+                {data.payment_method}
+              </span>
             </div>
           </div>
 

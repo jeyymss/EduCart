@@ -28,6 +28,11 @@ interface PaymentDialogProps {
   // RENT
   rentDays?: number | null;
 
+  // PASABUY
+  pasabuyItems?: Array<{product_name: string; price: number}>;
+  itemsTotal?: number | null;
+  serviceFee?: number | null;
+
   cash_added: number | null;
 
   totalPayment: number | null;
@@ -56,6 +61,9 @@ export default function PaymentDialog({
   distanceKm,
   deliveryFee,
   rentDays,
+  pasabuyItems,
+  itemsTotal,
+  serviceFee,
   cash_added,
   totalPayment,
   fulfillmentMethod,
@@ -74,16 +82,29 @@ export default function PaymentDialog({
   const isRent = postType === "Rent";
   const isSale = postType === "Sale";
   const isTrade = postType === "Trade";
+  const isPasaBuy = postType === "PasaBuy";
 
   const isDelivery =
-    fulfillmentMethod === "Delivery" && !isTrade; 
+    fulfillmentMethod === "Delivery" && !isTrade;
 
   const isMeetup =
-    fulfillmentMethod === "Meetup" || isTrade; 
+    fulfillmentMethod === "Meetup" || isTrade;
 
 
   if (postType === "Trade") {
     totalPayment = cash_added ?? 0;
+  }
+
+  // Debug log for PasaBuy
+  if (isPasaBuy && open) {
+    console.log("PasaBuy Payment Dialog Data:", {
+      pasabuyItems,
+      itemsTotal,
+      serviceFee,
+      deliveryFee,
+      txnPrice,
+      fulfillmentMethod
+    });
   }
 
   return (
@@ -116,10 +137,12 @@ export default function PaymentDialog({
           <p className="font-semibold text-lg">{itemTitle}</p>
 
           {/* Price */}
-          <div className="flex justify-between text-sm">
-            <span>{isRent ? "Price per Day" : isTrade ? "Trade Value" : "Item Price"}</span>
-            <span>{formatCurrency(txnPrice)}</span>
-          </div>
+          {!isPasaBuy && (
+            <div className="flex justify-between text-sm">
+              <span>{isRent ? "Price per Day" : isTrade ? "Trade Value" : "Item Price"}</span>
+              <span>{formatCurrency(txnPrice)}</span>
+            </div>
+          )}
 
           {/* RENT: Duration */}
           {isRent && (
@@ -159,6 +182,73 @@ export default function PaymentDialog({
             </div>
           )}
 
+          {/* PASABUY: Show detailed breakdown */}
+          {isPasaBuy && (
+            <div className="space-y-3 border-t border-b border-gray-200 py-3">
+              {/* List of selected items */}
+              {pasabuyItems && pasabuyItems.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-xs font-bold text-gray-700 uppercase tracking-wide">Items Purchased</p>
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 space-y-2 max-h-40 overflow-y-auto">
+                    {pasabuyItems.map((item, idx) => (
+                      <div key={idx} className="flex justify-between items-center text-sm bg-white rounded px-2 py-1.5 border border-amber-100">
+                        <span className="text-gray-800 font-medium">{item.product_name}</span>
+                        <span className="font-semibold text-amber-700">{formatCurrency(item.price)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Price breakdown section */}
+              <div className="space-y-2 bg-gray-50 rounded-lg p-3">
+                <p className="text-xs font-bold text-gray-700 uppercase tracking-wide mb-2">Price Breakdown</p>
+
+                {/* Items Total */}
+                {itemsTotal !== null && itemsTotal !== undefined && (
+                  <div className="flex justify-between text-sm pb-1">
+                    <span className="text-gray-700">Items Subtotal</span>
+                    <span className="font-semibold text-gray-900">{formatCurrency(itemsTotal)}</span>
+                  </div>
+                )}
+
+                {/* Service Fee */}
+                {serviceFee !== null && serviceFee !== undefined && (
+                  <div className="flex justify-between text-sm pb-1">
+                    <span className="text-gray-700">Service Fee</span>
+                    <span className="font-semibold text-gray-900">{formatCurrency(serviceFee)}</span>
+                  </div>
+                )}
+
+                {/* Delivery Fee */}
+                {isDelivery && deliveryFee !== null && (
+                  <>
+                    <div className="flex justify-between text-sm pb-1">
+                      <span className="text-gray-700">Delivery Fee</span>
+                      <span className="font-semibold text-gray-900">{formatCurrency(deliveryFee)}</span>
+                    </div>
+
+                    <div className="flex justify-between text-xs text-gray-600 pl-4">
+                      <span>• Distance:</span>
+                      <span>
+                        {distanceKm !== null
+                          ? `${Number(distanceKm).toFixed(2)} km`
+                          : "Computing..."}
+                      </span>
+                    </div>
+                  </>
+                )}
+
+                {/* Meetup info */}
+                {isMeetup && (
+                  <div className="text-xs text-gray-600 italic bg-white p-2 rounded border border-gray-200">
+                    ℹ️ Meetup Transaction — No delivery fees
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
 
           {/* Total */}
           <hr />
@@ -167,12 +257,14 @@ export default function PaymentDialog({
 
               <span className="text-blue-900">
                 {isTrade
-                  ? formatCurrency(totalPayment)    
-                  : isSale && isMeetup
+                  ? formatCurrency(totalPayment)
+                  : isPasaBuy
                     ? formatCurrency(txnPrice)
-                    : totalPayment !== null
-                      ? formatCurrency(totalPayment)
-                      : "—"}
+                    : isSale && isMeetup
+                      ? formatCurrency(txnPrice)
+                      : totalPayment !== null
+                        ? formatCurrency(totalPayment)
+                        : "—"}
               </span>
             </div>
 

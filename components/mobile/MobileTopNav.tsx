@@ -152,10 +152,10 @@ export default function MobileTopNav({
                   <span>Browse</span>
                 </Chip>
 
-                <Chip href="/businesses" active={isActive("/businesses")}>
+                {/* <Chip href="/businesses" active={isActive("/businesses")}>
                   <Building2 className="h-4 w-4" />
                   <span>Businesses</span>
-                </Chip>
+                </Chip> */}
 
                 <Chip href="/organizations" active={isActive("/organizations")}>
                   <Landmark className="h-4 w-4" />

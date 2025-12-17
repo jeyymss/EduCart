@@ -12,7 +12,12 @@ export async function PasaBuyTransaction(
   selectPayment: string,
   sellerId: string,
   post_id: string,
-  postType: string
+  postType: string,
+  deliveryLat?: number | null,
+  deliveryLng?: number | null,
+  deliveryAddress?: string,
+  deliveryFee?: number | null,
+  delivery_distance_km?: number | null
 ) {
   return await withErrorHandling(async () => {
     const supabase = await createClient();
@@ -31,11 +36,25 @@ export async function PasaBuyTransaction(
     if (!userID) return { error: "User ID is missing." };
 
     // Get values from the form
-    const cashAdded = formData.get("cashAdded") as number | null;
-    const offeredItem = formData.get("offeredItem") as string;
     const inputDate = formData.get("inputDate") as string;
     const inputTime = formData.get("inputTime") as string;
     const location = formData.get("inputLocation") as string | null;
+
+    // Get selected items and price breakdown
+    const selectedItemsStr = formData.get("selectedItems") as string;
+    const selectedItems = selectedItemsStr ? JSON.parse(selectedItemsStr) : [];
+    const itemsTotal = parseFloat(formData.get("itemsTotal") as string) || 0;
+    const serviceFee = parseFloat(formData.get("serviceFee") as string) || 0;
+    const totalPrice = parseFloat(formData.get("totalPrice") as string) || itemPrice || 0;
+
+    // Store breakdown data: selected items in offered_item, itemsTotal in cash_added
+    const pasabuyData = {
+      items: selectedItems,
+      itemsTotal: itemsTotal,
+      serviceFee: serviceFee
+    };
+    const offeredItem = JSON.stringify(pasabuyData);
+    const cashAdded = serviceFee; // Store service fee in cash_added for later retrieval
 
     // Fetch post_type id
     const { data: post_type } = await supabase
@@ -65,12 +84,17 @@ export async function PasaBuyTransaction(
           cash_added: cashAdded,
           post_type_id: post_type?.id,
           item_title: itemTitle,
-          price: itemPrice,
+          price: totalPrice, // Total of items + service fee + delivery fee (if delivery)
           fulfillment_method: selectedType,
           payment_method: selectPayment,
           meetup_location: location,
           meetup_date: inputDate || null,
           meetup_time: inputTime || null,
+          delivery_location: deliveryAddress || null,
+          delivery_lat: deliveryLat || null,
+          delivery_lng: deliveryLng || null,
+          delivery_fee: deliveryFee || null,
+          delivery_distance_km: delivery_distance_km || null,
           status: "Pending",
         },
       ])

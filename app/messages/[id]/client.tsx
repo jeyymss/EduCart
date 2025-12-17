@@ -11,16 +11,14 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogDescription,
-  DialogClose,
 } from "@/components/ui/dialog";
 import {
   Tooltip,
   TooltipTrigger,
   TooltipContent,
 } from "@/components/ui/tooltip";
-import { Camera, FilePenLine, X } from "lucide-react";
+import { Camera, FilePenLine, ShoppingCart, Clock, Repeat, ShoppingBag, AlertTriangle, Gift } from "lucide-react";
 import PostTypeBadge from "@/components/postTypeBadge";
 import SaleTransacForm from "@/components/transaction/forms/SaleTransac";
 import TradeTransacForm from "@/components/transaction/forms/TradeTransac";
@@ -30,6 +28,7 @@ import PastTransactionDetails from "@/components/transaction/pastTransactions";
 import PasaBuyTransacForm from "@/components/transaction/forms/PasaBuyTransac";
 import EmergencyTransacForm from "@/components/transaction/forms/EmergencyTransac";
 import GiveawayTransacForm from "@/components/transaction/forms/GiveawayTransac";
+import TransactionFormDialog from "@/components/transaction/TransactionFormDialog";
 
 type ChatMessage = {
   id: number;
@@ -137,38 +136,8 @@ export default function ChatClient({
           table: "messages",
           filter: `conversation_id=eq.${conversationId}`,
         },
-        async (payload) => {
-          const { data } = await supabase
-            .from("messages")
-            .select(
-              `*,
-              transactions (
-                id,
-                item_title,
-                price,
-                rent_start_date,
-                rent_end_date,
-                offered_item,
-                cash_added,
-                created_at,
-                fulfillment_method,
-                payment_method,
-                meetup_location,
-                meetup_date,
-                meetup_time,
-                status,
-                post_types (id, name),
-                post_id (
-                  item_trade
-                )
-              )`
-            )
-            .eq("id", (payload.new as any).id)
-            .single();
-
-          if (data) {
-            setMessages((prev) => [...prev, data as ChatMessage]);
-          }
+        (payload) => {
+          setMessages((prev) => [...prev, payload.new as ChatMessage]);
         }
       )
       .on(
@@ -177,6 +146,7 @@ export default function ChatClient({
           event: "UPDATE",
           schema: "public",
           table: "transactions",
+          filter: `conversation_id=eq.${conversationId}`
         },
         async (payload) => {
           const updatedTransaction = payload.new as any;
@@ -404,7 +374,7 @@ export default function ChatClient({
             <div className="flex items-center gap-3">
               {otherUserAvatarUrl ? (
                 <Image
-                  src={otherUserAvatarUrl}
+                  src={otherUserAvatarUrl || "/avatarplaceholder.png"}
                   alt="avatar"
                   width={40}
                   height={40}
@@ -715,140 +685,136 @@ export default function ChatClient({
               (currentUserRole === "seller" && postType === "Giveaway")
             ) && (
               <Tooltip>
-                <Dialog open={open} onOpenChange={setOpen}>
-                  <TooltipTrigger asChild>
-                    <DialogTrigger asChild>
-                      <button
-                        type="button"
-                        className="px-2 py-2 rounded hover:bg-gray-100 hover:cursor-pointer"
-                        onClick={() => setOpen(true)}
-                      >
-                        <FilePenLine />
-                      </button>
-                    </DialogTrigger>
-                  </TooltipTrigger>
-
-                  <DialogContent
-                    onOpenAutoFocus={(e) => e.preventDefault()}
-                    onInteractOutside={(e) => e.preventDefault()}
-                    onPointerDownOutside={(e) => e.preventDefault()}
-                    className="overflow-visible"
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    className="px-2 py-2 rounded hover:bg-gray-100 hover:cursor-pointer"
+                    onClick={() => setOpen(true)}
                   >
-                    <DialogClose asChild>
-                      <button
-                        className="absolute right-2 top-2 rounded p-1 text-gray-500 hover:bg-gray-200 hover:cursor-pointer"
-                        aria-label="Close"
-                      >
-                        <X className="h-5 w-5" />
-                      </button>
-                    </DialogClose>
-
-                    <DialogHeader>
-                      <div className="flex items-center">
-                        <DialogTitle>Form</DialogTitle>
-                        <PostTypeBadge type={postType as any} />
-                      </div>
-                      <DialogDescription>Fill up form</DialogDescription>
-                    </DialogHeader>
-
-                    {/* Your forms here */}
-                    {postType === "Sale" && (
-                      <SaleTransacForm
-                        conversationId={conversationId}
-                        itemPrice={itemPrice}
-                        itemTitle={itemTitle}
-                        sellerId={otherUserId}
-                        post_id={postId}
-                        postType={postType || ""}
-                        acceptedOfferPrice={acceptedPrice}
-                        onClose={() => {
-                          setOpen(false);
-                          setShowSuccess(true);
-                        }}
-                      />
-                    )}
-
-                    {postType === "Rent" && (
-                      <RentTransacForm
-                        conversationId={conversationId}
-                        itemPrice={itemPrice}
-                        itemTitle={itemTitle}
-                        sellerId={otherUserId}
-                        post_id={postId}
-                        postType={postType || ""}
-                        onClose={() => {
-                          setOpen(false);
-                          setShowSuccess(true);
-                        }}
-                      />
-                    )}
-
-                    {postType === "Trade" && (
-                      <TradeTransacForm
-                        conversationId={conversationId}
-                        itemPrice={itemPrice}
-                        itemTrade={itemTrade}
-                        itemTitle={itemTitle}
-                        sellerId={otherUserId}
-                        post_id={postId}
-                        postType={postType || ""}
-                        onClose={() => {
-                          setOpen(false);
-                          setShowSuccess(true);
-                        }}
-                      />
-                    )}
-
-                    {postType === "PasaBuy" && (
-                      <PasaBuyTransacForm
-                        conversationId={conversationId}
-                        itemPrice={itemPrice}
-                        itemTitle={itemTitle}
-                        sellerId={otherUserId}
-                        post_id={postId}
-                        postType={postType || ""}
-                        onClose={() => {
-                          setOpen(false);
-                          setShowSuccess(true);
-                        }}
-                      />
-                    )}
-
-                    {postType === "Emergency Lending" && (
-                      <EmergencyTransacForm
-                        conversationId={conversationId}
-                        itemTitle={itemTitle}
-                        sellerId={otherUserId}
-                        post_id={postId}
-                        postType={postType || ""}
-                        onClose={() => {
-                          setOpen(false);
-                          setShowSuccess(true);
-                        }}
-                      />
-                    )}
-
-                    {postType === "Giveaway" && (
-                      <GiveawayTransacForm
-                        conversationId={conversationId}
-                        itemTitle={itemTitle}
-                        sellerId={otherUserId}
-                        post_id={postId}
-                        postType={postType || ""}
-                        onClose={() => {
-                          setOpen(false);
-                          setShowSuccess(true);
-                        }}
-                      />
-                    )}
-                  </DialogContent>
-                </Dialog>
-
+                    <FilePenLine />
+                  </button>
+                </TooltipTrigger>
                 <TooltipContent>
                   <p>Fill Up Form</p>
                 </TooltipContent>
               </Tooltip>
             )}
+
+            {/* Transaction Form Modal */}
+            <TransactionFormDialog
+              open={open}
+              onClose={() => setOpen(false)}
+              title={`${postType} Transaction`}
+              description="Complete the form below to proceed with this transaction"
+              icon={
+                postType === "Sale" ? <ShoppingCart className="w-6 h-6" /> :
+                postType === "Rent" ? <Clock className="w-6 h-6" /> :
+                postType === "Trade" ? <Repeat className="w-6 h-6" /> :
+                postType === "PasaBuy" ? <ShoppingBag className="w-6 h-6" /> :
+                postType === "Emergency Lending" ? <AlertTriangle className="w-6 h-6" /> :
+                postType === "Giveaway" ? <Gift className="w-6 h-6" /> :
+                <FilePenLine className="w-6 h-6" />
+              }
+              color={
+                postType === "Sale" ? "blue" :
+                postType === "Rent" ? "indigo" :
+                postType === "Trade" ? "orange" :
+                postType === "PasaBuy" ? "amber" :
+                postType === "Emergency Lending" ? "red" :
+                postType === "Giveaway" ? "green" :
+                "blue"
+              }
+            >
+              {postType === "Sale" && (
+                <SaleTransacForm
+                  conversationId={conversationId}
+                  itemPrice={itemPrice}
+                  itemTitle={itemTitle}
+                  sellerId={otherUserId}
+                  post_id={postId}
+                  postType={postType || ""}
+                  acceptedOfferPrice={acceptedPrice}
+                  onClose={() => {
+                    setOpen(false);
+                    setShowSuccess(true);
+                  }}
+                />
+              )}
+
+              {postType === "Rent" && (
+                <RentTransacForm
+                  conversationId={conversationId}
+                  itemPrice={itemPrice}
+                  itemTitle={itemTitle}
+                  sellerId={otherUserId}
+                  post_id={postId}
+                  postType={postType || ""}
+                  onClose={() => {
+                    setOpen(false);
+                    setShowSuccess(true);
+                  }}
+                />
+              )}
+
+              {postType === "Trade" && (
+                <TradeTransacForm
+                  conversationId={conversationId}
+                  itemPrice={itemPrice}
+                  itemTrade={itemTrade}
+                  itemTitle={itemTitle}
+                  sellerId={otherUserId}
+                  post_id={postId}
+                  postType={postType || ""}
+                  onClose={() => {
+                    setOpen(false);
+                    setShowSuccess(true);
+                  }}
+                />
+              )}
+
+              {postType === "PasaBuy" && (
+                <PasaBuyTransacForm
+                  conversationId={conversationId}
+                  itemPrice={itemPrice}
+                  itemTitle={itemTitle}
+                  sellerId={otherUserId}
+                  post_id={postId}
+                  postType={postType || ""}
+                  onClose={() => {
+                    setOpen(false);
+                    setShowSuccess(true);
+                  }}
+                />
+              )}
+
+              {postType === "Emergency Lending" && (
+                <EmergencyTransacForm
+                  conversationId={conversationId}
+                  itemTitle={itemTitle}
+                  sellerId={otherUserId}
+                  post_id={postId}
+                  postType={postType || ""}
+                  onClose={() => {
+                    setOpen(false);
+                    setShowSuccess(true);
+                  }}
+                />
+              )}
+
+              {postType === "Giveaway" && (
+                <GiveawayTransacForm
+                  conversationId={conversationId}
+                  itemTitle={itemTitle}
+                  sellerId={otherUserId}
+                  post_id={postId}
+                  postType={postType || ""}
+                  onClose={() => {
+                    setOpen(false);
+                    setShowSuccess(true);
+                  }}
+                />
+              )}
+            </TransactionFormDialog>
 
 
           </div>
@@ -888,7 +854,9 @@ export default function ChatClient({
             <Button
               onClick={() => {
                 setShowSuccess(false);
+                
               }}
+
             >
               Close
             </Button>

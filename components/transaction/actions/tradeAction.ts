@@ -28,6 +28,7 @@ export function computeTradeActionLabel(
 
     // ⭐ PURE TRADE (NO CASH ADDED, NO PAYMENT METHOD)
     if (noPayment) {
+      if (s === "pending") return "Waiting for Seller";
       if (s === "accepted") return "Confirm Item Received";
       if (s === "received") return "Waiting for Seller";
       if (s === "completed") return "Completed";
@@ -37,6 +38,7 @@ export function computeTradeActionLabel(
 
     // ⭐ TRADE — CASH ON HAND (MEETUP)
     if (isCash) {
+      if (s === "pending") return "Waiting for Seller";
       if (s === "accepted") return "Confirm Item Received";
       if (s === "received") return "Waiting for Seller";
       if (s === "completed") return "Completed";
@@ -46,6 +48,7 @@ export function computeTradeActionLabel(
 
     // ⭐ TRADE — ONLINE PAYMENT (Buyer pays cash top-up first)
     if (isOnline) {
+      if (s === "pending") return "Pay Now";
       if (s === "accepted") return "Pay Now";
       if (s === "paid") return "Waiting for Seller";
       if (s === "pickedup") return "Confirm Exchange";
@@ -62,6 +65,7 @@ export function computeTradeActionLabel(
 
     // ⭐ PURE TRADE (NO PAYMENT METHOD)
     if (noPayment) {
+      if (s === "pending") return "Action";
       if (s === "accepted") return "Waiting for Buyer";
       if (s === "received") return "Confirm Item Received";
       if (s === "completed") return "Completed";
@@ -71,6 +75,7 @@ export function computeTradeActionLabel(
 
     // ⭐ TRADE — CASH ON HAND
     if (isCash) {
+      if (s === "pending") return "Action";
       if (s === "accepted") return "Waiting for Buyer";
       if (s === "received") return "Confirm Item Received";
       if (s === "completed") return "Completed";
@@ -80,6 +85,7 @@ export function computeTradeActionLabel(
 
     // ⭐ TRADE — ONLINE PAYMENT
     if (isOnline) {
+      if (s === "pending") return "Action";
       if (s === "paid") return "Mark as Exchanged";
       if (s === "pickedup") return "On Hold";
       if (s === "completed") return "Completed";

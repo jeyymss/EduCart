@@ -37,6 +37,17 @@ export default function PastTransactionDetails({
   const [isPaying, setIsPaying] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
 
+  // Parse PasaBuy data from offered_item
+  const pasabuyData = postType === "PasaBuy" && txn.offered_item
+    ? (() => {
+        try {
+          return JSON.parse(txn.offered_item);
+        } catch {
+          return null;
+        }
+      })()
+    : null;
+
   // ========================
   // COMPUTE RENT DAYS
   // ========================
@@ -101,6 +112,24 @@ export default function PastTransactionDetails({
       return;
     }
 
+    // ========================
+    // PASABUY
+    // ========================
+    if (postType === "PasaBuy") {
+      // For PasaBuy, the price field already contains the total
+      // (items + service fee + delivery fee if delivery)
+      setTotalPayment(Number(txn.price));
+
+      // Set delivery fee and distance if it's a delivery
+      if (txn.fulfillment_method === "Delivery" && txn.delivery_fee !== null) {
+        setDeliveryFee(Number(txn.delivery_fee));
+        setDistanceKm(Number(txn.delivery_distance_km ?? 0));
+      } else {
+        setDeliveryFee(null);
+        setDistanceKm(null);
+      }
+      return;
+    }
 
     // ======================
     // SALE + MEETUP
@@ -342,8 +371,72 @@ export default function PastTransactionDetails({
           </div>
         )}
 
-        {/* TOTAL PAYMENT - If delivery or rent */}
-        {totalPayment !== null && totalPayment !== txn.price && (
+        {/* PASABUY: Selected Items */}
+        {postType === "PasaBuy" && pasabuyData?.items && Array.isArray(pasabuyData.items) && pasabuyData.items.length > 0 && (
+          <div className="bg-white border border-gray-100 rounded-lg p-3 space-y-2">
+            <p className="text-xs text-gray-500 font-medium">SELECTED ITEMS</p>
+            <div className="space-y-1.5">
+              {pasabuyData.items.map((item: any, idx: number) => (
+                <div key={idx} className="flex justify-between text-sm">
+                  <span className="text-gray-700">{item.product_name}</span>
+                  <span className="font-medium text-amber-600">₱{Number(item.price).toFixed(2)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* PASABUY: Price Breakdown */}
+        {postType === "PasaBuy" && (
+          <div className="bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-lg p-3 space-y-2">
+            <p className="text-xs text-amber-700 font-medium">PRICE BREAKDOWN</p>
+
+            {pasabuyData?.itemsTotal !== null && pasabuyData?.itemsTotal !== undefined && (
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-700">Items Total</span>
+                <span className="font-medium">{formatCurrency(pasabuyData.itemsTotal)}</span>
+              </div>
+            )}
+
+            {pasabuyData?.serviceFee !== null && pasabuyData?.serviceFee !== undefined && (
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-700">Service Fee</span>
+                <span className="font-medium">{formatCurrency(pasabuyData.serviceFee)}</span>
+              </div>
+            )}
+
+            {txn.delivery_fee !== null && txn.fulfillment_method === "Delivery" && (
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-700">Delivery Fee</span>
+                <span className="font-medium">{formatCurrency(txn.delivery_fee)}</span>
+              </div>
+            )}
+
+            <div className="border-t border-amber-300 pt-2 mt-2">
+              <div className="flex justify-between items-center">
+                <p className="text-base font-bold text-gray-800">Total</p>
+                <p className="text-lg font-bold text-amber-700">
+                  {formatCurrency(totalPayment)}
+                </p>
+              </div>
+            </div>
+
+            {txn.delivery_distance_km !== null && txn.fulfillment_method === "Delivery" && (
+              <p className="text-xs text-gray-600 mt-1">
+                Distance: {Number(txn.delivery_distance_km).toFixed(2)} km
+              </p>
+            )}
+
+            {txn.fulfillment_method === "Meetup" && (
+              <p className="text-xs text-gray-600 mt-1 italic">
+                Meetup Transaction — No delivery fees
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* TOTAL PAYMENT - If delivery or rent (non-PasaBuy) */}
+        {postType !== "PasaBuy" && totalPayment !== null && totalPayment !== txn.price && (
           <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-3">
             <div className="flex justify-between items-center">
               <p className="text-sm font-semibold text-gray-700">Total Payment</p>
@@ -372,6 +465,9 @@ export default function PastTransactionDetails({
           txnPrice={txn.price}
           distanceKm={distanceKm}
           deliveryFee={deliveryFee}
+          pasabuyItems={pasabuyData?.items}
+          itemsTotal={pasabuyData?.itemsTotal}
+          serviceFee={pasabuyData?.serviceFee}
           totalPayment={totalPayment}
           fulfillmentMethod={txn.fulfillment_method}
           paymentMethod={paymentMethod}

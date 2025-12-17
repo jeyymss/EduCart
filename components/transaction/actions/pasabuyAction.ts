@@ -1,4 +1,4 @@
-export function computeSaleActionLabel(
+export function computePasaBuyActionLabel(
   type: "Purchases" | "Sales",
   status?: string,
   paymentMethod?: string,
@@ -8,7 +8,32 @@ export function computeSaleActionLabel(
   const s = status.toLowerCase();
 
   // ------------------------------------------------------------
-  // FLOW A — CASH ON HAND + MEETUP
+  // ONLINE PAYMENT + DELIVERY
+  // ------------------------------------------------------------
+  if (paymentMethod === "Online Payment" && fulfillmentMethod === "Delivery") {
+    // BUYER VIEW
+    if (type === "Purchases") {
+      if (s === "pending") return "Pay Now";
+      if (s === "paid") return "Waiting for Delivery";
+      if (s === "pickedup") return "Order Received";
+      if (s === "completed") return "Completed";
+      if (s === "cancelled") return "Cancelled";
+      return "";
+    }
+
+    // SELLER VIEW
+    if (type === "Sales") {
+      if (s === "pending") return "Action";
+      if (s === "paid") return "Order Picked Up";
+      if (s === "pickedup") return "On Hold";
+      if (s === "completed") return "Completed";
+      if (s === "cancelled") return "Cancelled";
+      return "";
+    }
+  }
+
+  // ------------------------------------------------------------
+  // CASH ON HAND + MEETUP
   // ------------------------------------------------------------
   if (paymentMethod === "Cash on Hand" && fulfillmentMethod === "Meetup") {
     // BUYER VIEW
@@ -31,7 +56,7 @@ export function computeSaleActionLabel(
   }
 
   // ------------------------------------------------------------
-  // FLOW C — ONLINE PAYMENT + MEETUP
+  // ONLINE PAYMENT + MEETUP
   // ------------------------------------------------------------
   if (paymentMethod === "Online Payment" && fulfillmentMethod === "Meetup") {
     // BUYER VIEW
@@ -47,35 +72,8 @@ export function computeSaleActionLabel(
     // SELLER VIEW
     if (type === "Sales") {
       if (s === "pending") return "Action";
-      if (s === "accepted") return "Waiting for Payment"
+      if (s === "accepted") return "Waiting for Payment";
       if (s === "paid") return "Waiting for Confirmation";
-      if (s === "completed") return "Completed";
-      if (s === "cancelled") return "Cancelled";
-      return "";
-    }
-  }
-
-  // ------------------------------------------------------------
-  // FLOW B — ONLINE PAYMENT + DELIVERY  (Original Logic)
-  // ------------------------------------------------------------
-  if (paymentMethod === "Online Payment" && fulfillmentMethod === "Delivery") {
-    // BUYER VIEW
-    if (type === "Purchases") {
-      if (s === "pending") return "Waiting for Seller";
-      if (s === "accepted") return "Pay Now"
-      if (s === "paid") return "Waiting for Delivery";
-      if (s === "pickedup") return "Order Received";
-      if (s === "completed") return "Completed";
-      if (s === "cancelled") return "Cancelled";
-      return "";
-    }
-
-    // SELLER VIEW
-    if (type === "Sales") {
-      if (s === "pending") return "Action";
-      if (s === "accepted") return "Waiting for Payment"
-      if (s === "paid") return "Order Picked Up";
-      if (s === "pickedup") return "On Hold";
       if (s === "completed") return "Completed";
       if (s === "cancelled") return "Cancelled";
       return "";

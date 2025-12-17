@@ -32,6 +32,7 @@ export function computeRentActionLabel(
   if (type === "Purchases") {
     // ⭐ CASH ON HAND FLOW
     if (isCash) {
+      if (s === "pending") return "Waiting for Seller";
       if (s === "accepted") return "Waiting for Pickup"; // instead of 'paid'
       if (s === "pickedup") return "Return Item";
       if (s === "returned") return "Waiting for Review";
@@ -41,6 +42,8 @@ export function computeRentActionLabel(
 
     // ⭐ ONLINE PAYMENT FLOW (original)
     if (isOnline) {
+      if (s === "pending") return "Waiting for Seller";
+      if (s === "accepted") return "Pay Now"
       if (s === "paid") return "Waiting for Pickup";
       if (s === "pickedup") return "Return Item";
       if (s === "returned") return "Waiting for Review";
@@ -56,6 +59,7 @@ export function computeRentActionLabel(
   if (type === "Sales") {
     // ⭐ CASH ON HAND FLOW
     if (isCash) {
+      if (s === "pending") return "Action";
       if (s === "accepted") return "Mark as Picked Up"; // replaces 'paid'
       if (s === "pickedup") return "On Rent";
       if (s === "returned") return "Confirm Return";
@@ -65,6 +69,8 @@ export function computeRentActionLabel(
 
     // ⭐ ONLINE PAYMENT FLOW (original)
     if (isOnline) {
+      if (s === "pending") return "Action";
+      if (s === "accepted") return "Waiting for Payment"
       if (s === "paid") return "Mark as Picked Up";
       if (s === "pickedup") return "On Rent";
       if (s === "returned") return "Confirm Return";
