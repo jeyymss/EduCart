@@ -175,7 +175,7 @@ export default function LoginForm() {
                 {/* BUTTON */}
                 <Button
                   type="submit"
-                  className="w-full bg-[#F3D58D] text-[#3A2D13] rounded-xl h-9 shadow-md hover:scale-[1.05] transition-all duration-300"
+                  className="w-full bg-[#C7D9E5] text-[#3A2D13] rounded-xl h-9 shadow-md transition-all duration-300 hover:bg-[#F3D58D] hover:text-[#3A2D13] hover:scale-[1.05]"
                   disabled={submitting}
                 >
                   {submitting ? "Signing in…" : "Login"}
@@ -284,7 +284,7 @@ export default function LoginForm() {
               {/* LOGIN BUTTON */}
               <Button
                 type="submit"
-                className="w-full bg-[#C7D9E5] text-[#3A2D13] rounded-xl h-11 shadow-md hover:scale-[1.05] transition-all duration-300"
+                className="w-full bg-[#C7D9E5] text-[#3A2D13] rounded-xl h-11 shadow-md transition-all duration-300 hover:bg-[#F3D58D] hover:text-[#3A2D13] hover:scale-[1.05]"
                 disabled={submitting}
               >
                 {submitting ? "Signing in…" : "Login"}

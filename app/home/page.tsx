@@ -200,58 +200,9 @@ export default function HomePage() {
       </div>
 
       {/* PAGE CONTENT */}
-      <div className="px-4 sm:px-6 md:px-8 pt-1 pb-20 md:pb-8 lg:pb-8 space-y-8 lg:space-y-10 max-w-[1600px] mx-auto">
-        {/* CATEGORY GRID */}
-        <section
-          className="-mt-18 md:mt-4 lg:mt-6 rounded-2xl border bg-white p-4 sm:p-5 shadow-sm md:hover:shadow-md transition-all"
-          style={cv}
-        >
-          <div className="flex items-center justify-between">
-            <h2 className="font-semibold text-[#102E4A] text-base sm:text-lg">
-              Browse by Category Listing
-            </h2>
-          </div>
-
-          <div className="mt-4 grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-9 gap-3 sm:gap-4">
-            {[
-              { name: "Hobbies & Toys", src: "/hobbies.jpg" },
-              { name: "Accessories", src: "/accessories.jpg" },
-              { name: "Beauty & Personal Care", src: "/beauty.jpg" },
-              { name: "Clothing", src: "/clothing.jpg" },
-              { name: "Academic", src: "/academic.jpg" },
-              { name: "Electronics", src: "/electronics.jpg" },
-              { name: "Sports", src: "/sports.jpg" },
-              { name: "Pet Supplies", src: "/pet.jpg" },
-              { name: "Home & Furniture", src: "/home.jpg" },
-            ].map((cat) => (
-              <Link
-                key={cat.name}
-                href="#"
-                className="group relative block overflow-hidden rounded-xl border bg-white shadow-sm md:hover:-translate-y-1 md:hover:shadow-md transition-all"
-              >
-                <div className="relative aspect-square w-full">
-                  <Image
-                    src={cat.src}
-                    alt={cat.name}
-                    fill
-                    loading="lazy"
-                    decoding="async"
-                    sizes="(max-width: 640px) 45vw, (max-width: 768px) 30vw, (max-width: 1024px) 18vw, 12vw"
-                    className="object-cover transition-transform duration-300 group-hover:scale-105"
-                  />
-                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent opacity-90" />
-
-                  <span className="absolute inset-x-0 bottom-0 m-2 rounded-lg bg-white/85 px-2.5 py-1 text-center text-[10px] sm:text-[11px] font-semibold text-[#102E4A] ring-1 ring-black/10 backdrop-blur md:group-hover:bg-white">
-                    {cat.name}
-                  </span>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </section>
-
-        {/* EMERGENCY LENDING */}
-        <div className="-mx-4 sm:-mx-6 md:-mx-8 px-4 sm:px-6 md:px-8 py-4 md:py-6 lg:py-8 bg-white -mt-4 md:-mt-6 lg:-mt-10">
+      <div className="px-4 sm:px-6 md:px-8 pt-2 sm:pt-3 md:pt-2 -mt-20 sm:-mt-4 md:-mt-2 pb-20 md:pb-8 lg:pb-8 space-y-8 lg:space-y-10 max-w-[1600px] mx-auto">
+        {/* EMERGENCY + REST OF SECTIONS */}
+        <div className="-mx-4 sm:-mx-6 md:-mx-8 px-4 sm:px-6 md:px-8 py-4 md:py-6 lg:py-8 bg-white">
           <div className="mx-auto max-w-[1600px] space-y-8 lg:space-y-10">
             {/* EMERGENCY SECTION */}
             <section
@@ -406,14 +357,11 @@ export default function HomePage() {
                         className="min-w-[280px] snap-start rounded-2xl bg-white text-left"
                       >
                         <PasabuyCard
-                            key={post.post_id}
-                            id={post.post_id}
-                            title={post.item_title}
-                            description={post.item_description}
-                            serviceFee={post.item_service_fee}
-                            created_at={post.created_at}
-                            items={post.pasabuy_items}
-                          />
+                          id={post.post_id}
+                          title={post.item_title}
+                          description={post.item_description}
+                          serviceFee={post.item_service_fee}
+                          created_at={post.created_at} items={[]}                        />
                       </button>
                     ))}
                   </div>
@@ -428,14 +376,11 @@ export default function HomePage() {
                         className="rounded-2xl bg-white text-left"
                       >
                         <PasabuyCard
-                            key={post.post_id}
-                            id={post.post_id}
-                            title={post.item_title}
-                            description={post.item_description}
-                            serviceFee={post.item_service_fee}
-                            created_at={post.created_at}
-                            items={post.pasabuy_items}
-                          />
+                          id={post.post_id}
+                          title={post.item_title}
+                          description={post.item_description}
+                          serviceFee={post.item_service_fee}
+                          created_at={post.created_at} items={[]}                        />
                       </button>
                     ))}
                   </div>

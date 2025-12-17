@@ -123,8 +123,8 @@ export function ItemCard({
         <div className="absolute top-2 right-2 z-10 hover:cursor-pointer">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button size="icon" variant="ghost">
-                <MoreHorizontal className="h-5 w-5" />
+              <Button className="flex items-center justify-center w-8 h-8 rounded-full bg-black/60 backdrop-blur text-white hover:bg-black/70 transition">
+                <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
