@@ -225,12 +225,15 @@ export default function Transactions({ userId }: { userId: string }) {
                 buyer: selectedTx.buyer,
                 seller: selectedTx.seller,
                 buyer_id: selectedTx.buyer_id,
-                seller_id: selectedTx.seller_id!,
-                address: (selectedTx as any).address,
+                seller_id: selectedTx.seller_id,
+                pickup_location: (selectedTx as any).pickup_location,      
+                delivery_location: (selectedTx as any).delivery_location,  
+                address: (selectedTx as any).address, 
               }
             : undefined
         }
       />
+
     </section>
   );
 }

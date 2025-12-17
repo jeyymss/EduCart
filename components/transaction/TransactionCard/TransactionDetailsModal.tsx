@@ -52,6 +52,8 @@ type TransactionDetailsModalProps = {
     seller?: string;
     seller_id: string;
     address?: string;
+    pickup_location?: string | null;   
+    delivery_location?: string | null; 
   };
 };
 
@@ -134,6 +136,12 @@ export default function TransactionDetailsModal({
     setShowReport(false);
     setSelectedReportReason("");
   };
+
+  console.log("LOCATIONS", {
+  method: data.method,
+  pickup: data.pickup_location,
+  dropoff: data.delivery_location,
+});
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -443,13 +451,46 @@ export default function TransactionDetailsModal({
               </div>
             )}
 
-            {/* Address */}
-            {data.address && (
-              <div className="flex items-start gap-2 text-slate-600">
-                <MapPin className="mt-0.5 h-4 w-4 flex-none" />
-                <span className="break-words">{data.address}</span>
-              </div>
-            )}
+            {/* LOCATION DETAILS */}
+              {data.method === "Delivery" && (
+                <div className="space-y-2">
+                  {/* PICKUP LOCATION (SELLER) */}
+                  {data.pickup_location && (
+                    <div className="flex items-start gap-2 text-slate-600">
+                      <MapPin className="mt-0.5 h-4 w-4 text-blue-600 flex-none" />
+                      <span className="break-words">
+                        <span className="font-medium text-slate-700">
+                          Pickup Location:
+                        </span>{" "}
+                        {data.pickup_location}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* DROP-OFF LOCATION (BUYER) */}
+                  {data.delivery_location && (
+                    <div className="flex items-start gap-2 text-slate-600">
+                      <MapPin className="mt-0.5 h-4 w-4 text-emerald-600 flex-none" />
+                      <span className="break-words">
+                        <span className="font-medium text-slate-700">
+                          Drop-off Location:
+                        </span>{" "}
+                        {data.delivery_location}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* MEETUP */}
+              {data.method === "Meetup" && data.address && (
+                <div className="flex items-start gap-2 text-slate-600">
+                  <MapPin className="mt-0.5 h-4 w-4 flex-none" />
+                  <span className="break-words">{data.address}</span>
+                </div>
+              )}
+
+
 
             {/* Buyer / Seller */}
             <div className="grid grid-cols-2 gap-3 pt-2 text-xs text-slate-500">

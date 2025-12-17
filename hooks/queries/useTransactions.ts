@@ -28,6 +28,9 @@ export interface Tx {
   created_at: string;
   post_type?: string;
   image_url?: string;
+  pickup_location?: string | null;
+  delivery_location?: string | null;
+  address?: string | null;
 }
 
 async function fetchTransactions(userId: string): Promise<Tx[]> {

@@ -28,7 +28,7 @@ export default function CommentItem({
   const addComment = useAddGiveawayComment(postId);
   const { data: profile } = useUserProfile();
 
-  const isSellerViewer = profile?.id === sellerId;
+  const isSellerViewer = profile?.user_id === sellerId;
   const isCommenterSeller = comment.user_id === sellerId;
 
   const router = useRouter();

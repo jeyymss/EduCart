@@ -52,7 +52,10 @@ export function GiveawayPostCard({ post }: { post: GiveawayPost }) {
   const [showAllComments, setShowAllComments] = useState(false);
 
   const profileLink =
-    profile?.id === post.post_user_id ? `/profile` : `/${post.post_user_id}`;
+  profile?.user_id === post.post_user_id
+    ? "/profile"
+    : `/${post.post_user_id}`;
+
 
   // images
   const images = useMemo<string[]>(

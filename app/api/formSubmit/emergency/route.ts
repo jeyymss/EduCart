@@ -16,10 +16,10 @@ export async function EmergencySubmit(
     } = await supabase.auth.getSession();
 
     if (!session) throw new Error("User not authenticated");
-    if (!session.user.email) return { error: "User email is missing." };
+    if (!session.user.id) return { error: "User email is missing." };
     
     //get user id
-    const userId = session.user.email
+    const userId = session.user.id
 
     if(!userId) return { error: "User ID is missing."};
 

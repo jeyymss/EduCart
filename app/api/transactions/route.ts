@@ -33,7 +33,11 @@ type MappedTransaction = {
   buyer_id: string;
   seller_id: string;
   post_id: string;
-  address: string | null;
+
+  /* ✅ LOCATIONS */
+  pickup_location: string | null;    // seller (posts)
+  delivery_location: string | null;  // buyer (transactions)
+  address: string | null;            // meetup fallback
 };
 
 /* ===================== HELPERS ===================== */
@@ -66,7 +70,9 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Missing userId" }, { status: 400 });
   }
 
-  /* ===================== FETCH TRANSACTION RECORDS ===================== */
+  /* =================================================
+     1️⃣ TRANSACTION RECORDS (COMPLETED / HISTORY)
+  ================================================= */
 
   const { data, error } = await supabase
     .from("transaction_records")
@@ -84,12 +90,15 @@ export async function GET(req: Request) {
         payment_method,
         fulfillment_method,
         price,
+        delivery_location,
+        meetup_location,
         buyer:buyer_id ( id, name ),
         seller:seller_id ( id, name ),
         post:post_id (
           id,
           item_title,
           image_urls,
+          pickup_location,
           item_service_fee,
           post_type:post_type_id ( name ),
           pasabuy_items (
@@ -108,8 +117,6 @@ export async function GET(req: Request) {
     console.error("❌ Supabase error:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
-
-  /* ===================== MAP TRANSACTION RECORDS ===================== */
 
   const transactions = (data || [])
     .map((row): MappedTransaction | null => {
@@ -140,13 +147,11 @@ export async function GET(req: Request) {
       const itemsTotal = snap.items_total ?? null;
       const cashAdded = snap.cash_added ?? null;
 
-      /* ✅ SERVICE FEE: ALWAYS FROM POSTS (PASABUY ONLY) */
       const serviceFee =
         postType?.name === "PasaBuy"
           ? post?.item_service_fee ?? null
           : snap.service_fee ?? null;
 
-      /* RENT DAYS */
       let rentDays = snap.rent_days ?? null;
       if (!rentDays && snap.rent_start_date && snap.rent_end_date) {
         rentDays = Math.max(
@@ -159,7 +164,6 @@ export async function GET(req: Request) {
         );
       }
 
-      /* PASABUY ITEMS */
       let pasabuyItems: any[] | null = null;
       if (postType?.name === "PasaBuy") {
         if (post?.pasabuy_items?.length) {
@@ -176,7 +180,6 @@ export async function GET(req: Request) {
         }
       }
 
-      /* TOTAL CALCULATION */
       let totalAmount = 0;
       const postTypeName = postType?.name || snap.post_type;
 
@@ -227,12 +230,24 @@ export async function GET(req: Request) {
         buyer_id: row.buyer_id,
         seller_id: row.seller_id,
         post_id: post?.id,
-        address: snap.delivery_address || null,
+
+        /* ✅ LOCATIONS */
+        pickup_location: post?.pickup_location || null,
+        delivery_location:
+          snap.delivery_location ||
+          txn.delivery_location ||
+          null,
+        address:
+          txn.meetup_location ||
+          snap.meetup_location ||
+          null,
       };
     })
     .filter((t): t is MappedTransaction => t !== null);
 
-  /* ===================== FETCH PENDING TRANSACTIONS ===================== */
+  /* =================================================
+     2️⃣ PENDING TRANSACTIONS
+  ================================================= */
 
   const { data: pendingData } = await supabase
     .from("transactions")
@@ -250,7 +265,7 @@ export async function GET(req: Request) {
       rent_start_date,
       rent_end_date,
       pasabuy_items_snapshot,
-      delivery_address,
+      delivery_location,
       meetup_location,
       created_at,
       buyer_id,
@@ -261,6 +276,7 @@ export async function GET(req: Request) {
         id,
         item_title,
         item_price,
+        pickup_location,
         item_service_fee,
         image_urls,
         post_type:post_type_id ( name ),
@@ -274,8 +290,6 @@ export async function GET(req: Request) {
     )
     .eq("status", "Pending")
     .or(`buyer_id.eq.${userId},seller_id.eq.${userId}`);
-
-  /* ===================== MAP PENDING ===================== */
 
   const pendingTransactions = (pendingData || [])
     .map((txn): MappedTransaction | null => {
@@ -336,12 +350,11 @@ export async function GET(req: Request) {
 
       if (postType?.name === "PasaBuy") {
         const itemsSum =
-            pasabuyItems?.reduce(
-              (sum: number, item: { price: number }) =>
-                sum + (Number(item.price) || 0),
-              0
-            ) ?? itemsTotal ?? 0;
-
+          pasabuyItems?.reduce(
+            (sum: number, item: { price: number }) =>
+              sum + (Number(item.price) || 0),
+            0
+          ) ?? itemsTotal ?? 0;
 
         totalAmount =
           itemsSum +
@@ -383,7 +396,11 @@ export async function GET(req: Request) {
         buyer_id: txn.buyer_id,
         seller_id: txn.seller_id,
         post_id: post?.id,
-        address: txn.delivery_address || txn.meetup_location,
+
+        /* ✅ LOCATIONS */
+        pickup_location: post?.pickup_location || null,
+        delivery_location: txn.delivery_location || null,
+        address: txn.meetup_location || null,
       };
     })
     .filter((t): t is MappedTransaction => t !== null);

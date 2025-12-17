@@ -101,26 +101,45 @@ export default function LiveTransactionCard({
         </div>
 
         {/* LOCATION DETAILS */}
-        {(txn.meetup_location || txn.meetup_date || txn.meetup_time) && (
-          <div className="bg-white border border-gray-100 rounded-lg p-3 space-y-2">
-            <p className="text-xs text-gray-500 font-medium">MEETUP DETAILS</p>
-            {txn.meetup_location && (
-              <p className="text-sm text-gray-700">
-                <span className="font-medium">📍</span> {txn.meetup_location}
-              </p>
-            )}
-            {txn.meetup_date && (
-              <p className="text-sm text-gray-700">
-                <span className="font-medium">📅</span> {formatDate(txn.meetup_date)}
-              </p>
-            )}
-            {txn.meetup_time && (
-              <p className="text-sm text-gray-700">
-                <span className="font-medium">🕐</span> {formatTime(txn.meetup_time)}
-              </p>
-            )}
-          </div>
-        )}
+          {(txn.delivery_location ||
+            txn.meetup_location ||
+            txn.meetup_date ||
+            txn.meetup_time) && (
+            <div className="bg-white border border-gray-100 rounded-lg p-3 space-y-2">
+              <p className="text-xs text-gray-500 font-medium">LOCATION DETAILS</p>
+
+              {/* DELIVERY LOCATION (Buyer) */}
+              {txn.delivery_location && (
+                <p className="text-sm text-gray-700">
+                  <span className="font-medium">🚚 Delivery Address:</span>{" "}
+                  {txn.delivery_location}
+                </p>
+              )}
+
+              {/* MEETUP LOCATION */}
+              {txn.meetup_location && (
+                <p className="text-sm text-gray-700">
+                  <span className="font-medium">📍 Meetup:</span>{" "}
+                  {txn.meetup_location}
+                </p>
+              )}
+
+              {txn.meetup_date && (
+                <p className="text-sm text-gray-700">
+                  <span className="font-medium">📅 Date:</span>{" "}
+                  {formatDate(txn.meetup_date)}
+                </p>
+              )}
+
+              {txn.meetup_time && (
+                <p className="text-sm text-gray-700">
+                  <span className="font-medium">🕐 Time:</span>{" "}
+                  {formatTime(txn.meetup_time)}
+                </p>
+              )}
+            </div>
+          )}
+
       </div>
 
       {/* BUTTONS */}
