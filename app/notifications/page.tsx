@@ -38,7 +38,6 @@ export default function NotificationsPage() {
   const supabase = createClient();
   const { data: user } = useUserProfile();
 
-  // Load notifications
   useEffect(() => {
     const loadNotifications = async () => {
       try {
@@ -57,7 +56,6 @@ export default function NotificationsPage() {
     loadNotifications();
   }, []);
 
-  // Real-time subscription
   useEffect(() => {
     if (!user) return;
 
@@ -83,7 +81,6 @@ export default function NotificationsPage() {
   }, [user, supabase]);
 
   const handleNotificationClick = async (notification: Notification) => {
-    // Mark as read
     if (!notification.is_read) {
       await fetch("/api/notifications/mark-read", {
         method: "POST",
@@ -98,9 +95,7 @@ export default function NotificationsPage() {
       );
     }
 
-    // Redirect based on notification type
     if (notification.related_table === "offers" && notification.related_id) {
-      // Fetch the offer to get the post_id
       const { data: offer } = await supabase
         .from("offers")
         .select("post_id")
@@ -114,7 +109,6 @@ export default function NotificationsPage() {
       notification.related_table === "posts" &&
       notification.related_id
     ) {
-      // Direct post notification
       router.push(`/product/${notification.related_id}`);
     }
   };
@@ -163,28 +157,81 @@ export default function NotificationsPage() {
       {/* Mobile Navigation */}
       <MobileTopNav />
 
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 sticky z-10">
-        <div className="px-4 py-4">
-          <h1 className="text-xl font-semibold text-[#102E4A]">Notifications</h1>
-          {unreadCount > 0 && (
-            <p className="text-sm text-gray-600 mt-1">
-              {unreadCount} unread notification{unreadCount !== 1 ? "s" : ""}
-            </p>
+      {/* WEB */}
+      <div className="hidden md:block">
+        <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
+          <div className="px-4 py-4">
+            <h1 className="text-xl font-semibold text-[#102E4A]">
+              Notifications
+            </h1>
+            {unreadCount > 0 && (
+              <p className="text-sm text-gray-600 mt-1">
+                {unreadCount} unread notification
+                {unreadCount !== 1 ? "s" : ""}
+              </p>
+            )}
+          </div>
+        </div>
+
+        <div className="pb-20">
+          {loading ? (
+            <div className="flex items-center justify-center py-20">
+              <div className="w-8 h-8 border-4 border-[#E59E2C] border-t-transparent rounded-full animate-spin" />
+            </div>
+          ) : notifications.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 px-4">
+              <Bell className="w-16 h-16 text-gray-300 mb-4" />
+              <p className="text-gray-500">No notifications yet</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-gray-200">
+              {notifications.map((notification) => (
+                <div
+                  key={notification.id}
+                  onClick={() => handleNotificationClick(notification)}
+                  className={`p-4 cursor-pointer ${
+                    !notification.is_read ? "bg-blue-50" : "bg-white"
+                  }`}
+                >
+                  <div className="flex gap-3">
+                    <div
+                      className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                        !notification.is_read
+                          ? "bg-[#F3D58D]"
+                          : "bg-gray-100"
+                      }`}
+                    >
+                      {getNotificationIcon(notification.category)}
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-sm font-medium text-[#102E4A]">
+                        {notification.title}
+                      </h3>
+                      <p className="text-sm text-gray-600">
+                        {notification.body}
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        {formatTimeAgo(notification.created_at)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
         </div>
       </div>
 
-      {/* Content */}
-      <div className="pb-20">
+      {/* MOBILE */}
+      <div className="md:hidden pt-[72px] pb-28">
         {loading ? (
-          <div className="flex items-center justify-center py-20">
+          <div className="flex items-center justify-center h-[60vh]">
             <div className="w-8 h-8 border-4 border-[#E59E2C] border-t-transparent rounded-full animate-spin" />
           </div>
         ) : notifications.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 px-4">
-            <Bell className="w-16 h-16 text-gray-300 mb-4" />
-            <p className="text-gray-500 text-center">No notifications yet</p>
+          <div className="flex flex-col items-center justify-center h-[60vh] px-6 text-center">
+            <Bell className="w-20 h-20 text-gray-300 mb-4" />
+            <p className="text-gray-500 text-sm">No notifications yet</p>
           </div>
         ) : (
           <div className="divide-y divide-gray-200">
@@ -192,38 +239,29 @@ export default function NotificationsPage() {
               <div
                 key={notification.id}
                 onClick={() => handleNotificationClick(notification)}
-                className={`p-4 hover:bg-gray-50 active:bg-gray-100 transition-colors cursor-pointer ${
+                className={`px-4 py-4 active:bg-gray-100 ${
                   !notification.is_read ? "bg-blue-50" : "bg-white"
                 }`}
               >
-                <div className="flex items-start gap-3">
-                  {/* Icon */}
+                <div className="flex gap-3">
                   <div
-                    className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
-                      !notification.is_read ? "bg-[#F3D58D]" : "bg-gray-100"
+                    className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                      !notification.is_read
+                        ? "bg-[#F3D58D]"
+                        : "bg-gray-100"
                     }`}
                   >
                     {getNotificationIcon(notification.category)}
                   </div>
 
-                  {/* Content */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2 mb-1">
-                      <h3
-                        className={`text-sm ${
-                          !notification.is_read ? "font-semibold" : "font-medium"
-                        } text-[#102E4A]`}
-                      >
-                        {notification.title}
-                      </h3>
-                      {!notification.is_read && (
-                        <div className="w-2 h-2 bg-[#E59E2C] rounded-full flex-shrink-0 mt-1.5" />
-                      )}
-                    </div>
-                    <p className="text-sm text-gray-600 mb-1">
+                  <div className="flex-1">
+                    <h3 className="text-sm font-semibold text-[#102E4A]">
+                      {notification.title}
+                    </h3>
+                    <p className="text-sm text-gray-600">
                       {notification.body}
                     </p>
-                    <p className="text-xs text-gray-400">
+                    <p className="text-xs text-gray-400 mt-1">
                       {formatTimeAgo(notification.created_at)}
                     </p>
                   </div>

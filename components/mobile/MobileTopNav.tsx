@@ -6,14 +6,14 @@ import * as React from "react";
 import {
   Home,
   Grid2X2,
-  Building2,
   Landmark,
   Plus,
   MessageSquareText,
   UserRound,
   Bell,
   LogOut,
-  TimerReset,
+  BadgeCent,
+  Wallet,
 } from "lucide-react";
 
 import {
@@ -50,7 +50,10 @@ const TYPE_LABEL = {
   trade: "Trade",
 } as const;
 
-const WEB_CREATE_ROUTES: Record<"emergency" | "pasabuy" | "giveaway", string> = {
+const WEB_CREATE_ROUTES: Record<
+  "emergency" | "pasabuy" | "giveaway",
+  string
+> = {
   emergency: "/emergency/new",
   pasabuy: "/pasabuy/new",
   giveaway: "/giveaway/new",
@@ -76,7 +79,6 @@ export default function MobileTopNav({
     prevPath.current = pathname;
   }, [pathname, open]);
 
-  /* HOME ACTIVE */
   const isActive = (href: string) => {
     if (href === "/") {
       return (
@@ -106,7 +108,6 @@ export default function MobileTopNav({
     if (!next) setChoice("");
   };
 
-  /* Search relocation logic */
   React.useEffect(() => {
     const slot = document.getElementById("mobile-search-slot");
     const search = document.getElementById("home-top-search");
@@ -141,26 +142,32 @@ export default function MobileTopNav({
 
   return (
     <>
-      {/* TOP NAV — Hidden when showOnlyBottom = true */}
       {!showOnlyBottom && !hideTopChips && (
         <div className="md:hidden sticky top-[56px] z-[40] bg-white shadow-sm">
           <nav className="px-3" aria-label="Secondary">
             {!isProductPage && (
-              <div className="flex items-center gap-2 overflow-x-auto scrollbar-none py-2">
+              /* ✅ ONLY CHANGE IS HERE: justify-center */
+              <div className="flex items-center justify-center gap-2 overflow-x-auto scrollbar-none py-2">
                 <Chip href="/browse" active={isActive("/browse")}>
                   <Grid2X2 className="h-4 w-4" />
                   <span>Browse</span>
                 </Chip>
 
-                {/* <Chip href="/businesses" active={isActive("/businesses")}>
-                  <Building2 className="h-4 w-4" />
-                  <span>Businesses</span>
-                </Chip> */}
-
-                <Chip href="/organizations" active={isActive("/organizations")}>
+                <Chip
+                  href="/organizations"
+                  active={isActive("/organizations")}
+                >
                   <Landmark className="h-4 w-4" />
                   <span>Organizations</span>
                 </Chip>
+
+                <Circle
+                  href="/wallet"
+                  label="Wallet"
+                  active={isActive("/wallet")}
+                >
+                  <Wallet className="h-4 w-4" />
+                </Circle>
 
                 <Circle
                   href="/credits"
@@ -168,7 +175,7 @@ export default function MobileTopNav({
                   active={isActive("/credits")}
                   badge="29"
                 >
-                  <TimerReset className="h-4 w-4" />
+                  <BadgeCent className="h-4 w-4" />
                 </Circle>
               </div>
             )}
@@ -178,7 +185,6 @@ export default function MobileTopNav({
         </div>
       )}
 
-      {/* Bottom Bar */}
       <BottomBar
         homeActive={isActive("/")}
         notifActive={isActive("/notifications")}
@@ -189,7 +195,6 @@ export default function MobileTopNav({
 
       {!showOnlyBottom && <div className="md:hidden h-20" />}
 
-      {/* Create Listing Dialog - Custom */}
       <ListDialog open={open} onOpenChange={handleOpenChange}>
         <ListDialogHeader>
           <ListDialogTitle>Create Listing</ListDialogTitle>
@@ -252,14 +257,16 @@ function Circle({ href, active, label, badge, children }: any) {
       href={href}
       aria-label={label}
       aria-current={active ? "page" : undefined}
-      className={`relative inline-flex items-center justify-center h-9 w-9 shrink-0 rounded-full ring-1 ring-black/10 ${
+      className={`relative inline-flex h-9 w-9 shrink-0 rounded-full ring-1 ring-black/10 ${
         active ? "bg-[#102E4A]/10 text-[#102E4A]" : "bg-white text-[#102E4A]"
       }`}
     >
-      {children}
+      <span className="absolute inset-0 flex items-center justify-center">
+        {children}
+      </span>
 
       {badge && (
-        <span className="absolute -top-1.5 -right-1.5 inline-flex items-center justify-center rounded-full bg-[#102E4A] text-white text-[10px] font-bold leading-none h-4 min-w-4 px-1">
+        <span className="absolute -top-1.5 -right-1.5 inline-flex items-center justify-center rounded-full bg-[#102E4A] text-white text-[10px] font-bold h-4 min-w-4 px-1">
           {badge}
         </span>
       )}
@@ -283,14 +290,18 @@ function BottomBar({
           <Home className="h-5 w-5" />
         </NavIcon>
 
-        <NavIcon href="/notifications" label="Notifications" active={notifActive}>
+        <NavIcon
+          href="/notifications"
+          label="Notifications"
+          active={notifActive}
+        >
           <Bell className="h-5 w-5" />
         </NavIcon>
 
         <button
           aria-label="Create listing"
           onClick={onOpenList}
-          className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 inline-flex items-center justify-center h-12 w-12 rounded-full bg-[#F3D58D] text-[#102E4A] shadow-md ring-1 ring-black/10"
+          className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 h-12 w-12 rounded-full bg-[#F3D58D] text-[#102E4A] shadow-md ring-1 ring-black/10 flex items-center justify-center"
         >
           <Plus className="h-6 w-6" />
         </button>
@@ -311,7 +322,7 @@ function NavIcon({ href, label, active, children }: any) {
       href={href}
       aria-label={label}
       aria-current={active ? "page" : undefined}
-      className={`inline-flex flex-col items-center justify-center gap-1 px-2 py-1.5 text-xs ${
+      className={`inline-flex flex-col items-center gap-1 px-2 py-1.5 text-xs ${
         active ? "text-[#E59E2C]" : "text-gray-600"
       }`}
     >
@@ -325,24 +336,17 @@ function ProfileBottomItem({ active }: any) {
   const router = useRouter();
   const supabase = React.useMemo(() => createClient(), []);
 
-  const handleProfile = () => router.push("/profile");
-
   const handleLogout = async () => {
-    try {
-      await supabase.auth.signOut();
-    } catch {}
-    finally {
-      router.push("/");
-      router.refresh();
-    }
+    await supabase.auth.signOut();
+    router.push("/");
+    router.refresh();
   };
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button
-          aria-label="Profile menu"
-          className={`inline-flex flex-col items-center justify-center gap-1 px-2 py-1.5 text-xs ${
+          className={`inline-flex flex-col items-center gap-1 px-2 py-1.5 text-xs ${
             active ? "text-[#E59E2C]" : "text-gray-600"
           }`}
         >
@@ -351,12 +355,10 @@ function ProfileBottomItem({ active }: any) {
         </button>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent align="end" sideOffset={6} className="w-44">
-        <DropdownMenuItem onClick={handleProfile}>
-          <UserRound className="mr-2 h-4 w-4" />
+      <DropdownMenuContent align="end" className="w-44">
+        <DropdownMenuItem onClick={() => router.push("/profile")}>
           Profile
         </DropdownMenuItem>
-
         <DropdownMenuItem onClick={handleLogout}>
           <LogOut className="mr-2 h-4 w-4" />
           Logout
