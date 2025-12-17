@@ -280,7 +280,7 @@ export function SettingsPanel() {
           <DialogHeader>
             <DialogTitle className="text-xl font-bold">Contact Admin</DialogTitle>
             <DialogDescription>
-              Send a message to the administrators. We'll get back to you as soon as possible.
+              Send a message to the administrators. We&apos;ll get back to you as soon as possible.
             </DialogDescription>
           </DialogHeader>
 
@@ -315,7 +315,7 @@ export function SettingsPanel() {
             )}
             {contactSuccess && (
               <p className="text-sm text-green-600">
-                Message sent successfully! We'll get back to you soon.
+                Message sent successfully! We&apos;ll get back to you soon.
               </p>
             )}
 
