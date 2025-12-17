@@ -341,21 +341,25 @@ useEffect(() => {
                                 setNotificationsOpen(false);
 
                                 // Redirect based on notification type
-                                if (n.related_table === "offers" && n.related_id) {
-                                  // Fetch the offer to get the post_id
-                                  const { data: offer } = await supabase
-                                    .from("offers")
-                                    .select("post_id")
-                                    .eq("id", n.related_id)
-                                    .single();
+                                  if (n.related_table === "reviews") {
+                                    router.push("/profile#reviews");
+                                  } 
+                                  else if (n.related_table === "offers" && n.related_id) {
+                                    // Fetch the offer to get the post_id
+                                    const { data: offer } = await supabase
+                                      .from("offers")
+                                      .select("post_id")
+                                      .eq("id", n.related_id)
+                                      .single();
 
-                                  if (offer?.post_id) {
-                                    router.push(`/product/${offer.post_id}`);
+                                    if (offer?.post_id) {
+                                      router.push(`/product/${offer.post_id}`);
+                                    }
+                                  } 
+                                  else if (n.related_table === "posts" && n.related_id) {
+                                    router.push(`/product/${n.related_id}`);
                                   }
-                                } else if (n.related_table === "posts" && n.related_id) {
-                                  // Direct post notification (includes item reports)
-                                  router.push(`/product/${n.related_id}`);
-                                }
+
                               }}
                             >
                               <div className="flex items-start gap-3">

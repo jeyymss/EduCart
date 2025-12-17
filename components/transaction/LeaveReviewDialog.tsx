@@ -37,25 +37,47 @@ export default function LeaveReviewDialog({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const supabase = useMemo(() => createClient(), []);
 
-  const handleSubmit = async () => {
-    if (!rating) {
-      toast.error("Please select a rating.");
-      return;
-    }
-    setIsSubmitting(true);
-    const { error } = await supabase.from("reviews").insert({
-      transaction_id: transactionId,
-      reviewer_id: buyerId,
-      reviewed_user_id: sellerId,
-      rating,
-      comment,
+  const notifySeller = async () => {
+    const { error } = await supabase.from("notifications").insert({
+      user_id: sellerId,
+      sender_user_id: buyerId,
+      category: "Review",
+      title: "New Review Received",
+      body: "A buyer has left a review on your transaction.",
+      related_table: "reviews",
     });
 
     if (error) {
-      console.error(error);
-      toast.error("Failed to submit review.");
-      setIsSubmitting(false);
-    } else {
+      console.error("[Review Notification Error]", error);
+    }
+  };
+
+  const handleSubmit = async () => {
+      if (!rating) {
+        toast.error("Please select a rating.");
+        return;
+      }
+
+      setIsSubmitting(true);
+
+      const { error } = await supabase.from("reviews").insert({
+        transaction_id: transactionId,
+        reviewer_id: buyerId,
+        reviewed_user_id: sellerId,
+        rating,
+        comment,
+      });
+
+      if (error) {
+        console.error(error);
+        toast.error("Failed to submit review.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      // 🔔 Notify seller
+      await notifySeller();
+
       toast.success("Review submitted successfully!");
 
       // Reset form
@@ -63,13 +85,10 @@ export default function LeaveReviewDialog({
       setComment("");
       setIsSubmitting(false);
 
-      // Notify parent component
       onReviewSubmitted?.();
-
-      // Close dialog
       onOpenChange(false);
-    }
-  };
+    };
+
 
   return (
     <Dialog open={open} onOpenChange={(newOpen) => {
