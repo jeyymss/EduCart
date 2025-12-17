@@ -26,6 +26,9 @@ export async function GET(req: Request) {
         product_name,
         price
       )
+      post_user_id (
+        name
+      )
     `)
     .eq("id", postId)
     .single();

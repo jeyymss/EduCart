@@ -40,9 +40,9 @@ export async function POST(req: Request) {
 
       let notificationMessage = "";
       if (newStatus === "Accepted") {
-        notificationMessage = `Your order for "${itemTitle}" has been accepted by the seller.`;
+        notificationMessage = `Your PasaBuy order "${itemTitle}" has been accepted by the seller.`;
       } else if (newStatus === "Cancelled") {
-        notificationMessage = `Your order for "${itemTitle}" has been rejected by the seller.`;
+        notificationMessage = `Your PasaBuy order "${itemTitle}" has been rejected by the seller.`;
       }
 
       // Insert notification for buyer

@@ -52,6 +52,12 @@ export default function PasabuyModal({ post, onClose }: PasabuyModalProps) {
             <div className="mt-4 space-y-3 text-sm text-gray-700">
                 <p>
                   <span className="font-semibold text-[#102E4A]">
+                    Posted By:
+                  </span>{" "}
+                  {post.full_name}
+                </p>
+                <p>
+                  <span className="font-semibold text-[#102E4A]">
                     Description:
                   </span>{" "}
                   {post.item_description}

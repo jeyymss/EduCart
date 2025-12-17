@@ -90,6 +90,7 @@ export async function GET(req: Request) {
           id,
           item_title,
           image_urls,
+          item_service_fee,
           post_type:post_type_id ( name ),
           pasabuy_items (
             id,
@@ -108,7 +109,7 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  /* ===================== MAP RECORDS ===================== */
+  /* ===================== MAP TRANSACTION RECORDS ===================== */
 
   const transactions = (data || [])
     .map((row): MappedTransaction | null => {
@@ -136,11 +137,16 @@ export async function GET(req: Request) {
 
       const itemPrice = txn.price || snap.price || 0;
       const deliveryFee = snap.delivery_fee ?? null;
-      const serviceFee = snap.service_fee ?? null;
       const itemsTotal = snap.items_total ?? null;
       const cashAdded = snap.cash_added ?? null;
 
-      // Calculate rent days from dates if not provided
+      /* ✅ SERVICE FEE: ALWAYS FROM POSTS (PASABUY ONLY) */
+      const serviceFee =
+        postType?.name === "PasaBuy"
+          ? post?.item_service_fee ?? null
+          : snap.service_fee ?? null;
+
+      /* RENT DAYS */
       let rentDays = snap.rent_days ?? null;
       if (!rentDays && snap.rent_start_date && snap.rent_end_date) {
         rentDays = Math.max(
@@ -153,15 +159,12 @@ export async function GET(req: Request) {
         );
       }
 
-      // Get PasaBuy items from post relation or snapshot
+      /* PASABUY ITEMS */
       let pasabuyItems: any[] | null = null;
       if (postType?.name === "PasaBuy") {
-        // First try to get from post relation
-        if (post?.pasabuy_items && Array.isArray(post.pasabuy_items) && post.pasabuy_items.length > 0) {
+        if (post?.pasabuy_items?.length) {
           pasabuyItems = post.pasabuy_items;
-        }
-        // Fallback to snapshot if available
-        else if (snap.pasabuy_items_snapshot) {
+        } else if (snap.pasabuy_items_snapshot) {
           try {
             pasabuyItems =
               typeof snap.pasabuy_items_snapshot === "string"
@@ -173,6 +176,7 @@ export async function GET(req: Request) {
         }
       }
 
+      /* TOTAL CALCULATION */
       let totalAmount = 0;
       const postTypeName = postType?.name || snap.post_type;
 
@@ -182,7 +186,11 @@ export async function GET(req: Request) {
             (sum, item) => sum + (Number(item.price) || 0),
             0
           ) || itemsTotal || 0;
-        totalAmount = itemsSum + (serviceFee || 0) + (deliveryFee || 0);
+
+        totalAmount =
+          itemsSum +
+          (serviceFee || 0) +
+          (deliveryFee || 0);
       } else if (postTypeName === "Rent") {
         totalAmount = itemPrice * (rentDays || 1);
       } else if (postTypeName === "Trade") {
@@ -213,8 +221,7 @@ export async function GET(req: Request) {
         pasabuy_items: pasabuyItems,
         created_at: snap.created_at,
         post_type: postTypeName || "Buy",
-        image_url:
-          post?.image_urls?.[0] || "/bluecart.png",
+        image_url: post?.image_urls?.[0] || "/bluecart.png",
         buyer: buyerObj?.name || "",
         seller: sellerObj?.name || "",
         buyer_id: row.buyer_id,
@@ -289,11 +296,14 @@ export async function GET(req: Request) {
 
       const itemPrice = post?.item_price || txn.price || 0;
       const deliveryFee = txn.delivery_fee ?? null;
-      const serviceFee = post?.item_service_fee ?? null;
       const itemsTotal = txn.items_total ?? null;
       const cashAdded = txn.cash_added ?? null;
 
-      // Calculate rent days from dates if not provided
+      const serviceFee =
+        postType?.name === "PasaBuy"
+          ? post?.item_service_fee ?? null
+          : null;
+
       let rentDays = txn.rent_days ?? null;
       if (!rentDays && txn.rent_start_date && txn.rent_end_date) {
         rentDays = Math.max(
@@ -306,49 +316,42 @@ export async function GET(req: Request) {
         );
       }
 
-      // Get PasaBuy items from post relation or snapshot
       let pasabuyItems = null;
       if (postType?.name === "PasaBuy") {
-        // First try to get from post relation
-        if (post?.pasabuy_items && Array.isArray(post.pasabuy_items) && post.pasabuy_items.length > 0) {
+        if (post?.pasabuy_items?.length) {
           pasabuyItems = post.pasabuy_items;
-        }
-        // Fallback to snapshot if available
-        else if (txn.pasabuy_items_snapshot) {
+        } else if (txn.pasabuy_items_snapshot) {
           try {
-            pasabuyItems = typeof txn.pasabuy_items_snapshot === 'string'
-              ? JSON.parse(txn.pasabuy_items_snapshot)
-              : txn.pasabuy_items_snapshot;
+            pasabuyItems =
+              typeof txn.pasabuy_items_snapshot === "string"
+                ? JSON.parse(txn.pasabuy_items_snapshot)
+                : txn.pasabuy_items_snapshot;
           } catch {
             pasabuyItems = null;
           }
         }
       }
 
-      // Calculate total amount based on transaction type
       let totalAmount = 0;
-      const postTypeName = postType?.name;
 
-      if (postTypeName === "PasaBuy") {
-        // PasaBuy: Sum of all selected items + service_fee + delivery_fee
-        if (pasabuyItems && Array.isArray(pasabuyItems) && pasabuyItems.length > 0) {
-          const itemsSum = pasabuyItems.reduce((sum, item) => {
-            return sum + (Number(item.price) || 0);
-          }, 0);
-          totalAmount = itemsSum + (serviceFee || 0) + (deliveryFee || 0);
-        } else {
-          // Fallback to itemsTotal if pasabuyItems not available
-          totalAmount = (itemsTotal || 0) + (serviceFee || 0) + (deliveryFee || 0);
-        }
-      } else if (postTypeName === "Rent") {
-        // Rent: price_per_day × rent_days
-        const days = rentDays || 1;
-        totalAmount = itemPrice * days;
-      } else if (postTypeName === "Trade") {
-        // Trade: cash_added (the amount buyer needs to pay on top of trade)
+      if (postType?.name === "PasaBuy") {
+        const itemsSum =
+            pasabuyItems?.reduce(
+              (sum: number, item: { price: number }) =>
+                sum + (Number(item.price) || 0),
+              0
+            ) ?? itemsTotal ?? 0;
+
+
+        totalAmount =
+          itemsSum +
+          (serviceFee || 0) +
+          (deliveryFee || 0);
+      } else if (postType?.name === "Rent") {
+        totalAmount = itemPrice * (rentDays || 1);
+      } else if (postType?.name === "Trade") {
         totalAmount = cashAdded || 0;
       } else {
-        // Sale, Emergency, Giveaway: item_price + delivery_fee
         totalAmount = itemPrice + (deliveryFee || 0);
       }
 

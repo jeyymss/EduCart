@@ -13,7 +13,8 @@ export function computePasaBuyActionLabel(
   if (paymentMethod === "Online Payment" && fulfillmentMethod === "Delivery") {
     // BUYER VIEW
     if (type === "Purchases") {
-      if (s === "pending") return "Pay Now";
+      if (s === "pending") return "Waiting for Seller";
+      if (s === "accepted") return "Pay Now";
       if (s === "paid") return "Waiting for Delivery";
       if (s === "pickedup") return "Order Received";
       if (s === "completed") return "Completed";
@@ -24,6 +25,7 @@ export function computePasaBuyActionLabel(
     // SELLER VIEW
     if (type === "Sales") {
       if (s === "pending") return "Action";
+      if (s === "accepted") return "Waiting for Payment";
       if (s === "paid") return "Order Picked Up";
       if (s === "pickedup") return "On Hold";
       if (s === "completed") return "Completed";

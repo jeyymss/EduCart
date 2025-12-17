@@ -96,16 +96,51 @@ export default function PaymentDialog({
   }
 
   // Debug log for PasaBuy
-  if (isPasaBuy && open) {
-    console.log("PasaBuy Payment Dialog Data:", {
-      pasabuyItems,
-      itemsTotal,
-      serviceFee,
-      deliveryFee,
-      txnPrice,
-      fulfillmentMethod
-    });
-  }
+    if (isPasaBuy && open) {
+      console.log("PasaBuy Payment Dialog Data:", {
+        pasabuyItems,
+        itemsTotal,
+        serviceFee,
+        deliveryFee,
+        txnPrice,
+        fulfillmentMethod
+      });
+    }
+
+    const computedTotal = (() => {
+    // TRADE
+    if (isTrade) {
+      return cash_added ?? 0;
+    }
+
+    // PASABUY ✅ items + service fee + delivery fee (if delivery)
+    if (isPasaBuy) {
+      const itemsSum =
+        pasabuyItems?.reduce(
+          (sum, item) => sum + (Number(item.price) || 0),
+          0
+        ) ?? 0;
+
+      return (
+        itemsSum +
+        (serviceFee ?? 0) +
+        (isDelivery ? deliveryFee ?? 0 : 0)
+      );
+    }
+
+    // RENT
+    if (isRent) {
+      return (Number(txnPrice) || 0) * (rentDays || 1);
+    }
+
+    // SALE / EMERGENCY / GIVEAWAY
+    return (
+      (Number(txnPrice) || 0) +
+      (isDelivery ? deliveryFee ?? 0 : 0)
+    );
+  })();
+
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -256,16 +291,9 @@ export default function PaymentDialog({
               <span>Total</span>
 
               <span className="text-blue-900">
-                {isTrade
-                  ? formatCurrency(totalPayment)
-                  : isPasaBuy
-                    ? formatCurrency(txnPrice)
-                    : isSale && isMeetup
-                      ? formatCurrency(txnPrice)
-                      : totalPayment !== null
-                        ? formatCurrency(totalPayment)
-                        : "—"}
+                {formatCurrency(computedTotal)}
               </span>
+
             </div>
 
 
