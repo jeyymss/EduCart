@@ -21,6 +21,9 @@ import {
 import * as React from "react";
 import ReportTransacDialog from "@/components/report/reportTransacDialog";
 import { submitTransacReport } from "@/app/api/reports/reportTransac/route";
+import { createClient } from "@/utils/supabase/client";
+import { useEffect } from "react";
+
 
 type TransactionDetailsModalProps = {
   open: boolean;
@@ -86,6 +89,16 @@ export default function TransactionDetailsModal({
 }: TransactionDetailsModalProps) {
   const [showReport, setShowReport] = useState(false);
   const [selectedReportReason, setSelectedReportReason] = useState("");
+  const supabase = createClient();
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      setCurrentUserId(data.user?.id ?? null);
+    });
+  }, []);
+
+  const isSeller = currentUserId === data?.seller_id;
 
   if (!data) return null;
 
@@ -452,7 +465,7 @@ export default function TransactionDetailsModal({
             )}
 
             {/* LOCATION DETAILS */}
-              {data.method === "Delivery" && (
+              {data.method === "Delivery" && isSeller &&  (
                 <div className="space-y-2">
                   {/* PICKUP LOCATION (SELLER) */}
                   {data.pickup_location && (
