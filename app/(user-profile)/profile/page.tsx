@@ -306,7 +306,7 @@ export default function ProfilePage() {
                 </div>
 
                 {/* Add Business Account Modal */}
-                {displayUser.profile_type !== "Organization" && (
+                {/* {displayUser.profile_type !== "Organization" && (
                   <motion.div
                     className="mt-3 md:mt-2 w-full md:w-auto flex justify-end md:justify-start"
                     variants={fadeIn}
@@ -315,7 +315,7 @@ export default function ProfilePage() {
                   >
                     <AddBusinessModal />
                   </motion.div>
-                )}
+                )} */}
               </div>
             </motion.div>
           </motion.div>
