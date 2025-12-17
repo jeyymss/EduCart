@@ -4,10 +4,18 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Send } from "lucide-react";
 import Link from "next/link";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { createClient } from "@/utils/supabase/client";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 
 export function SettingsPanel() {
   const supabase = createClient();
@@ -21,6 +29,14 @@ export function SettingsPanel() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+
+  // Contact Admin Modal States
+  const [showContactModal, setShowContactModal] = useState(false);
+  const [contactSubject, setContactSubject] = useState("");
+  const [contactMessage, setContactMessage] = useState("");
+  const [contactLoading, setContactLoading] = useState(false);
+  const [contactError, setContactError] = useState<string | null>(null);
+  const [contactSuccess, setContactSuccess] = useState(false);
 
   const { data: user } = useUserProfile();
 
@@ -84,6 +100,63 @@ export function SettingsPanel() {
       setLoading(false);
     }
   };
+
+  /* ================= CONTACT ADMIN HANDLER ================= */
+
+  const handleContactAdmin = async () => {
+    setContactError(null);
+    setContactSuccess(false);
+    setContactLoading(true);
+
+    try {
+      if (!contactSubject.trim() || !contactMessage.trim()) {
+        throw new Error("Please fill in both subject and message");
+      }
+
+      // get logged-in user (email will be used as sender)
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user?.email) {
+        throw new Error("User not authenticated");
+      }
+
+      const res = await fetch("/api/contact-admin", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: user.user_metadata?.full_name || "EduCart User",
+          email: user.email,
+          subject: contactSubject,
+          message: contactMessage,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to send message");
+      }
+
+      setContactSuccess(true);
+      setContactSubject("");
+      setContactMessage("");
+
+      // auto-close modal
+      setTimeout(() => {
+        setShowContactModal(false);
+        setContactSuccess(false);
+      }, 2000);
+    } catch (err: any) {
+      setContactError(err.message || "Something went wrong");
+    } finally {
+      setContactLoading(false);
+    }
+  };
+
 
   /* ================= UI ================= */
 
@@ -189,14 +262,75 @@ export function SettingsPanel() {
       <section className="space-y-3">
         <h3 className="font-semibold text-lg">Support</h3>
         <p className="text-sm text-muted-foreground">
-          <a href="#" className="font-medium hover:text-primary">
+          <button
+            onClick={() => setShowContactModal(true)}
+            className="font-medium hover:text-primary underline"
+          >
             Contact Admin →
-          </a>
+          </button>
           <br />
           Reach out to administrators for help, technical issues, or account
           support.
         </p>
       </section>
+
+      {/* ================= CONTACT ADMIN MODAL ================= */}
+      <Dialog open={showContactModal} onOpenChange={setShowContactModal}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold">Contact Admin</DialogTitle>
+            <DialogDescription>
+              Send a message to the administrators. We'll get back to you as soon as possible.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            {/* Subject Input */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Subject</label>
+              <Input
+                placeholder="Enter subject"
+                value={contactSubject}
+                onChange={(e) => setContactSubject(e.target.value)}
+                disabled={contactLoading}
+              />
+            </div>
+
+            {/* Message Textarea */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Message</label>
+              <Textarea
+                placeholder="Enter your message"
+                value={contactMessage}
+                onChange={(e) => setContactMessage(e.target.value)}
+                disabled={contactLoading}
+                rows={6}
+                className="resize-none"
+              />
+            </div>
+
+            {/* Feedback Messages */}
+            {contactError && (
+              <p className="text-sm text-red-500">{contactError}</p>
+            )}
+            {contactSuccess && (
+              <p className="text-sm text-green-600">
+                Message sent successfully! We'll get back to you soon.
+              </p>
+            )}
+
+            {/* Submit Button */}
+            <Button
+              onClick={handleContactAdmin}
+              disabled={contactLoading || contactSuccess}
+              className="w-full bg-[#E59E2C] text-white hover:bg-[#d4881f]"
+            >
+              <Send className="mr-2 h-4 w-4" />
+              {contactLoading ? "Sending..." : "Submit"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
