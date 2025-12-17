@@ -283,11 +283,11 @@ export default function TradeTransacForm({
                   <p className="text-xs text-gray-600 uppercase tracking-wide mb-2">Exchange Details</p>
                   {hasCashRequired ? (
                     <p className="text-sm text-gray-700">
-                      You'll trade your item <span className="font-semibold">+ cash</span> for <span className="font-semibold">{itemTitle}</span>
+                      You&apos;ll trade your item <span className="font-semibold">+ cash</span> for <span className="font-semibold">{itemTitle}</span>
                     </p>
                   ) : (
                     <p className="text-sm text-gray-700">
-                      You'll trade your item for <span className="font-semibold">{itemTitle}</span>
+                      You&apos;ll trade your item for <span className="font-semibold">{itemTitle}</span>
                     </p>
                   )}
                 </div>
