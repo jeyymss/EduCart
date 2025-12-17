@@ -139,7 +139,19 @@ export async function GET(req: Request) {
       const serviceFee = snap.service_fee ?? null;
       const itemsTotal = snap.items_total ?? null;
       const cashAdded = snap.cash_added ?? null;
-      const rentDays = snap.rent_days ?? null;
+
+      // Calculate rent days from dates if not provided
+      let rentDays = snap.rent_days ?? null;
+      if (!rentDays && snap.rent_start_date && snap.rent_end_date) {
+        rentDays = Math.max(
+          1,
+          Math.ceil(
+            (new Date(snap.rent_end_date).getTime() -
+              new Date(snap.rent_start_date).getTime()) /
+              (1000 * 60 * 60 * 24)
+          )
+        );
+      }
 
       // Get PasaBuy items from post relation or snapshot
       let pasabuyItems: any[] | null = null;
@@ -280,7 +292,19 @@ export async function GET(req: Request) {
       const serviceFee = post?.item_service_fee ?? null;
       const itemsTotal = txn.items_total ?? null;
       const cashAdded = txn.cash_added ?? null;
-      const rentDays = txn.rent_days ?? null;
+
+      // Calculate rent days from dates if not provided
+      let rentDays = txn.rent_days ?? null;
+      if (!rentDays && txn.rent_start_date && txn.rent_end_date) {
+        rentDays = Math.max(
+          1,
+          Math.ceil(
+            (new Date(txn.rent_end_date).getTime() -
+              new Date(txn.rent_start_date).getTime()) /
+              (1000 * 60 * 60 * 24)
+          )
+        );
+      }
 
       // Get PasaBuy items from post relation or snapshot
       let pasabuyItems = null;
