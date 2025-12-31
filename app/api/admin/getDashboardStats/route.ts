@@ -12,20 +12,50 @@ export async function GET() {
 
     const supabase = await createClient();
 
-    // Fetch counts in parallel
-    const [individualsRes, orgsRes, txnsRes] = await Promise.all([
+    // Get current month and year
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth() + 1;
+
+    // Fetch all data in parallel
+    const [
+      individualsRes,
+      orgsRes,
+      creditSalesRes,
+      commissionsRes,
+      monthlyRevenueRes,
+    ] = await Promise.all([
+      // Total individuals
       supabase.from("individuals").select("*", { count: "exact", head: true }),
+
+      // Total organizations
+      supabase.from("organizations").select("*", { count: "exact", head: true }),
+
+      // Credit sales - sum of all 'Credit Purchase' transactions
       supabase
-        .from("organizations")
-        .select("*", { count: "exact", head: true }),
-      supabase.from("transactions").select("*", { count: "exact", head: true }),
+        .from("platform_wallet_transactions")
+        .select("amount")
+        .eq("type", "Credit Purchase"),
+
+      // Commissions - sum of all 'Commission' transactions
+      supabase
+        .from("platform_wallet_transactions")
+        .select("amount")
+        .eq("type", "Commission"),
+
+      // Monthly revenue from platform_wallet_monthly_sales
+      supabase
+        .from("platform_wallet_monthly_sales")
+        .select("total_sales")
+        .eq("year", year)
+        .eq("month", month)
+        .single(),
     ]);
 
-    if (individualsRes.error || orgsRes.error || txnsRes.error) {
+    if (individualsRes.error || orgsRes.error) {
       console.error("❌ Supabase query errors:", {
         individuals: individualsRes.error,
         organizations: orgsRes.error,
-        transactions: txnsRes.error,
       });
       return NextResponse.json(
         {
@@ -33,17 +63,35 @@ export async function GET() {
           details: {
             individuals: individualsRes.error?.message ?? null,
             organizations: orgsRes.error?.message ?? null,
-            transactions: txnsRes.error?.message ?? null,
           },
         },
         { status: 500 }
       );
     }
 
+    // Calculate total users
+    const totalUsers = (individualsRes.count ?? 0) + (orgsRes.count ?? 0);
+
+    // Calculate credit sales total
+    const creditSales = creditSalesRes.data?.reduce(
+      (sum, transaction) => sum + (transaction.amount || 0),
+      0
+    ) ?? 0;
+
+    // Calculate commissions total
+    const commissions = commissionsRes.data?.reduce(
+      (sum, transaction) => sum + (transaction.amount || 0),
+      0
+    ) ?? 0;
+
+    // Get monthly revenue
+    const monthlyRevenue = monthlyRevenueRes.data?.total_sales ?? 0;
+
     return NextResponse.json({
-      totalIndividuals: individualsRes.count ?? 0,
-      totalOrganizations: orgsRes.count ?? 0,
-      totalTransactions: txnsRes.count ?? 0,
+      totalUsers,
+      creditSales,
+      commissions,
+      monthlyRevenue,
     });
   } catch (err: any) {
     console.error("❌ Unexpected error:", err.message);

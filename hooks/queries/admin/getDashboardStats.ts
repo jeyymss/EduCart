@@ -14,9 +14,10 @@ export function useDashboardStats() {
 
       const data = await res.json();
       return {
-        individuals: data.totalIndividuals as number,
-        organizations: data.totalOrganizations as number,
-        transactions: data.totalTransactions as number,
+        totalUsers: data.totalUsers as number,
+        creditSales: data.creditSales as number,
+        commissions: data.commissions as number,
+        monthlyRevenue: data.monthlyRevenue as number,
       };
     },
     staleTime: 1000 * 60, // 1 minute cache
