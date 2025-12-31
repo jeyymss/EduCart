@@ -493,7 +493,7 @@ export default function ManageUsers() {
           <DialogHeader>
             <DialogTitle>Suspend User</DialogTitle>
             <DialogDescription>
-              Suspend {selectedUser?.name}'s account. They will not be able to access the platform until unsuspended.
+              Suspend {selectedUser?.name}&apos;s account. They will not be able to access the platform until unsuspended.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -521,7 +521,7 @@ export default function ManageUsers() {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete {selectedUser?.name}'s account
+              This action cannot be undone. This will permanently delete {selectedUser?.name}&apos;s account
               and remove all their data from our servers.
             </AlertDialogDescription>
           </AlertDialogHeader>
