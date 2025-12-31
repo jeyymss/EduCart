@@ -6,7 +6,7 @@ export async function GET() {
 
   const { data, error } = await supabase
     .from("admin_all_accounts")
-    .select("user_id, name, email, role, university, created_at, avatar_url")
+    .select("user_id, name, email, role, university, created_at, avatar_url, credits")
     .order("created_at", { ascending: false });
 
   if (error)

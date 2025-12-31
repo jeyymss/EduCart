@@ -6,9 +6,10 @@ export type Users = {
   email: string;
   role: string;
   university: string | null;
-
   created_at: string;
   avatar_url: string | null;
+  credits: number | null;
+  status: string | null;
 };
 
 export const manageUsers = () => {

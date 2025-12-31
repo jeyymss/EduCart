@@ -46,7 +46,7 @@ export function AdminNavMain() {
           </Link>
         </SidebarMenuItem>
 
-        {/* Manage Accounts */}
+        {/* Users */}
         <SidebarMenuItem>
           <Link
             href="/admin/accounts"
@@ -59,7 +59,7 @@ export function AdminNavMain() {
               )}
             >
               <UserPen className="h-4 w-4" />
-              <span>Manage Accounts</span>
+              <span>Users</span>
             </SidebarMenuButton>
           </Link>
         </SidebarMenuItem>
