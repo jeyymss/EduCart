@@ -13,7 +13,7 @@ export async function GET() {
     .select("total_sales")
     .eq("year", year)
     .eq("month", month)
-    .single();
+    .maybeSingle();
 
   return NextResponse.json({
     totalSales: data?.total_sales ?? 0,

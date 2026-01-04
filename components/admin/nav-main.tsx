@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { LayoutDashboard, UserPen, Wallet, Flag } from "lucide-react";
+import { LayoutDashboard, UserPen, Wallet, Flag, Folder } from "lucide-react";
 import {
   SidebarGroup,
   SidebarMenu,
@@ -60,6 +60,24 @@ export function AdminNavMain() {
             >
               <UserPen className="h-4 w-4" />
               <span>Users</span>
+            </SidebarMenuButton>
+          </Link>
+        </SidebarMenuItem>
+
+        {/* Categories */}
+        <SidebarMenuItem>
+          <Link
+            href="/admin/categories"
+            aria-current={isActive("/admin/categories") ? "page" : undefined}
+          >
+            <SidebarMenuButton
+              className={cx(
+                baseItem,
+                isActive("/admin/categories") ? activeItem : inactiveItem
+              )}
+            >
+              <Folder className="h-4 w-4" />
+              <span>Categories</span>
             </SidebarMenuButton>
           </Link>
         </SidebarMenuItem>

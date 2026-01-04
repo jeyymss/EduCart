@@ -49,6 +49,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { manageUsers } from "@/hooks/queries/admin/manageUsers";
+import { UserProfileModal } from "@/components/admin/UserProfileModal";
 
 function initialsFrom(name?: string) {
   if (!name) return "ED";
@@ -71,6 +72,7 @@ export default function ManageUsers() {
   const ITEMS_PER_PAGE = 10;
 
   // Dialog states
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [warnDialogOpen, setWarnDialogOpen] = useState(false);
   const [suspendDialogOpen, setSuspendDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -115,8 +117,9 @@ export default function ManageUsers() {
     return Array.from(new Set(users.map((u) => u.university).filter(Boolean)));
   }, [users]);
 
-  const handleViewProfile = (userId: string) => {
-    router.push(`/${userId}`);
+  const handleViewProfile = (user: any) => {
+    setSelectedUser(user);
+    setProfileModalOpen(true);
   };
 
   const handleWarnUser = (user: any) => {
@@ -352,7 +355,7 @@ export default function ManageUsers() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem
-                            onClick={() => handleViewProfile(u.user_id)}
+                            onClick={() => handleViewProfile(u)}
                           >
                             <Eye className="mr-2 h-4 w-4" />
                             View Profile
@@ -458,6 +461,13 @@ export default function ManageUsers() {
           </Pagination>
         )}
       </div>
+
+      {/* User Profile Modal */}
+      <UserProfileModal
+        userId={selectedUser?.user_id ?? null}
+        open={profileModalOpen}
+        onOpenChange={setProfileModalOpen}
+      />
 
       {/* Warn User Dialog */}
       <Dialog open={warnDialogOpen} onOpenChange={setWarnDialogOpen}>

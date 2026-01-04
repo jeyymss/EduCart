@@ -49,7 +49,7 @@ export async function GET() {
         .select("total_sales")
         .eq("year", year)
         .eq("month", month)
-        .single(),
+        .maybeSingle(),
     ]);
 
     if (individualsRes.error || orgsRes.error) {
@@ -86,6 +86,14 @@ export async function GET() {
 
     // Get monthly revenue
     const monthlyRevenue = monthlyRevenueRes.data?.total_sales ?? 0;
+
+    console.log("📊 Monthly Sales Data:", {
+      year,
+      month,
+      data: monthlyRevenueRes.data,
+      monthlyRevenue,
+      error: monthlyRevenueRes.error,
+    });
 
     return NextResponse.json({
       totalUsers,

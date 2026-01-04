@@ -39,7 +39,7 @@ export async function GET(request: Request) {
         .select("total_sales")
         .eq("year", year)
         .eq("month", month)
-        .single();
+        .maybeSingle();
 
       // Get month name
       const monthDate = new Date(year, month - 1);
