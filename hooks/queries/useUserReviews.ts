@@ -41,5 +41,7 @@ export function useUserReviews(userId: string) {
     queryKey: ["userReviews", userId],
     queryFn: () => fetchUserReviews(userId),
     enabled: !!userId,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    refetchOnWindowFocus: false,
   });
 }

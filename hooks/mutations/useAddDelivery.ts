@@ -3,7 +3,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-export function useAddDelivery() {
+export function useAddDelivery(userId?: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -26,7 +26,12 @@ export function useAddDelivery() {
     onMutate: () => toast.loading("Assigning courier..."),
     onSuccess: () => {
       toast.success("Courier assigned successfully!");
-      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      // Invalidate specific user's transactions if userId provided, otherwise invalidate all
+      if (userId) {
+        queryClient.invalidateQueries({ queryKey: ["transactions", userId] });
+      } else {
+        queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      }
     },
     onError: (err: any) => toast.error(err.message || "Failed to add delivery"),
     onSettled: () => toast.dismiss(),

@@ -27,5 +27,7 @@ export function usePasabuyDetails(postId: string | null) {
       return data;
     },
     enabled: !!postId,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    refetchOnWindowFocus: false,
   });
 }

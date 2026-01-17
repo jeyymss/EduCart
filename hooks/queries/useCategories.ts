@@ -16,5 +16,7 @@ export const useCategories = () => {
       if (error) throw new Error(error.message);
       return data;
     },
+    staleTime: 1000 * 60 * 10, // 10 minutes - categories rarely change
+    refetchOnWindowFocus: false,
   });
 };

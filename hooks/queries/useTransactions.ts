@@ -50,6 +50,8 @@ export function useTransactions(userId: string) {
     queryKey: ["transactions", userId],
     queryFn: () => fetchTransactions(userId),
     enabled: !!userId,
+    staleTime: 1000 * 60 * 1, // 1 minute - real-time updates handle freshness
+    refetchOnWindowFocus: false,
   });
 
   // Real-time subscription for transaction updates

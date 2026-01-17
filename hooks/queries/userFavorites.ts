@@ -18,6 +18,8 @@ export function useIsFavorite(postId?: string, userId?: string) {
       return !!data;
     },
     enabled: !!postId && !!userId,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    refetchOnWindowFocus: false,
   });
 }
 

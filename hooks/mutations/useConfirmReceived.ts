@@ -3,7 +3,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-export function useConfirmReceived() {
+export function useConfirmReceived(userId?: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -20,7 +20,12 @@ export function useConfirmReceived() {
     onMutate: () => toast.loading("Updating transaction..."),
     onSuccess: () => {
       toast.success("Item marked as received!");
-      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      // Invalidate specific user's transactions if userId provided, otherwise invalidate all
+      if (userId) {
+        queryClient.invalidateQueries({ queryKey: ["transactions", userId] });
+      } else {
+        queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      }
     },
     onError: (err: any) => toast.error(err.message),
     onSettled: () => toast.dismiss(),

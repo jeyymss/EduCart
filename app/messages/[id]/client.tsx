@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useMemo } from "react";
+import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -124,10 +124,16 @@ export default function ChatClient({
     });
   }, [messages]);
 
+  // Generate a unique channel ID to ensure fresh subscriptions
+  const channelIdRef = useRef<string>(`${Date.now()}_${Math.random().toString(36).substring(2, 9)}`);
+
   // Realtime subscription
   useEffect(() => {
-    const subscriptionChannel = supabase
-      .channel(`conversation_${conversationId}`)
+    const channelId = channelIdRef.current;
+
+    // Create channels with unique names to avoid reusing stale channel references
+    const messagesChannel = supabase
+      .channel(`messages_${conversationId}_${channelId}`)
       .on(
         "postgres_changes",
         {
@@ -137,9 +143,20 @@ export default function ChatClient({
           filter: `conversation_id=eq.${conversationId}`,
         },
         (payload) => {
-          setMessages((prev) => [...prev, payload.new as ChatMessage]);
+          const newMessage = payload.new as ChatMessage;
+          setMessages((prev) => {
+            // Prevent duplicates by checking if message already exists
+            if (prev.some((msg) => msg.id === newMessage.id)) {
+              return prev;
+            }
+            return [...prev, newMessage];
+          });
         }
       )
+      .subscribe();
+
+    const transactionsChannel = supabase
+      .channel(`transactions_${conversationId}_${channelId}`)
       .on(
         "postgres_changes",
         {
@@ -168,6 +185,10 @@ export default function ChatClient({
           );
         }
       )
+      .subscribe();
+
+    const recordsChannel = supabase
+      .channel(`records_${conversationId}_${channelId}`)
       .on(
         "postgres_changes",
         {
@@ -214,6 +235,10 @@ export default function ChatClient({
           );
         }
       )
+      .subscribe();
+
+    const offersChannel = supabase
+      .channel(`offers_${postId}_${channelId}`)
       .on(
         "postgres_changes",
         {
@@ -234,10 +259,12 @@ export default function ChatClient({
       .subscribe();
 
     return () => {
-      supabase.removeChannel(subscriptionChannel);
+      supabase.removeChannel(messagesChannel);
+      supabase.removeChannel(transactionsChannel);
+      supabase.removeChannel(recordsChannel);
+      supabase.removeChannel(offersChannel);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [conversationId, currentUserId, otherUserId]);
+  }, [conversationId, currentUserId, otherUserId, postId, postType, supabase]);
 
   // Send normal user message
   async function sendMessage() {
