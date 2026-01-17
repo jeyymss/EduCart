@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,6 +43,8 @@ import {
 } from "@/hooks/queries/admin/useSchools";
 
 export default function SchoolsPage() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const { data: schools, isLoading, isError, error } = useSchools();
   const createSchool = useCreateSchool();
   const updateSchool = useUpdateSchool();
@@ -60,6 +63,24 @@ export default function SchoolsPage() {
   const [editSchoolName, setEditSchoolName] = useState("");
   const [editSchoolAbbreviation, setEditSchoolAbbreviation] = useState("");
   const [editSchoolDomain, setEditSchoolDomain] = useState("");
+
+  // Handle URL params for pre-filling add school modal
+  useEffect(() => {
+    const openAddModal = searchParams.get("openAddModal");
+    if (openAddModal === "true") {
+      const name = searchParams.get("name") || "";
+      const abbreviation = searchParams.get("abbreviation") || "";
+      const domain = searchParams.get("domain") || "";
+
+      setNewSchoolName(name);
+      setNewSchoolAbbreviation(abbreviation);
+      setNewSchoolDomain(domain);
+      setAddDialogOpen(true);
+
+      // Clear the URL params
+      router.replace("/admin/schools");
+    }
+  }, [searchParams, router]);
 
   const handleAddSchool = async () => {
     if (!newSchoolName.trim()) {

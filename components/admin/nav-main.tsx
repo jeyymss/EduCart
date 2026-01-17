@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { LayoutDashboard, UserPen, Wallet, Flag, Folder, GraduationCap } from "lucide-react";
+import { LayoutDashboard, UserPen, Wallet, Folder, GraduationCap, FileText, ClipboardCheck } from "lucide-react";
 import {
   SidebarGroup,
   SidebarMenu,
@@ -131,8 +131,27 @@ export function AdminNavMain() {
                 isActive("/admin/reports") ? activeItem : inactiveItem
               )}
             >
-              <Flag className="h-4 w-4" />
+              <FileText className="h-4 w-4" />
               <span>Reports</span>
+            </SidebarMenuButton>
+          </Link>
+        </SidebarMenuItem>
+
+        {/* Requests */}
+        <SidebarMenuItem>
+          <Link
+            href="/admin/requests"
+            aria-current={isActive("/admin/requests") ? "page" : undefined}
+          >
+            <SidebarMenuButton
+              className={cx(
+                baseItem,
+                isActive("/admin/requests") ? activeItem : inactiveItem
+              )}
+              title="Review and manage school and courier applications"
+            >
+              <ClipboardCheck className="h-4 w-4" />
+              <span>Requests</span>
             </SidebarMenuButton>
           </Link>
         </SidebarMenuItem>
