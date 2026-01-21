@@ -340,7 +340,7 @@ export default function SignUpForm() {
 
     try {
       const supabase = createClient();
-      const { error } = await supabase.from("school_requests").insert({
+      const { error } = await supabase.from("university_requests").insert({
         school_name: requestSchoolName.trim(),
         abbreviation: requestAbbreviation.trim() || null,
         domain: requestDomain.trim() || null,
