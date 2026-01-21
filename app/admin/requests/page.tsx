@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -51,13 +51,26 @@ import { toast } from "sonner";
 /* ===================== TYPES ===================== */
 type RequestStatus = "pending" | "approved" | "rejected";
 
+type UniversityRequest = {
+  id: string;
+  request_id: string;
+  school_name: string;
+  abbreviation: string | null;
+  domain: string | null;
+  reason: string | null;
+  requester_email: string;
+  requester_name: string;
+  status: RequestStatus;
+  created_at: string;
+};
+
 type SchoolRequest = {
   id: string;
+  requestId: string;
   status: RequestStatus;
   schoolName: string;
   requestedBy: string;
   email: string;
-  role: string;
   createdAt: string;
   details: {
     schoolAbbreviation?: string;
@@ -65,52 +78,6 @@ type SchoolRequest = {
     reason?: string;
   };
 };
-
-/* ===================== MOCK DATA (Replace with actual hook) ===================== */
-const mockRequests: SchoolRequest[] = [
-  {
-    id: "REQ-001",
-    status: "pending",
-    schoolName: "State University",
-    requestedBy: "John Doe",
-    email: "john@stateuniversity.edu",
-    role: "Faculty",
-    createdAt: "2025-01-15T10:30:00Z",
-    details: {
-      schoolAbbreviation: "SU",
-      schoolDomain: "stateuniversity.edu",
-      reason: "We want to join the platform to help students buy and sell items safely within our campus community.",
-    },
-  },
-  {
-    id: "REQ-002",
-    status: "pending",
-    schoolName: "Community College",
-    requestedBy: "Jane Smith",
-    email: "jane@commcollege.edu",
-    role: "Student",
-    createdAt: "2025-01-14T14:20:00Z",
-    details: {
-      schoolAbbreviation: "CC",
-      schoolDomain: "commcollege.edu",
-      reason: "Our school doesn't have a marketplace yet and students need a safe platform to trade items.",
-    },
-  },
-  {
-    id: "REQ-003",
-    status: "approved",
-    schoolName: "Tech Institute",
-    requestedBy: "Admin User",
-    email: "admin@techinstitute.edu",
-    role: "Administrator",
-    createdAt: "2025-01-10T09:00:00Z",
-    details: {
-      schoolAbbreviation: "TI",
-      schoolDomain: "techinstitute.edu",
-      reason: "Looking to expand student services and provide a trusted marketplace.",
-    },
-  },
-];
 
 /* ===================== EMAIL TEMPLATES ===================== */
 const APPROVAL_TEMPLATE = `Dear {requester_name},
@@ -147,8 +114,48 @@ EduCart Admin Team`;
 /* ===================== PAGE ===================== */
 export default function RequestsPage() {
   const router = useRouter();
-  const [requests, setRequests] = useState<SchoolRequest[]>(mockRequests);
-  const [isLoading] = useState(false);
+  const [requests, setRequests] = useState<SchoolRequest[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch university requests from API
+  useEffect(() => {
+    async function fetchRequests() {
+      try {
+        const res = await fetch("/api/admin/university-requests");
+        const json = await res.json();
+
+        if (!res.ok) {
+          throw new Error(json.error || "Failed to fetch requests");
+        }
+
+        // Transform data to match the component's expected format
+        const transformed: SchoolRequest[] = (json.data || []).map((r: UniversityRequest) => ({
+          id: r.id,
+          requestId: r.request_id,
+          status: r.status,
+          schoolName: r.school_name,
+          requestedBy: r.requester_name,
+          email: r.requester_email,
+          createdAt: r.created_at,
+          details: {
+            schoolAbbreviation: r.abbreviation || undefined,
+            schoolDomain: r.domain || undefined,
+            reason: r.reason || undefined,
+          },
+        }));
+
+        setRequests(transformed);
+      } catch (error: any) {
+        console.error("Error fetching requests:", error);
+        toast.error(error.message || "Failed to load requests");
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchRequests();
+  }, []);
+
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<SchoolRequest | null>(null);
   const [emailSubject, setEmailSubject] = useState("");
@@ -172,8 +179,7 @@ export default function RequestsPage() {
       const matchesSearch =
         r.schoolName.toLowerCase().includes(search.toLowerCase()) ||
         r.requestedBy.toLowerCase().includes(search.toLowerCase()) ||
-        r.email.toLowerCase().includes(search.toLowerCase()) ||
-        r.id.toLowerCase().includes(search.toLowerCase());
+        r.email.toLowerCase().includes(search.toLowerCase());
 
       const matchesStatus =
         statusFilter === "all" || r.status === statusFilter;
@@ -232,10 +238,23 @@ export default function RequestsPage() {
 
     setActionLoading(true);
     try {
-      // TODO: Replace with actual API call to send email and update status
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
       const newStatus: RequestStatus = decision === "approve" ? "approved" : "rejected";
+
+      // Update status in database
+      const res = await fetch("/api/admin/university-requests", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          requestId: selectedRequest.id,
+          decision,
+        }),
+      });
+
+      const json = await res.json();
+
+      if (!res.ok) {
+        throw new Error(json.error || "Failed to update request status");
+      }
 
       setRequests((prev) =>
         prev.map((r) =>
@@ -395,14 +414,12 @@ export default function RequestsPage() {
       <Card className="border-none shadow-md rounded-2xl overflow-hidden">
         <CardContent className="p-0">
           <div className="grid grid-cols-12 px-6 py-3 text-sm font-semibold bg-[#C7D9E5]">
-            <div className="col-span-1">Request ID</div>
             <div className="col-span-2">School Name</div>
             <div className="col-span-2">Requested By</div>
-            <div className="col-span-2">Email</div>
-            <div className="col-span-1">Role</div>
+            <div className="col-span-3">Email</div>
             <div className="col-span-2">Date</div>
             <div className="col-span-1">Status</div>
-            <div className="col-span-1 text-right">Actions</div>
+            <div className="col-span-2 text-right">Actions</div>
           </div>
 
           {paginatedRequests.length === 0 ? (
@@ -415,16 +432,14 @@ export default function RequestsPage() {
                 key={r.id}
                 className="grid grid-cols-12 px-6 py-4 border-b hover:bg-gray-50 items-center"
               >
-                <div className="col-span-1 text-gray-600 text-sm">{r.id}</div>
                 <div className="col-span-2 font-medium">{r.schoolName}</div>
                 <div className="col-span-2 text-sm">{r.requestedBy}</div>
-                <div className="col-span-2 text-sm text-gray-600">{r.email}</div>
-                <div className="col-span-1 text-sm">{r.role}</div>
+                <div className="col-span-3 text-sm text-gray-600 truncate">{r.email}</div>
                 <div className="col-span-2 text-sm text-gray-600">
                   {formatDate(r.createdAt)}
                 </div>
                 <div className="col-span-1">{getStatusBadge(r.status)}</div>
-                <div className="col-span-1 text-right">
+                <div className="col-span-2 text-right">
                   <Button
                     size="sm"
                     variant="outline"
@@ -554,7 +569,7 @@ export default function RequestsPage() {
                             </div>
                             <div>
                               <p className="text-xs font-medium text-gray-500">Request ID</p>
-                              <p className="text-sm text-gray-900">{selectedRequest.id}</p>
+                              <p className="text-sm text-gray-900 font-mono">{selectedRequest.requestId}</p>
                             </div>
                           </div>
                           <div className="flex items-start gap-3">
@@ -607,25 +622,14 @@ export default function RequestsPage() {
 
                         <Separator />
 
-                        {/* Requested By & Role */}
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="flex items-start gap-3">
-                            <div className="mt-0.5 p-1.5 rounded-md bg-gray-100">
-                              <User className="h-4 w-4 text-gray-600" />
-                            </div>
-                            <div>
-                              <p className="text-xs font-medium text-gray-500">Requested By</p>
-                              <p className="text-sm text-gray-900">{selectedRequest.requestedBy}</p>
-                            </div>
+                        {/* Requested By */}
+                        <div className="flex items-start gap-3">
+                          <div className="mt-0.5 p-1.5 rounded-md bg-gray-100">
+                            <User className="h-4 w-4 text-gray-600" />
                           </div>
-                          <div className="flex items-start gap-3">
-                            <div className="mt-0.5 p-1.5 rounded-md bg-gray-100">
-                              <User className="h-4 w-4 text-gray-600" />
-                            </div>
-                            <div>
-                              <p className="text-xs font-medium text-gray-500">Role</p>
-                              <p className="text-sm text-gray-900">{selectedRequest.role}</p>
-                            </div>
+                          <div>
+                            <p className="text-xs font-medium text-gray-500">Requested By</p>
+                            <p className="text-sm text-gray-900">{selectedRequest.requestedBy}</p>
                           </div>
                         </div>
 
@@ -660,140 +664,178 @@ export default function RequestsPage() {
                     </Card>
                   </div>
 
-                  <Separator />
-
-                  {/* Email Response Section */}
-                  <div className="space-y-4">
-                    <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
-                      <div className="h-1.5 w-1.5 rounded-full bg-[#FDB813]" />
-                      Email Response
-                    </h3>
-
-                    <Card className="border-gray-200">
-                      <CardContent className="p-4 space-y-4">
-                        {/* To */}
-                        <div className="space-y-2">
-                          <Label htmlFor="email-to" className="text-sm font-medium">
-                            To:
-                          </Label>
-                          <Input
-                            id="email-to"
-                            value={selectedRequest.email}
-                            disabled
-                            className="bg-gray-50"
-                          />
+                  {/* Status Banner for already processed requests */}
+                  {selectedRequest.status !== "pending" && (
+                    <>
+                      <div className={`p-4 rounded-lg flex items-center gap-3 ${
+                        selectedRequest.status === "approved"
+                          ? "bg-green-50 border border-green-200"
+                          : "bg-red-50 border border-red-200"
+                      }`}>
+                        {selectedRequest.status === "approved" ? (
+                          <Check className="h-5 w-5 text-green-600" />
+                        ) : (
+                          <XCircle className="h-5 w-5 text-red-600" />
+                        )}
+                        <div>
+                          <p className={`font-medium ${
+                            selectedRequest.status === "approved" ? "text-green-800" : "text-red-800"
+                          }`}>
+                            This request has been {selectedRequest.status}
+                          </p>
+                          <p className={`text-sm ${
+                            selectedRequest.status === "approved" ? "text-green-600" : "text-red-600"
+                          }`}>
+                            No further action is required.
+                          </p>
                         </div>
+                      </div>
 
-                        {/* Subject */}
-                        <div className="space-y-2">
-                          <Label htmlFor="email-subject" className="text-sm font-medium">
-                            Subject:
-                          </Label>
-                          <Input
-                            id="email-subject"
-                            value={emailSubject}
-                            onChange={(e) => setEmailSubject(e.target.value)}
-                            placeholder="Enter email subject"
-                          />
-                        </div>
-
-                        {/* Message */}
-                        <div className="space-y-2">
-                          <Label htmlFor="email-message" className="text-sm font-medium">
-                            Message:
-                          </Label>
-                          <Textarea
-                            id="email-message"
-                            value={emailMessage}
-                            onChange={(e) => setEmailMessage(e.target.value)}
-                            placeholder="Enter your email message..."
-                            rows={10}
-                            className="resize-none"
-                          />
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-
-                  {/* Quick Actions */}
-                  <div className="space-y-3">
-                    <p className="text-sm font-medium text-gray-700">Quick Actions</p>
-                    <div className="flex gap-3">
-                      <Button
-                        variant="outline"
-                        onClick={() => applyTemplate("approval")}
-                        className="flex-1"
-                      >
-                        Use Approval Template
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={() => applyTemplate("rejection")}
-                        className="flex-1"
-                      >
-                        Use Rejection Template
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Decision Buttons */}
-                  {selectedRequest.status === "pending" && (
-                    <div className="space-y-3">
-                      <p className="text-sm font-medium text-gray-700">Decision</p>
-                      <div className="flex gap-3">
-                        <Button
-                          variant={decision === "approve" ? "default" : "outline"}
-                          onClick={() => setDecision("approve")}
-                          className={`flex-1 ${
-                            decision === "approve"
-                              ? "bg-green-600 hover:bg-green-700 text-white"
-                              : "border-green-200 text-green-700 hover:bg-green-50"
-                          }`}
-                        >
-                          <Check className="h-4 w-4 mr-2" />
-                          Approve School
-                        </Button>
-                        <Button
-                          variant={decision === "reject" ? "default" : "outline"}
-                          onClick={() => setDecision("reject")}
-                          className={`flex-1 ${
-                            decision === "reject"
-                              ? "bg-red-600 hover:bg-red-700 text-white"
-                              : "border-red-200 text-red-700 hover:bg-red-50"
-                          }`}
-                        >
-                          <XCircle className="h-4 w-4 mr-2" />
-                          Reject School
+                      <div className="flex justify-end pb-2">
+                        <Button variant="outline" onClick={closeModal}>
+                          Close
                         </Button>
                       </div>
-                    </div>
+                    </>
                   )}
 
-                  <Separator />
+                  {/* Only show email response and actions for pending requests */}
+                  {selectedRequest.status === "pending" && (
+                    <>
+                      <Separator />
 
-                  {/* Action Buttons */}
-                  <div className="flex justify-end gap-3 pb-2">
-                    <Button variant="outline" onClick={closeModal} disabled={actionLoading}>
-                      Cancel
-                    </Button>
-                    <Button
-                      onClick={handleSendEmail}
-                      disabled={actionLoading || !decision || !emailMessage.trim() || selectedRequest.status !== "pending"}
-                      className="bg-[#FDB813] hover:bg-[#e5a811] text-black"
-                    >
-                      {actionLoading ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Sending...
-                        </>
-                      ) : (
-                        <>
-                          <Mail className="h-4 w-4 mr-2" />
-                          Send Email
-                        </>
-                      )}
-                    </Button>
-                  </div>
+                      {/* Email Response Section */}
+                      <div className="space-y-4">
+                        <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
+                          <div className="h-1.5 w-1.5 rounded-full bg-[#FDB813]" />
+                          Email Response
+                        </h3>
+
+                        <Card className="border-gray-200">
+                          <CardContent className="p-4 space-y-4">
+                            {/* To */}
+                            <div className="space-y-2">
+                              <Label htmlFor="email-to" className="text-sm font-medium">
+                                To:
+                              </Label>
+                              <Input
+                                id="email-to"
+                                value={selectedRequest.email}
+                                disabled
+                                className="bg-gray-50"
+                              />
+                            </div>
+
+                            {/* Subject */}
+                            <div className="space-y-2">
+                              <Label htmlFor="email-subject" className="text-sm font-medium">
+                                Subject:
+                              </Label>
+                              <Input
+                                id="email-subject"
+                                value={emailSubject}
+                                onChange={(e) => setEmailSubject(e.target.value)}
+                                placeholder="Enter email subject"
+                              />
+                            </div>
+
+                            {/* Message */}
+                            <div className="space-y-2">
+                              <Label htmlFor="email-message" className="text-sm font-medium">
+                                Message:
+                              </Label>
+                              <Textarea
+                                id="email-message"
+                                value={emailMessage}
+                                onChange={(e) => setEmailMessage(e.target.value)}
+                                placeholder="Enter your email message..."
+                                rows={10}
+                                className="resize-none"
+                              />
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </div>
+
+                      {/* Quick Actions */}
+                      <div className="space-y-3">
+                        <p className="text-sm font-medium text-gray-700">Quick Actions</p>
+                        <div className="flex gap-3">
+                          <Button
+                            variant="outline"
+                            onClick={() => applyTemplate("approval")}
+                            className="flex-1"
+                          >
+                            Use Approval Template
+                          </Button>
+                          <Button
+                            variant="outline"
+                            onClick={() => applyTemplate("rejection")}
+                            className="flex-1"
+                          >
+                            Use Rejection Template
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* Decision Buttons */}
+                      <div className="space-y-3">
+                        <p className="text-sm font-medium text-gray-700">Decision</p>
+                        <div className="flex gap-3">
+                          <Button
+                            variant={decision === "approve" ? "default" : "outline"}
+                            onClick={() => setDecision("approve")}
+                            className={`flex-1 ${
+                              decision === "approve"
+                                ? "bg-green-600 hover:bg-green-700 text-white"
+                                : "border-green-200 text-green-700 hover:bg-green-50"
+                            }`}
+                          >
+                            <Check className="h-4 w-4 mr-2" />
+                            Approve School
+                          </Button>
+                          <Button
+                            variant={decision === "reject" ? "default" : "outline"}
+                            onClick={() => setDecision("reject")}
+                            className={`flex-1 ${
+                              decision === "reject"
+                                ? "bg-red-600 hover:bg-red-700 text-white"
+                                : "border-red-200 text-red-700 hover:bg-red-50"
+                            }`}
+                          >
+                            <XCircle className="h-4 w-4 mr-2" />
+                            Reject School
+                          </Button>
+                        </div>
+                      </div>
+
+                      <Separator />
+
+                      {/* Action Buttons */}
+                      <div className="flex justify-end gap-3 pb-2">
+                        <Button variant="outline" onClick={closeModal} disabled={actionLoading}>
+                          Cancel
+                        </Button>
+                        <Button
+                          onClick={handleSendEmail}
+                          disabled={actionLoading || !decision || !emailMessage.trim()}
+                          className="bg-[#FDB813] hover:bg-[#e5a811] text-black"
+                        >
+                          {actionLoading ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              Sending...
+                            </>
+                          ) : (
+                            <>
+                              <Mail className="h-4 w-4 mr-2" />
+                              Send Email
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </>
+                  )}
                 </>
               )}
             </div>

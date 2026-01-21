@@ -340,24 +340,63 @@ export default function SignUpForm() {
 
     try {
       const supabase = createClient();
-      const { error } = await supabase.from("university_requests").insert({
-        school_name: requestSchoolName.trim(),
-        abbreviation: requestAbbreviation.trim() || null,
-        domain: requestDomain.trim() || null,
-        reason: requestReason.trim() || null,
-        requester_email: requestEmail.trim(),
-        requester_name: requestName.trim(),
-        status: "pending",
-      });
+      const rawDomain = requestDomain.trim().toLowerCase();
+      const domain = rawDomain ? (rawDomain.startsWith("@") ? rawDomain : `@${rawDomain}`) : null;
 
-      if (error) throw error;
+      // 1️⃣ Check if university already exists (approved)
+      const { data: existingUniversity, error: uniError } = await supabase
+        .from("universities")
+        .select("id")
+        .eq("domain", domain)
+        .limit(1)
+        .single();
 
-      setRequestSuccess(true);
+      if (existingUniversity) {
+        throw new Error("This university is already registered.");
+      }
+
+      if (uniError && uniError.code !== "PGRST116") {
+        throw uniError;
+      }
+
+      // 2️⃣ Check if university is already under review
+      const { data: existingRequest, error: reqError } = await supabase
+        .from("university_requests")
+        .select("id")
+        .eq("domain", domain)
+        .limit(1)
+        .single();
+
+      if (existingRequest) {
+        throw new Error("This university is already under review.");
+      }
+
+      if (reqError && reqError.code !== "PGRST116") {
+        throw reqError;
+      }
+
+      // 3️⃣ Insert request
+      const { error: insertError } = await supabase
+        .from("university_requests")
+        .insert({
+          school_name: requestSchoolName.trim(),
+          abbreviation: requestAbbreviation.trim() || null,
+          domain,
+          reason: requestReason.trim() || null,
+          requester_email: requestEmail.trim(),
+          requester_name: requestName.trim(),
+          status: "pending",
+        });
+
+      if (insertError) throw insertError;
+
+    setRequestSuccess(true);
     } catch (err: any) {
       setRequestError(err.message || "Failed to submit request. Please try again.");
     } finally {
       setRequestSubmitting(false);
     }
+
   }
 
   async function onSubmitFinal(e: React.FormEvent<HTMLFormElement>) {

@@ -183,7 +183,7 @@ export default function SchoolsPage() {
             </p>
           </div>
 
-          <Button onClick={() => setAddDialogOpen(true)} className="gap-2">
+          <Button onClick={() => setAddDialogOpen(true)} className="gap-2 hover:cursor-pointer">
             <Plus className="h-4 w-4" />
             Add School
           </Button>
@@ -324,12 +324,14 @@ export default function SchoolsPage() {
                 setNewSchoolAbbreviation("");
                 setNewSchoolDomain("");
               }}
+              className="hover:cursor-pointer"
             >
               Cancel
             </Button>
             <Button
               onClick={handleAddSchool}
               disabled={createSchool.isPending}
+              className="hover:cursor-pointer"
             >
               {createSchool.isPending ? "Creating..." : "Add School"}
             </Button>
@@ -410,18 +412,18 @@ export default function SchoolsPage() {
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
               This action cannot be undone. This will permanently delete the school &quot;{selectedSchool?.name}&quot;.
-              {selectedSchool?.user_count && selectedSchool.user_count > 0 && (
+              {selectedSchool?.user_count && selectedSchool.user_count > 0 ? (
                 <span className="block mt-2 text-red-600 font-semibold">
                   Warning: This school has {selectedSchool.user_count} user(s) and cannot be deleted.
                 </span>
-              )}
+              ): (<></>)}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel className="hover:cursor-pointer">Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDelete}
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-red-600 hover:bg-red-700 hover:cursor-pointer"
               disabled={deleteSchool.isPending || (selectedSchool?.user_count ?? 0) > 0}
             >
               {deleteSchool.isPending ? "Deleting..." : "Delete School"}
