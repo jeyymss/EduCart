@@ -32,11 +32,22 @@ export function SettingsPanel() {
 
   // Contact Admin Modal States
   const [showContactModal, setShowContactModal] = useState(false);
-  const [contactSubject, setContactSubject] = useState("");
+  const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
+  const [customSubject, setCustomSubject] = useState("");
   const [contactMessage, setContactMessage] = useState("");
   const [contactLoading, setContactLoading] = useState(false);
   const [contactError, setContactError] = useState<string | null>(null);
   const [contactSuccess, setContactSuccess] = useState(false);
+
+  // Predefined subject options
+  const subjectOptions = [
+    "Account Issue",
+    "Payment Problem",
+    "Report a Bug",
+    "Feature Request",
+    "Transaction Dispute",
+    "Other",
+  ];
 
   const { data: user } = useUserProfile();
 
@@ -108,9 +119,17 @@ export function SettingsPanel() {
     setContactSuccess(false);
     setContactLoading(true);
 
+    // Determine the final subject
+    const finalSubject =
+      selectedSubject === "Other" ? customSubject.trim() : selectedSubject;
+
     try {
-      if (!contactSubject.trim() || !contactMessage.trim()) {
-        throw new Error("Please fill in both subject and message");
+      if (!finalSubject || !contactMessage.trim()) {
+        throw new Error("Please select a subject and enter a message");
+      }
+
+      if (selectedSubject === "Other" && !customSubject.trim()) {
+        throw new Error("Please specify your subject");
       }
 
       // get logged-in user (email will be used as sender)
@@ -130,7 +149,7 @@ export function SettingsPanel() {
         body: JSON.stringify({
           name: user.user_metadata?.full_name || "EduCart User",
           email: user.email,
-          subject: contactSubject,
+          subject: finalSubject,
           message: contactMessage,
         }),
       });
@@ -142,7 +161,8 @@ export function SettingsPanel() {
       }
 
       setContactSuccess(true);
-      setContactSubject("");
+      setSelectedSubject(null);
+      setCustomSubject("");
       setContactMessage("");
 
       // auto-close modal
@@ -264,7 +284,7 @@ export function SettingsPanel() {
         <p className="text-sm text-muted-foreground">
           <button
             onClick={() => setShowContactModal(true)}
-            className="font-medium hover:text-primary underline"
+            className="font-medium hover:text-primary underline hover:cursor-pointer"
           >
             Contact Admin →
           </button>
@@ -275,7 +295,20 @@ export function SettingsPanel() {
       </section>
 
       {/* ================= CONTACT ADMIN MODAL ================= */}
-      <Dialog open={showContactModal} onOpenChange={setShowContactModal}>
+      <Dialog
+        open={showContactModal}
+        onOpenChange={(open) => {
+          setShowContactModal(open);
+          if (!open) {
+            // Reset form when modal closes
+            setSelectedSubject(null);
+            setCustomSubject("");
+            setContactMessage("");
+            setContactError(null);
+            setContactSuccess(false);
+          }
+        }}
+      >
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold">Contact Admin</DialogTitle>
@@ -285,15 +318,42 @@ export function SettingsPanel() {
           </DialogHeader>
 
           <div className="space-y-4 py-4">
-            {/* Subject Input */}
+            {/* Subject Options */}
             <div className="space-y-2">
               <label className="text-sm font-medium">Subject</label>
-              <Input
-                placeholder="Enter subject"
-                value={contactSubject}
-                onChange={(e) => setContactSubject(e.target.value)}
-                disabled={contactLoading}
-              />
+              <div className="flex flex-wrap gap-2">
+                {subjectOptions.map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    onClick={() => {
+                      setSelectedSubject(option);
+                      if (option !== "Other") {
+                        setCustomSubject("");
+                      }
+                    }}
+                    disabled={contactLoading}
+                    className={`px-3 py-1.5 text-sm rounded-full border transition-colors hover:cursor-pointer ${
+                      selectedSubject === option
+                        ? "bg-[#E59E2C] text-white border-[#E59E2C]"
+                        : "bg-white text-gray-700 border-gray-300 hover:border-[#E59E2C] hover:text-[#E59E2C]"
+                    } disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
+
+              {/* Custom Subject Input (shown when "Other" is selected) */}
+              {selectedSubject === "Other" && (
+                <Input
+                  placeholder="Specify your subject"
+                  value={customSubject}
+                  onChange={(e) => setCustomSubject(e.target.value)}
+                  disabled={contactLoading}
+                  className="mt-2"
+                />
+              )}
             </div>
 
             {/* Message Textarea */}
@@ -323,7 +383,7 @@ export function SettingsPanel() {
             <Button
               onClick={handleContactAdmin}
               disabled={contactLoading || contactSuccess}
-              className="w-full bg-[#E59E2C] text-white hover:bg-[#d4881f]"
+              className="w-full bg-[#E59E2C] text-white hover:bg-[#d4881f] hover:cursor-pointer"
             >
               <Send className="mr-2 h-4 w-4" />
               {contactLoading ? "Sending..." : "Submit"}

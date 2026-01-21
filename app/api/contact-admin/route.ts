@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
+import { contactAdminTemplate } from "@/lib/emails/contactAdminTemplate";
 
 /* ================= INIT ================= */
 
@@ -40,9 +41,12 @@ export async function POST(req: Request) {
       );
     }
 
+    // Sanitize name for use in email header (remove special characters)
+    const sanitizedName = name.replace(/[<>"]/g, "").trim();
+
     console.log("✉️ Preparing email payload...");
     console.log({
-      from: "EduCart Support <onboarding@resend.dev>",
+      from: `${sanitizedName} via EduCart <onboarding@resend.dev>`,
       to: ADMIN_EMAIL,
       replyTo: email,
       subject: `[EduCart Support] ${subject}`,
@@ -50,21 +54,23 @@ export async function POST(req: Request) {
 
     console.log("🚀 Sending email via Resend...");
 
+    // Generate the HTML email template
+    const htmlContent = contactAdminTemplate({
+      name,
+      email,
+      subject,
+      message,
+    });
+
+    // NOTE: Resend requires the "from" address to be from a verified domain.
+    // You cannot send from a user's personal email directly.
+    // Instead, we use replyTo so the admin can reply directly to the user.
     const response = await resend.emails.send({
-      from: "EduCart Support <onboarding@resend.dev>", // MUST be verified
+      from: `${sanitizedName} via EduCart <onboarding@resend.dev>`,
       to: [ADMIN_EMAIL],
       replyTo: email,
       subject: `[EduCart Support] ${subject}`,
-      html: `
-        <div style="font-family: Arial, sans-serif; line-height: 1.6;">
-          <h2>New Contact Admin Message</h2>
-          <p><strong>Name:</strong> ${name}</p>
-          <p><strong>Email:</strong> ${email}</p>
-          <p><strong>Subject:</strong> ${subject}</p>
-          <hr />
-          <p>${message.replace(/\n/g, "<br />")}</p>
-        </div>
-      `,
+      html: htmlContent,
     });
 
     console.log("✅ Resend response:", response);

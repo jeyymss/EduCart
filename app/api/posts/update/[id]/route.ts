@@ -10,8 +10,6 @@ export async function PATCH(request: Request, context: { params: { id: string } 
     console.log("PATCH BODY:", body);
     console.log("POST ID:", params.id);
 
-    // 🚨 Important: quantity should NEVER be null for non-sale post types
-    // so we DO NOT update quantity unless explicitly provided
     const updateData: any = {};
 
     if (body.item_price !== undefined) updateData.item_price = body.item_price;
@@ -19,7 +17,7 @@ export async function PATCH(request: Request, context: { params: { id: string } 
     if (body.item_trade !== undefined) updateData.item_trade = body.item_trade;
     if (body.item_service_fee !== undefined) updateData.item_service_fee = body.item_service_fee;
 
-    // Only update quantity if the frontend explicitly includes it
+    
     if (body.quantity !== undefined) updateData.quantity = body.quantity;
 
     console.log("FINAL UPDATE DATA:", updateData);
