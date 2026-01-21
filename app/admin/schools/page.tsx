@@ -31,7 +31,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { MoreVertical, Edit, Trash2, Plus } from "lucide-react";
+import { MoreVertical, Edit, Trash2, Plus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -168,7 +168,16 @@ export default function SchoolsPage() {
     return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Active</Badge>;
   };
 
-  if (isLoading) return <p className="mt-6 text-sm text-gray-500">Loading schools...</p>;
+  if (isLoading) {
+    return (
+      <div className="mx-auto max-w-[95%] space-y-6 p-6 flex items-center justify-center min-h-[400px]">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
+          <p className="text-sm text-gray-600">Loading schools...</p>
+        </div>
+      </div>
+    );
+  }
   if (isError) return <p className="mt-6 text-sm text-red-500">Error: {error.message}</p>;
 
   return (

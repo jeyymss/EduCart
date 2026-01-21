@@ -320,7 +320,7 @@ export default function RequestsPage() {
     return (
       <div className="mx-auto max-w-[95%] space-y-6 p-6 flex items-center justify-center min-h-[400px]">
         <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+          <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
           <p className="text-sm text-gray-600">Loading requests...</p>
         </div>
       </div>

@@ -23,6 +23,7 @@ import {
   TrendingUp,
   Activity,
   FileText,
+  Loader2,
 } from "lucide-react";
 
 import {
@@ -212,6 +213,17 @@ export default function AdminDashboard() {
     },
   ]
 
+  if (isLoading) {
+    return (
+      <div className="mx-auto max-w-[95%] space-y-6 p-6 flex items-center justify-center min-h-[400px]">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
+          <p className="text-sm text-gray-600">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-white p-6">
       <div className="mx-auto max-w-[1600px] space-y-8">
@@ -261,15 +273,15 @@ export default function AdminDashboard() {
       {/* Analytics Tabs */}
       <Tabs defaultValue="user-activity" className="w-full">
         <TabsList className="grid w-full max-w-md grid-cols-3">
-          <TabsTrigger value="user-activity">
+          <TabsTrigger value="user-activity" className="hover:cursor-pointer hover:bg-gray-50">
             <Activity className="w-4 h-4 mr-2" />
             User Activity
           </TabsTrigger>
-          <TabsTrigger value="post-types">
+          <TabsTrigger value="post-types" className="hover:cursor-pointer hover:bg-gray-50">
             <FileText className="w-4 h-4 mr-2" />
             Post Types
           </TabsTrigger>
-          <TabsTrigger value="revenue">
+          <TabsTrigger value="revenue" className="hover:cursor-pointer hover:bg-gray-50">
             <TrendingUp className="w-4 h-4 mr-2" />
             Revenue
           </TabsTrigger>

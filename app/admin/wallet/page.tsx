@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileCheck, FileX, Wallet } from "lucide-react";
+import { FileCheck, FileX, Wallet, Loader2 } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { SquareArrowOutUpRight } from "lucide-react";
 import WalletTransactionSheet from "@/components/admin/wallet/wallet-transaction-sheet";
@@ -95,6 +95,17 @@ export default function WalletPage() {
       supabase.removeChannel(channel);
     };
   }, [supabase]);
+
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-[95%] space-y-6 p-6 flex items-center justify-center min-h-[400px]">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
+          <p className="text-sm text-gray-600">Loading wallet...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-[95%] space-y-8 p-6">
