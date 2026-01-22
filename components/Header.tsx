@@ -68,6 +68,7 @@ export function Header() {
   const [listDialogOpen, setListDialogOpen] = useState(false);
 
   const [notifications, setNotifications] = useState<any[]>([]);
+  const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
 
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
@@ -83,6 +84,66 @@ export function Header() {
 
   loadNotifications();
 }, [isLoggedIn]);
+
+// Load unread messages count
+useEffect(() => {
+  if (!isLoggedIn) return;
+
+  const loadUnreadMessages = async () => {
+    const res = await fetch("/api/messages/unread-count");
+    const data = await res.json();
+    if (!data.error) setUnreadMessagesCount(data.count);
+  };
+
+  loadUnreadMessages();
+}, [isLoggedIn]);
+
+// Real-time subscription for messages (to update unread count)
+useEffect(() => {
+  if (!user) return;
+
+  const supabaseRT = createClient();
+
+  const messagesChannel = supabaseRT
+    .channel(`messages:header:${user.user_id}`)
+    .on(
+      "postgres_changes",
+      {
+        event: "INSERT",
+        schema: "public",
+        table: "messages",
+      },
+      async (payload: any) => {
+        // Only increment if message is from someone else
+        if (payload.new.sender_user_id !== user.user_id) {
+          // Refetch the count to get accurate number
+          const res = await fetch("/api/messages/unread-count");
+          const data = await res.json();
+          if (!data.error) setUnreadMessagesCount(data.count);
+        }
+      }
+    )
+    .on(
+      "postgres_changes",
+      {
+        event: "UPDATE",
+        schema: "public",
+        table: "conversation_participants",
+        filter: `participant_user_id=eq.${user.user_id}`,
+      },
+      async () => {
+        // Refetch when user reads a conversation (last_read_at updated)
+        const res = await fetch("/api/messages/unread-count");
+        const data = await res.json();
+        if (!data.error) setUnreadMessagesCount(data.count);
+      }
+    )
+    .subscribe();
+
+  return () => {
+    supabaseRT.removeChannel(messagesChannel);
+  };
+}, [user]);
 
 useEffect(() => {
   if (!user) return;
@@ -266,10 +327,19 @@ useEffect(() => {
                   {/* MESSAGE BUTTON */}
                   <Link
                     href={"/messages"}
-                    className="hover:opacity-80"
+                    className="hover:opacity-80 relative"
                     style={{ color: primary }}
                   >
                     <MessageSquare className="w-6 h-6" />
+                    {/* Unread messages badge */}
+                    {unreadMessagesCount > 0 && (
+                      <span
+                        className="absolute -top-1 -right-1 w-5 h-5 rounded-full text-xs flex items-center justify-center text-white font-semibold"
+                        style={{ backgroundColor: "#E53E3E" }}
+                      >
+                        {unreadMessagesCount > 99 ? "99+" : unreadMessagesCount}
+                      </span>
+                    )}
                   </Link>
                   {/* WALLET BUTTON */}
                   <Link
@@ -283,7 +353,20 @@ useEffect(() => {
                   {/* NOTIFICATIONS DROPDOWN */}
                   <DropdownMenu
                     open={notificationsOpen}
-                    onOpenChange={setNotificationsOpen}
+                    onOpenChange={async (open) => {
+                      // When closing the dropdown, mark all notifications as read
+                      if (!open && notifications.some((n) => !n.is_read)) {
+                        await fetch("/api/notifications/mark-read", {
+                          method: "POST",
+                          body: JSON.stringify({ markAll: true }),
+                        });
+                        // Update local state to mark all as read
+                        setNotifications((prev) =>
+                          prev.map((n) => ({ ...n, is_read: true }))
+                        );
+                      }
+                      setNotificationsOpen(open);
+                    }}
                   >
                     <DropdownMenuTrigger asChild>
                       <button

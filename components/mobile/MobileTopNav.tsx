@@ -140,6 +140,60 @@ export default function MobileTopNav({
   const hideTopChips =
     isProductPage || isMessagesPage || pathname.startsWith("/profile");
 
+  // Unread messages count
+  const [unreadMessagesCount, setUnreadMessagesCount] = React.useState(0);
+  const supabase = React.useMemo(() => createClient(), []);
+
+  // Fetch unread messages count
+  React.useEffect(() => {
+    const loadUnreadMessages = async () => {
+      const res = await fetch("/api/messages/unread-count");
+      const data = await res.json();
+      if (!data.error) setUnreadMessagesCount(data.count);
+    };
+
+    loadUnreadMessages();
+  }, []);
+
+  // Real-time subscription for messages
+  React.useEffect(() => {
+    const messagesChannel = supabase
+      .channel("messages:mobile-nav")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+        },
+        async () => {
+          // Refetch the count to get accurate number
+          const res = await fetch("/api/messages/unread-count");
+          const data = await res.json();
+          if (!data.error) setUnreadMessagesCount(data.count);
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "conversation_participants",
+        },
+        async () => {
+          // Refetch when user reads a conversation (last_read_at updated)
+          const res = await fetch("/api/messages/unread-count");
+          const data = await res.json();
+          if (!data.error) setUnreadMessagesCount(data.count);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(messagesChannel);
+    };
+  }, [supabase]);
+
   return (
     <>
       {!showOnlyBottom && !hideTopChips && (
@@ -191,6 +245,7 @@ export default function MobileTopNav({
         messagesActive={isActive("/messages")}
         profileActive={isActive("/profile")}
         onOpenList={() => setOpen(true)}
+        unreadMessagesCount={unreadMessagesCount}
       />
 
       {!showOnlyBottom && <div className="md:hidden h-20" />}
@@ -282,6 +337,7 @@ function BottomBar({
   messagesActive,
   profileActive,
   onOpenList,
+  unreadMessagesCount,
 }: any) {
   return (
     <div className="md:hidden fixed inset-x-0 bottom-0 z-30 bg-white border-t border-black/10 h-16 pb-[env(safe-area-inset-bottom)]">
@@ -306,7 +362,7 @@ function BottomBar({
           <Plus className="h-6 w-6" />
         </button>
 
-        <NavIcon href="/messages" label="Messages" active={messagesActive}>
+        <NavIcon href="/messages" label="Messages" active={messagesActive} badge={unreadMessagesCount}>
           <MessageSquareText className="h-5 w-5" />
         </NavIcon>
 
@@ -316,17 +372,24 @@ function BottomBar({
   );
 }
 
-function NavIcon({ href, label, active, children }: any) {
+function NavIcon({ href, label, active, badge, children }: any) {
   return (
     <Link
       href={href}
       aria-label={label}
       aria-current={active ? "page" : undefined}
-      className={`inline-flex flex-col items-center gap-1 px-2 py-1.5 text-xs ${
+      className={`inline-flex flex-col items-center gap-1 px-2 py-1.5 text-xs relative ${
         active ? "text-[#E59E2C]" : "text-gray-600"
       }`}
     >
-      {children}
+      <span className="relative">
+        {children}
+        {badge > 0 && (
+          <span className="absolute -top-1 -right-2 w-4 h-4 rounded-full text-[10px] flex items-center justify-center text-white font-semibold bg-red-500">
+            {badge > 99 ? "99+" : badge}
+          </span>
+        )}
+      </span>
       <span className="text-[11px]">{label}</span>
     </Link>
   );
