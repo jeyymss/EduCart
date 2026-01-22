@@ -9,7 +9,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useState, useRef, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { RentTransaction } from "@/app/api/transacForm/RentTransac/route";
@@ -35,7 +34,6 @@ export default function RentTransacForm({
   postType,
   onClose,
 }: FormProps) {
-  const router = useRouter();
   const formRef = useRef<HTMLFormElement | null>(null);
   const [isFormValid, setIsFormValid] = useState(false);
   const [selectedType, setSelectedType] = useState("Meetup");
@@ -100,7 +98,6 @@ export default function RentTransacForm({
         setError(result.error);
       } else {
         onClose?.();
-        router.push("/profile#transactions");
       }
     } catch (err) {
       console.error(err);

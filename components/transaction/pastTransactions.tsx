@@ -202,8 +202,6 @@ export default function PastTransactionDetails({
 
     setSuccessMsg("Payment successful!");
     setTimeout(() => setShowPaymentDialog(false), 1500);
-
-    window.location.reload();
   };
 
   // GCASH PAYMENT

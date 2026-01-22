@@ -142,15 +142,68 @@ export default function ChatClient({
           table: "messages",
           filter: `conversation_id=eq.${conversationId}`,
         },
-        (payload) => {
-          const newMessage = payload.new as ChatMessage;
-          setMessages((prev) => {
-            // Prevent duplicates by checking if message already exists
-            if (prev.some((msg) => msg.id === newMessage.id)) {
-              return prev;
+        async (payload) => {
+          const newMessage = payload.new as any;
+
+          // If this message has a transaction_id, fetch the full transaction data
+          if (newMessage.transaction_id) {
+            const { data: transactionData, error } = await supabase
+              .from("transactions")
+              .select(`
+                id,
+                item_title,
+                rent_start_date,
+                rent_end_date,
+                price,
+                offered_item,
+                cash_added,
+                fulfillment_method,
+                payment_method,
+                meetup_location,
+                meetup_date,
+                meetup_time,
+                status
+              `)
+              .eq("id", newMessage.transaction_id)
+              .single();
+
+            if (transactionData && !error) {
+              const messageWithTransaction: ChatMessage = {
+                id: newMessage.id,
+                conversation_id: newMessage.conversation_id,
+                sender_user_id: newMessage.sender_user_id,
+                body: newMessage.body,
+                attachments: newMessage.attachments,
+                created_at: newMessage.created_at,
+                type: newMessage.type || "system",
+                transaction_id: newMessage.transaction_id,
+                transactions: transactionData,
+              };
+
+              setMessages((prev) => {
+                if (prev.some((msg) => msg.id === newMessage.id)) {
+                  return prev;
+                }
+                return [...prev, messageWithTransaction];
+              });
+            } else {
+              // Fallback: add message without transaction data
+              setMessages((prev) => {
+                if (prev.some((msg) => msg.id === newMessage.id)) {
+                  return prev;
+                }
+                return [...prev, newMessage as ChatMessage];
+              });
             }
-            return [...prev, newMessage];
-          });
+          } else {
+            // Regular message without transaction
+            setMessages((prev) => {
+              if (prev.some((msg) => msg.id === newMessage.id)) {
+                return prev;
+              }
+              return [...prev, newMessage as ChatMessage];
+            });
+          }
         }
       )
       .subscribe();
@@ -515,7 +568,8 @@ export default function ChatClient({
             });
 
             // SYSTEM MESSAGES (transaction forms)
-            if (messageRow.type === "system" && messageRow.transactions) {
+            // Check for transaction_id as well in case type field is not set
+            if ((messageRow.type === "system" || messageRow.transaction_id) && messageRow.transactions) {
               const txn = messageRow.transactions;
 
               return (

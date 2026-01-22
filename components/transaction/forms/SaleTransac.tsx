@@ -9,7 +9,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useState, useRef, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { SaleTransaction } from "@/app/api/transacForm/SaleTransac/route";
@@ -40,7 +39,6 @@ export default function SaleTransacForm({
   onClose,
   acceptedOfferPrice,
 }: FormProps) {
-  const router = useRouter();
   const finalPrice = acceptedOfferPrice ?? itemPrice;
   const formRef = useRef<HTMLFormElement | null>(null);
   const [isFormValid, setIsFormValid] = useState(false);
@@ -133,7 +131,6 @@ export default function SaleTransacForm({
         setError(result.error);
       } else {
         onClose?.();
-        router.push("/profile#transactions");
       }
     } catch (err) {
       console.error(err);

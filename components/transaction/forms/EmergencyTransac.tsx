@@ -9,7 +9,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useState, useRef, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { EmergencyTransaction } from "@/app/api/transacForm/EmergencyTransac/route";
@@ -32,7 +31,6 @@ export default function EmergencyTransacForm({
   postType,
   onClose,
 }: FormProps) {
-  const router = useRouter();
   const formRef = useRef<HTMLFormElement | null>(null);
   const [isFormValid, setIsFormValid] = useState(false);
   const [selectedType, setSelectedType] = useState("");
@@ -85,7 +83,6 @@ export default function EmergencyTransacForm({
         setError(result.error);
       } else {
         onClose?.();
-        router.push("/profile#transactions");
       }
     } catch (err) {
       console.error(err);

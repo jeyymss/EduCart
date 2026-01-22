@@ -143,7 +143,6 @@ export default function TradeActions({
       toast.success("Payment successful!");
       setShowPaymentDialog(false);
       onPrimary?.(transactionId);
-      window.location.reload();
     } catch (error: any) {
       toast.error(error.message || "Payment failed");
     } finally {

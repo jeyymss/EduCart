@@ -9,7 +9,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useState, useRef, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { TradeTransaction } from "@/app/api/transacForm/TradeTransac/route";
@@ -36,7 +35,6 @@ export default function TradeTransacForm({
   postType,
   onClose,
 }: FormProps) {
-  const router = useRouter();
   const formRef = useRef<HTMLFormElement | null>(null);
   const [isFormValid, setIsFormValid] = useState(false);
   const [selectedType, setSelectedType] = useState("");
@@ -102,7 +100,6 @@ export default function TradeTransacForm({
         setError(result.error);
       } else {
         onClose?.();
-        router.push("/profile#transactions");
       }
     } catch (err) {
       console.error(err);

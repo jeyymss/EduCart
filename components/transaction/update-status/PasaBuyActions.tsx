@@ -160,7 +160,6 @@ export default function PasaBuyActions({
       toast.success("Payment successful!");
       setShowPaymentDialog(false);
       onPrimary?.(transactionId);
-      window.location.reload();
     } catch (error: any) {
       toast.error(error.message || "Payment failed");
     } finally {
